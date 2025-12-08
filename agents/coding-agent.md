@@ -25,7 +25,7 @@ Run `pwd` to confirm your working directory before any operation.
 
 ## Stack Context
 
-DO NOT detect the stack yourself. Use `<project-root>/context/<issue-id>.context.md` which contains:
+DO NOT detect the stack yourself. Use `<project-root>/agent-context/context/<issue-id>.context.md` which contains:
 - Stack name
 - Skill reference
 - Validation commands
@@ -38,10 +38,10 @@ If stack context is missing, STOP and escalate.
 
 Before coding, read:
 
-1. `<project-root>/plan/<issue-id>.SolutionPlan.md`
-2. `<project-root>/context/<issue-id>.context.md`
-3. `<project-root>/harness/feature-requirements.json`
-4. `<project-root>/harness/progress-log.md`
+1. `<project-root>/agent-context/plan/<issue-id>.SolutionPlan.md`
+2. `<project-root>/agent-context/context/<issue-id>.context.md`
+3. `<project-root>/agent-context/harness/feature-requirements.json`
+4. `<project-root>/agent-context/harness/progress-log.md`
 
 DO NOT read `learning-playbook.md` directly — relevant entries are already in your context.md.
 
@@ -55,9 +55,9 @@ For each task:
 2. **Gather context**: Open source files, review context.md, check guardrails
 3. **Implement**: Smallest change, respect layers, no new cross-module deps unless in plan
 4. **Run checks**:
-   - `<project-root>/harness/run-feature.sh <feature-id>`
-   - `<project-root>/harness/run-arch-tests.sh`
-   - `<project-root>/harness/run-quality-gates.sh` (optional)
+   - `<project-root>/agent-context/harness/run-feature.sh <feature-id>`
+   - `<project-root>/agent-context/harness/run-arch-tests.sh`
+   - `<project-root>/agent-context/harness/run-quality-gates.sh` (optional)
 5. **Evaluate**: Tests pass → continue. Fail → fix or stop. Architecture fail → HARD STOP
 6. **Log**: Append to progress-log.md, update feature status, commit
 
@@ -65,7 +65,7 @@ For each task:
 
 ## Progress Log Entry
 
-Append to `<project-root>/harness/progress-log.md`:
+Append to `<project-root>/agent-context/harness/progress-log.md`:
 
 ```markdown
 ### Session <ISO8601> - Coding Agent
@@ -77,8 +77,8 @@ Append to `<project-root>/harness/progress-log.md`:
 - `path/to/file.kt` - <what changed>
 
 **Commands Run:**
-<project-root>/harness/run-feature.sh <feature-id>
-<project-root>/harness/run-arch-tests.sh
+<project-root>/agent-context/harness/run-feature.sh <feature-id>
+<project-root>/agent-context/harness/run-arch-tests.sh
 
 **Results:**
 - Unit tests: PASS/FAIL

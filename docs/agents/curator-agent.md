@@ -2,7 +2,7 @@
 
 > Maintains the quality of the learning playbook by preventing contamination, resolving conflicts, and ensuring high signal-to-noise ratio.
 
-**Agent Definition:** [`agentDirectory/agents/curator-agent.md`](../../agentDirectory/agents/curator-agent.md)
+**Agent Definition:** [`agents/curator-agent.md`](../../agents/curator-agent.md)
 
 ---
 
@@ -41,12 +41,12 @@ Without curation, the learning playbook degrades over time:
 
 | File | Purpose |
 |------|---------|
-| `<project-root>/memory/learning-playbook.md` | Current knowledge base |
+| `<project-root>/agent-context/memory/learning-playbook.md` | Current knowledge base |
 | New entries from Retro Agent | Incoming lessons |
-| `<project-root>/memory/contamination-guidelines.md` | Quality criteria |
-| `<project-root>/memory/retrieval-config.json` | Scoring weights |
-| `<project-root>/guardrails/*` | Current guardrails |
-| `<project-root>/harness/progress-log.md` | Historical context |
+| `<project-root>/agent-context/memory/contamination-guidelines.md` | Quality criteria |
+| `<project-root>/agent-context/memory/retrieval-config.json` | Scoring weights |
+| `<project-root>/agent-context/guardrails/*` | Current guardrails |
+| `<project-root>/agent-context/harness/progress-log.md` | Historical context |
 
 ---
 
@@ -54,11 +54,11 @@ Without curation, the learning playbook degrades over time:
 
 | File | Action |
 |------|--------|
-| `<project-root>/memory/learning-playbook.md` | Updated |
-| `<project-root>/memory/archive/` | Archived entries |
-| `<project-root>/memory/retrieval-config.json` | Scoring adjustments |
-| `<project-root>/memory/contamination-guidelines.md` | New anti-patterns |
-| `<project-root>/harness/progress-log.md` | Curation log |
+| `<project-root>/agent-context/memory/learning-playbook.md` | Updated |
+| `<project-root>/agent-context/memory/archive/` | Archived entries |
+| `<project-root>/agent-context/memory/retrieval-config.json` | Scoring adjustments |
+| `<project-root>/agent-context/memory/contamination-guidelines.md` | New anti-patterns |
+| `<project-root>/agent-context/harness/progress-log.md` | Curation log |
 
 ---
 

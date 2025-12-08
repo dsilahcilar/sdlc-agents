@@ -16,7 +16,7 @@ Run `pwd` to confirm your working directory before any operation.
 ## Stack Context
 
 DO NOT detect the stack. Use the Technology Stack section from:
-`<project-root>/plan/<issue-id>.SolutionPlan.md`
+`<project-root>/agent-context/plan/<issue-id>.SolutionPlan.md`
 
 If stack context is missing, REJECT the plan.
 
@@ -24,13 +24,13 @@ If stack context is missing, REJECT the plan.
 
 ## Inputs
 
-1. `<project-root>/plan/<issue-id>.SolutionPlan.md`
-2. `<project-root>/guardrails/architecture-as-guardrail.md`
-3. `<project-root>/guardrails/architecture-rules.md`
-4. `<project-root>/guardrails/generative-debt-checklist.md`
-5. `<project-root>/context/domain-heuristics.md`
-6. `<project-root>/context/risk-patterns.md`
-7. `<project-root>/memory/learning-playbook.md`
+1. `<project-root>/agent-context/plan/<issue-id>.SolutionPlan.md`
+2. `<project-root>/agent-context/guardrails/architecture-as-guardrail.md`
+3. `<project-root>/agent-context/guardrails/architecture-rules.md`
+4. `<project-root>/agent-context/guardrails/generative-debt-checklist.md`
+5. `<project-root>/agent-context/context/domain-heuristics.md`
+6. `<project-root>/agent-context/context/risk-patterns.md`
+7. `<project-root>/agent-context/memory/learning-playbook.md`
 8. `skills/stacks/<stack>.md` (from Solution Plan)
 
 ---
@@ -61,7 +61,7 @@ If stack context is missing, REJECT the plan.
 
 ## Review Checklist
 
-From `<project-root>/guardrails/generative-debt-checklist.md`:
+From `<project-root>/agent-context/guardrails/generative-debt-checklist.md`:
 
 - [ ] Introducing hard-to-undo shortcut?
 - [ ] Coupling previously independent modules?
@@ -76,7 +76,7 @@ From `<project-root>/guardrails/generative-debt-checklist.md`:
 
 ## Output
 
-Append to `<project-root>/plan/<issue-id>.SolutionPlan.md`:
+Append to `<project-root>/agent-context/plan/<issue-id>.SolutionPlan.md`:
 
 ```markdown
 ## 9. Architecture Review
@@ -155,7 +155,7 @@ Escalate to human when:
 
 ## Handoff
 
-1. Update `<project-root>/harness/progress-log.md`
+1. Update `<project-root>/agent-context/harness/progress-log.md`
 2. If approved: Coding Agent can proceed
 3. If rejected: Planning Agent must revise
-4. Update `<project-root>/context/<issue-id>.context.md` with constraints
+4. Update `<project-root>/agent-context/context/<issue-id>.context.md` with constraints

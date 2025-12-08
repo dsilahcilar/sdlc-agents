@@ -2,7 +2,7 @@
 
 > Transforms human requests (issues, tickets, features) into structured, architecture-aware plans.
 
-**Agent Definition:** [`agentDirectory/agents/planning-agent.md`](../../agentDirectory/agents/planning-agent.md)
+**Agent Definition:** [`agents/planning-agent.md`](../../agents/planning-agent.md)
 
 ---
 
@@ -32,12 +32,12 @@
 | File | Purpose |
 |------|---------|
 | Request (issue, ticket) | Human requirement |
-| `<project-root>/harness/feature-requirements.json` | Feature status |
-| `<project-root>/guardrails/architecture-as-guardrail.md` | Principles |
-| `<project-root>/guardrails/architecture-rules.md` | Rules |
-| `<project-root>/context/domain-heuristics.md` | Domain patterns |
-| `<project-root>/context/risk-patterns.md` | Failure modes |
-| `<project-root>/memory/learning-playbook.md` | Past lessons |
+| `<project-root>/agent-context/harness/feature-requirements.json` | Feature status |
+| `<project-root>/agent-context/guardrails/architecture-as-guardrail.md` | Principles |
+| `<project-root>/agent-context/guardrails/architecture-rules.md` | Rules |
+| `<project-root>/agent-context/context/domain-heuristics.md` | Domain patterns |
+| `<project-root>/agent-context/context/risk-patterns.md` | Failure modes |
+| `<project-root>/agent-context/memory/learning-playbook.md` | Past lessons |
 | `skills/stack-detection.md` | Stack detection rules |
 
 ---
@@ -46,10 +46,10 @@
 
 | File | Purpose |
 |------|---------|
-| `<project-root>/plan/<issue-id>.SolutionPlan.md` | Structured plan |
-| `<project-root>/context/<issue-id>.context.md` | Curated context (using `templates/context-template.md`) |
-| `<project-root>/harness/progress-log.md` | Updated log |
-| `<project-root>/harness/feature-requirements.json` | Updated status |
+| `<project-root>/agent-context/plan/<issue-id>.SolutionPlan.md` | Structured plan |
+| `<project-root>/agent-context/context/<issue-id>.context.md` | Curated context (using `templates/context-template.md`) |
+| `<project-root>/agent-context/harness/progress-log.md` | Updated log |
+| `<project-root>/agent-context/harness/feature-requirements.json` | Updated status |
 
 ---
 

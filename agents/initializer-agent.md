@@ -13,7 +13,7 @@ Run these commands to set your working directories:
 
 ```sh
 PROJECT_ROOT=$(pwd)
-SDLC_AGENTS=$(find "$HOME" -name "initializer-agent.md" -path "*/agentDirectory/agents/*" 2>/dev/null | head -1 | xargs -I {} dirname {} | xargs -I {} dirname {} | xargs -I {} dirname {})
+SDLC_AGENTS=$(dirname "$(find . -name "initializer-agent.md" 2>/dev/null | head -1)")
 ```
 
 Verify both paths are set correctly before proceeding.
@@ -24,15 +24,15 @@ Verify both paths are set correctly before proceeding.
 
 ### Step 1: Detect Stack
 
-1. Read `$SDLC_AGENTS/agentDirectory/skills/stack-detection.md`
+1. Read `$SDLC_AGENTS/skills/stack-detection.md`
 2. Follow detection heuristic
-3. Read corresponding `$SDLC_AGENTS/agentDirectory/skills/stacks/<detected>.md`
+3. Read corresponding `$SDLC_AGENTS/skills/stacks/<detected>.md`
 4. Use only commands from that skill for all subsequent steps
 
 ### Step 2: Run Setup Script
 
 ```sh
-$SDLC_AGENTS/agentDirectory/setup.sh $SDLC_AGENTS $PROJECT_ROOT
+$SDLC_AGENTS/setup.sh $PROJECT_ROOT
 ```
 
 ### Step 3: Customize for Stack
@@ -41,14 +41,14 @@ Based on detected stack, update these files:
 
 | File | Customization |
 |------|---------------|
-| `$PROJECT_ROOT/harness/init-project.sh` | Set build commands for stack |
-| `$PROJECT_ROOT/harness/run-arch-tests.sh` | Set architecture test commands |
-| `$PROJECT_ROOT/harness/run-quality-gates.sh` | Set lint/format/test commands |
-| `$PROJECT_ROOT/harness/run-feature.sh` | Set test runner for stack |
+| `$PROJECT_ROOT/agent-context/harness/init-project.sh` | Set build commands for stack |
+| `$PROJECT_ROOT/agent-context/harness/run-arch-tests.sh` | Set architecture test commands |
+| `$PROJECT_ROOT/agent-context/harness/run-quality-gates.sh` | Set lint/format/test commands |
+| `$PROJECT_ROOT/agent-context/harness/run-feature.sh` | Set test runner for stack |
 
 ### Step 4: Fill feature-requirements.json
 
-Edit `$PROJECT_ROOT/harness/feature-requirements.json`:
+Edit `$PROJECT_ROOT/agent-context/harness/feature-requirements.json`:
 
 Add at least one feature. Include discovered technical debt as features if legacy project.
 
@@ -64,7 +64,7 @@ Add at least one feature. Include discovered technical debt as features if legac
 2. Detect architectural patterns (Layered, Hexagonal, Clean, MVC, Modular Monolith)
 3. Identify violations as technical debt (not blockers)
 4. Generate architecture rules for detected stack
-5. Create `$PROJECT_ROOT/docs/architecture-discovery-report.md`
+5. Create `$PROJECT_ROOT/agent-context/docs/architecture-discovery-report.md`
 6. Request team review before proceeding
 
 #### Discovery Report Template
@@ -111,7 +111,7 @@ Add at least one feature. Include discovered technical debt as features if legac
 ### Step 6: Verify Health
 
 ```sh
-cd $PROJECT_ROOT
+cd $PROJECT_ROOT/agent-context
 ./harness/init-project.sh
 ./harness/run-arch-tests.sh
 ./harness/run-quality-gates.sh
@@ -121,7 +121,7 @@ All must complete without error.
 
 ### Step 7: Log and Commit
 
-1. Update `$PROJECT_ROOT/harness/progress-log.md` with initialization details
+1. Update `$PROJECT_ROOT/agent-context/harness/progress-log.md` with initialization details
 2. Commit: `git commit -m "chore: initialize SDLC agent harness"`
 
 ---
@@ -143,13 +143,13 @@ All must complete without error.
 
 - [ ] Setup script ran successfully
 - [ ] Stack-specific customizations applied
-- [ ] `$PROJECT_ROOT/harness/feature-requirements.json` has at least one feature
-- [ ] `$PROJECT_ROOT/harness/init-project.sh` runs without error
-- [ ] `$PROJECT_ROOT/harness/run-arch-tests.sh` runs without error
-- [ ] `$PROJECT_ROOT/harness/run-quality-gates.sh` runs without error
-- [ ] All `$PROJECT_ROOT/memory/`, `$PROJECT_ROOT/guardrails/`, `$PROJECT_ROOT/context/` files exist
+- [ ] `$PROJECT_ROOT/agent-context/harness/feature-requirements.json` has at least one feature
+- [ ] `$PROJECT_ROOT/agent-context/harness/init-project.sh` runs without error
+- [ ] `$PROJECT_ROOT/agent-context/harness/run-arch-tests.sh` runs without error
+- [ ] `$PROJECT_ROOT/agent-context/harness/run-quality-gates.sh` runs without error
+- [ ] All `$PROJECT_ROOT/agent-context/memory/`, `$PROJECT_ROOT/agent-context/guardrails/`, `$PROJECT_ROOT/agent-context/context/` files exist
 - [ ] Initial commit created
-- [ ] If legacy: `$PROJECT_ROOT/docs/architecture-discovery-report.md` exists and reviewed
+- [ ] If legacy: `$PROJECT_ROOT/agent-context/docs/architecture-discovery-report.md` exists and reviewed
 
 ---
 

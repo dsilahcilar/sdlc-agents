@@ -1,8 +1,8 @@
 # Harness Templates Documentation
 
-> Documentation for `agentDirectory/templates/harness/`
+> Documentation for `agents/templates/harness/`
 
-These are **template scripts** that the Initializer Agent copies to your project's `<project-root>/harness/` directory.
+These are **template scripts** that the Initializer Agent copies to your project's `<project-root>/agent-context/harness/` directory.
 
 ---
 

@@ -1,6 +1,6 @@
 # Templates Documentation
 
-> Documentation for `agentDirectory/templates/`
+> Documentation for `agents/templates/`
 
 This documents the templates that the Initializer Agent copies to your project workspace.
 
@@ -8,10 +8,10 @@ This documents the templates that the Initializer Agent copies to your project w
 
 ## Directory Structure
 
-The templates are located at `agentDirectory/templates/`:
+The templates are located at `agents/templates/`:
 
 ```
-agentDirectory/templates/
+agents/templates/
 ├── context-template.md        # Template for task-specific context files
 │
 ├── harness/                   # Harness scripts
@@ -43,20 +43,20 @@ agentDirectory/templates/
 
 When the **Initializer Agent** runs on your project:
 
-1. **All template directories** are copied to `<project-root>/`
+1. **All template directories** are copied to `<project-root>/agent-context/`
 2. Scripts are customized for your project's technology stack
 3. Placeholder content is replaced with project-specific information
 
 ```
-templates/harness/     →  <your-project>/harness/
-templates/memory/      →  <your-project>/memory/
-templates/guardrails/  →  <your-project>/guardrails/
-templates/context/     →  <your-project>/context/
+templates/harness/     →  <your-project>/agent-context/harness/
+templates/memory/      →  <your-project>/agent-context/memory/
+templates/guardrails/  →  <your-project>/agent-context/guardrails/
+templates/context/     →  <your-project>/agent-context/context/
 ```
 
 The `context-template.md` is used by the **Planning Agent** to generate:
 ```
-<your-project>/context/<issue-id>.context.md
+<your-project>/agent-context/context/<issue-id>.context.md
 ```
 
 ---

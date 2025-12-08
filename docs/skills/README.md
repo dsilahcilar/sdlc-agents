@@ -1,6 +1,6 @@
 # Skills - Progressive Disclosure System
 
-> Documentation for `agentDirectory/skills/`
+> Documentation for `agents/skills/`
 
 > "Progressive disclosure is the core design principle that makes Agent Skills flexible and scalable.
 > Like a well-organized manual that starts with a table of contents, then specific chapters, and finally detailed appendix,
@@ -53,7 +53,7 @@ Agent loads only the detected stack's skill file (e.g., `stacks/java.md`).
 
 ### Level 4: Tool Execution
 
-Agent uses tools from `agentDirectory/tools/` - only reading tool description when needed.
+Agent uses tools from `agents/tools/` - only reading tool description when needed.
 **Context cost: ~100 tokens per tool**
 
 **Total for typical task: ~800 tokens** (vs. ~4000+ if loading everything)
@@ -109,7 +109,7 @@ The **Planning Agent** is responsible for stack detection:
 
 Downstream agents **receive stack context** from the Planning Agent:
 
-1. Read the pre-assembled context: `<project-root>/context/<issue-id>.context.md`
+1. Read the pre-assembled context: `<project-root>/agent-context/context/<issue-id>.context.md`
 2. Use the documented skill reference: `skills/stacks/<stack>.md`
 3. Execute validation commands from the context file
 
@@ -117,7 +117,7 @@ Downstream agents **receive stack context** from the Planning Agent:
 
 ### Using Tools (Not Scripts!)
 
-Agent uses tools from `agentDirectory/tools/` instead of inline scripts:
+Agent uses tools from `agents/tools/` instead of inline scripts:
 
 ```markdown
 # OLD WAY (fills context):
@@ -126,8 +126,8 @@ find src/main -name "*.java" -o -name "*.kt" | xargs grep -h "^package " | sort 
 ```
 
 # NEW WAY (minimal context):
-See: agentDirectory/tools/discovery/list-packages.md
-Run: agentDirectory/tools/discovery/list-packages.sh src/main
+See: agents/tools/discovery/list-packages.md
+Run: agents/tools/discovery/list-packages.sh src/main
 ```
 
 ---
@@ -143,7 +143,7 @@ Each skill file follows this structure:
 Primary tool and dependencies.
 
 ## Available Tools
-Table linking to agentDirectory/tools/ with when to use each.
+Table linking to agents/tools/ with when to use each.
 
 ## Quick Commands
 For immediate execution without reading tool docs.
@@ -188,9 +188,9 @@ find src/main -name "*.java" -o -name "*.kt" | sed 's|/[^/]*$||' | sort | uniq -
 
 | Tool | Purpose |
 |------|---------|
-| `agentDirectory/tools/discovery/list-packages.sh` | List all packages |
-| `agentDirectory/tools/discovery/find-imports.sh` | Find import relationships |
-| `agentDirectory/tools/discovery/count-files.sh` | Count files per package |
+| `agents/tools/discovery/list-packages.sh` | List all packages |
+| `agents/tools/discovery/find-imports.sh` | Find import relationships |
+| `agents/tools/discovery/count-files.sh` | Count files per package |
 ```
 
 **Benefit:** Agent only loads tool description when it needs to use that specific tool.
@@ -201,7 +201,7 @@ find src/main -name "*.java" -o -name "*.kt" | sed 's|/[^/]*$||' | sort | uniq -
 
 1. Create `skills/stacks/<stack>.md`
 2. Follow the standard skill format
-3. Create tools in `agentDirectory/tools/stack/<stack>/`
+3. Create tools in `agents/tools/stack/<stack>/`
 4. Update `stack-detection.md` with detection rules
 5. Update `harness/run-arch-tests.sh` if needed
 6. Test with a sample project
@@ -219,7 +219,7 @@ Agents should:
 4. Document stack, skill reference, and validation commands in Solution Plan and Context file
 
 ### Downstream Agents (Context Consumers)
-1. **First**: Read the context file (`<project-root>/context/<issue-id>.context.md`)
+1. **First**: Read the context file (`<project-root>/agent-context/context/<issue-id>.context.md`)
 2. **Then**: Read only the skill file referenced in the context
 3. **Then**: Read tool description only when ready to execute
 4. **Never**: Read `stack-detection.md` (that's Planning Agent's job)

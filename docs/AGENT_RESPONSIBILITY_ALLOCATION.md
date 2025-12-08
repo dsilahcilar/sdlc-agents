@@ -60,7 +60,7 @@ The Planning Agent now adds a **Section 1.1: Technology Stack** to every Solutio
 
 ## Context File: Technology Stack Section
 
-The Context file (`<project-root>/context/<issue-id>.context.md`) now includes:
+The Context file (`<project-root>/agent-context/context/<issue-id>.context.md`) now includes:
 
 ```markdown
 ## Technology Stack

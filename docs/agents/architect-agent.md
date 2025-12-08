@@ -2,7 +2,7 @@
 
 > Evaluates proposed plans from the perspective of structural integrity, modularity, and long-term maintainability.
 
-**Agent Definition:** [`agentDirectory/agents/architect-agent.md`](../../agentDirectory/agents/architect-agent.md)
+**Agent Definition:** [`agents/architect-agent.md`](../../agents/architect-agent.md)
 
 ---
 
@@ -38,13 +38,13 @@ LLMs are notoriously weak at architectural decisions. This agent provides a dedi
 
 | File | Purpose |
 |------|---------|
-| `<project-root>/plan/<issue-id>.SolutionPlan.md` | Plan to review (includes Technology Stack section) |
-| `<project-root>/guardrails/architecture-as-guardrail.md` | Principles |
-| `<project-root>/guardrails/architecture-rules.md` | Rules |
-| `<project-root>/guardrails/generative-debt-checklist.md` | Debt checklist |
-| `<project-root>/context/domain-heuristics.md` | Domain patterns |
-| `<project-root>/context/risk-patterns.md` | Failure modes |
-| `<project-root>/memory/learning-playbook.md` | Past lessons |
+| `<project-root>/agent-context/plan/<issue-id>.SolutionPlan.md` | Plan to review (includes Technology Stack section) |
+| `<project-root>/agent-context/guardrails/architecture-as-guardrail.md` | Principles |
+| `<project-root>/agent-context/guardrails/architecture-rules.md` | Rules |
+| `<project-root>/agent-context/guardrails/generative-debt-checklist.md` | Debt checklist |
+| `<project-root>/agent-context/context/domain-heuristics.md` | Domain patterns |
+| `<project-root>/agent-context/context/risk-patterns.md` | Failure modes |
+| `<project-root>/agent-context/memory/learning-playbook.md` | Past lessons |
 | `skills/stacks/<stack>.md` | Stack-specific tool (from Solution Plan) |
 
 ---
@@ -53,9 +53,9 @@ LLMs are notoriously weak at architectural decisions. This agent provides a dedi
 
 | File | Action |
 |------|--------|
-| `<project-root>/plan/<issue-id>.SolutionPlan.md` | Append Section 9: Architecture Review |
-| `<project-root>/harness/progress-log.md` | Updated with review summary |
-| `<project-root>/context/<issue-id>.context.md` | Updated with architectural constraints |
+| `<project-root>/agent-context/plan/<issue-id>.SolutionPlan.md` | Append Section 9: Architecture Review |
+| `<project-root>/agent-context/harness/progress-log.md` | Updated with review summary |
+| `<project-root>/agent-context/context/<issue-id>.context.md` | Updated with architectural constraints |
 
 ---
 

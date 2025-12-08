@@ -6,7 +6,7 @@ Template for generating task-specific context files.
 
 ## Output Location
 
-`<project-root>/context/<issue-id>.context.md`
+`<project-root>/agent-context/context/<issue-id>.context.md`
 
 ---
 
@@ -120,13 +120,13 @@ Gather from these sources to populate the template:
 
 | Source | Use For |
 |--------|---------|
-| `plan/<issue-id>.SolutionPlan.md` | Task summary, scope, stack |
-| `harness/progress-log.md` | Previous session state |
-| `guardrails/architecture-as-guardrail.md` | Architectural constraints |
-| `guardrails/generative-debt-checklist.md` | Debt checklist |
-| `context/domain-heuristics.md` | Domain heuristics |
-| `context/risk-patterns.md` | Risk patterns |
-| `memory/learning-playbook.md` | Relevant lessons |
+| `agent-context/plan/<issue-id>.SolutionPlan.md` | Task summary, scope, stack |
+| `agent-context/harness/progress-log.md` | Previous session state |
+| `agent-context/guardrails/architecture-as-guardrail.md` | Architectural constraints |
+| `agent-context/guardrails/generative-debt-checklist.md` | Debt checklist |
+| `agent-context/context/domain-heuristics.md` | Domain heuristics |
+| `agent-context/context/risk-patterns.md` | Risk patterns |
+| `agent-context/memory/learning-playbook.md` | Relevant lessons |
 | `skills/stacks/<stack>.md` | Validation commands |
 
 ---

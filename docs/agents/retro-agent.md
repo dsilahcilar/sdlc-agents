@@ -2,7 +2,7 @@
 
 > Analyzes completed work (progress logs, test results, review findings) and distills reusable lessons into the evolving playbook.
 
-**Agent Definition:** [`agentDirectory/agents/retro-agent.md`](../../agentDirectory/agents/retro-agent.md)
+**Agent Definition:** [`agents/retro-agent.md`](../../agents/retro-agent.md)
 
 ---
 
@@ -37,13 +37,13 @@ The Retro Agent closes the learning loop. Without it, agents make the same mista
 
 | File | Purpose |
 |------|---------|
-| `<project-root>/harness/progress-log.md` | Implementation history |
+| `<project-root>/agent-context/harness/progress-log.md` | Implementation history |
 | Code Review findings | Review observations |
 | Test results | Unit, integration, architecture |
 | Post-merge outcomes | Bug reports, incidents |
-| `<project-root>/memory/learning-playbook.md` | Current knowledge base |
-| `<project-root>/guardrails/*` | Current guardrails |
-| `<project-root>/context/*` | Context files |
+| `<project-root>/agent-context/memory/learning-playbook.md` | Current knowledge base |
+| `<project-root>/agent-context/guardrails/*` | Current guardrails |
+| `<project-root>/agent-context/context/*` | Context files |
 
 ---
 
@@ -51,9 +51,9 @@ The Retro Agent closes the learning loop. Without it, agents make the same mista
 
 | File | Action |
 |------|--------|
-| `<project-root>/memory/learning-playbook.md` | New entries appended |
+| `<project-root>/agent-context/memory/learning-playbook.md` | New entries appended |
 | Guardrail update proposals | Recommended changes |
-| `<project-root>/harness/progress-log.md` | Retro summary |
+| `<project-root>/agent-context/harness/progress-log.md` | Retro summary |
 
 ---
 

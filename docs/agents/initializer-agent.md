@@ -2,7 +2,7 @@
 
 > Performs one-time setup for long-running, multi-session development work, including architecture discovery for legacy projects.
 
-**Agent Definition:** [`agentDirectory/agents/initializer-agent.md`](../../agentDirectory/agents/initializer-agent.md)
+**Agent Definition:** [`agents/initializer-agent.md`](../../agents/initializer-agent.md)
 
 ---
 
@@ -30,10 +30,10 @@
 
 ## Setup Script
 
-The Initializer Agent uses `agentDirectory/setup.sh` to copy all templates in one atomic operation:
+The Initializer Agent uses `agents/setup.sh` to copy all templates in one atomic operation:
 
 ```sh
-<sdlc-agents-path>/agentDirectory/setup.sh <sdlc-agents-path> <project-root>
+<sdlc-agents-path>/agents/setup.sh <sdlc-agents-path> <project-root>
 ```
 
 **Options:**
@@ -48,20 +48,20 @@ This approach increases determinism by handling all file copying in a single scr
 
 | File | Purpose |
 |------|---------|
-| `<project-root>/harness/init-project.sh` | Environment setup script |
-| `<project-root>/harness/run-feature.sh` | Per-feature test runner |
-| `<project-root>/harness/run-arch-tests.sh` | Architecture validation |
-| `<project-root>/harness/run-quality-gates.sh` | Full quality check |
-| `<project-root>/harness/feature-requirements.json` | Feature registry |
-| `<project-root>/harness/progress-log.md` | Session log |
-| `<project-root>/memory/learning-playbook.md` | Knowledge base |
-| `<project-root>/memory/retrieval-config.json` | Retrieval config |
-| `<project-root>/memory/contamination-guidelines.md` | Quality rules |
-| `<project-root>/guardrails/architecture-as-guardrail.md` | Principles |
-| `<project-root>/guardrails/architecture-rules.md` | Rules |
-| `<project-root>/guardrails/generative-debt-checklist.md` | Debt checklist |
-| `<project-root>/context/domain-heuristics.md` | Domain patterns |
-| `<project-root>/context/risk-patterns.md` | Failure modes |
+| `<project-root>/agent-context/harness/init-project.sh` | Environment setup script |
+| `<project-root>/agent-context/harness/run-feature.sh` | Per-feature test runner |
+| `<project-root>/agent-context/harness/run-arch-tests.sh` | Architecture validation |
+| `<project-root>/agent-context/harness/run-quality-gates.sh` | Full quality check |
+| `<project-root>/agent-context/harness/feature-requirements.json` | Feature registry |
+| `<project-root>/agent-context/harness/progress-log.md` | Session log |
+| `<project-root>/agent-context/memory/learning-playbook.md` | Knowledge base |
+| `<project-root>/agent-context/memory/retrieval-config.json` | Retrieval config |
+| `<project-root>/agent-context/memory/contamination-guidelines.md` | Quality rules |
+| `<project-root>/agent-context/guardrails/architecture-as-guardrail.md` | Principles |
+| `<project-root>/agent-context/guardrails/architecture-rules.md` | Rules |
+| `<project-root>/agent-context/guardrails/generative-debt-checklist.md` | Debt checklist |
+| `<project-root>/agent-context/context/domain-heuristics.md` | Domain patterns |
+| `<project-root>/agent-context/context/risk-patterns.md` | Failure modes |
 | `<project-root>/templates/context-template.md` | Context file template |
 | `docs/architecture-discovery-report.md` | Analysis results (if legacy project) |
 

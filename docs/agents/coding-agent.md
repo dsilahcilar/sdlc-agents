@@ -2,7 +2,7 @@
 
 > Implements the approved plan incrementally, one task at a time, while strictly respecting architecture guardrails.
 
-**Agent Definition:** [`agentDirectory/agents/coding-agent.md`](../../agentDirectory/agents/coding-agent.md)
+**Agent Definition:** [`agents/coding-agent.md`](../../agents/coding-agent.md)
 
 ---
 
@@ -40,10 +40,10 @@
 
 | File | Purpose |
 |------|---------|
-| `<project-root>/plan/<issue-id>.SolutionPlan.md` | Approved plan |
-| `<project-root>/context/<issue-id>.context.md` | Curated context (includes stack) |
-| `<project-root>/harness/feature-requirements.json` | Feature registry |
-| `<project-root>/harness/progress-log.md` | Previous progress |
+| `<project-root>/agent-context/plan/<issue-id>.SolutionPlan.md` | Approved plan |
+| `<project-root>/agent-context/context/<issue-id>.context.md` | Curated context (includes stack) |
+| `<project-root>/agent-context/harness/feature-requirements.json` | Feature registry |
+| `<project-root>/agent-context/harness/progress-log.md` | Previous progress |
 
 **Important:** Does NOT read the full `learning-playbook.md` directly. Relevant entries are curated in `context.md`.
 
@@ -55,8 +55,8 @@
 |------|--------|
 | Source code files | Created/Modified |
 | Test files | Created/Modified |
-| `<project-root>/harness/progress-log.md` | Session entry appended |
-| `<project-root>/harness/feature-requirements.json` | Status updated |
+| `<project-root>/agent-context/harness/progress-log.md` | Session entry appended |
+| `<project-root>/agent-context/harness/feature-requirements.json` | Status updated |
 
 ---
 

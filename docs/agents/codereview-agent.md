@@ -2,7 +2,7 @@
 
 > Reviews code changes with equal focus on functional correctness, structural integrity, and debt awareness.
 
-**Agent Definition:** [`agentDirectory/agents/codereview-agent.md`](../../agentDirectory/agents/codereview-agent.md)
+**Agent Definition:** [`agents/codereview-agent.md`](../../agents/codereview-agent.md)
 
 ---
 
@@ -40,10 +40,10 @@ Functional correctness is table stakes. The hard part is catching structural and
 | File | Purpose |
 |------|---------|
 | Changed files (diff) | Code to review |
-| `<project-root>/plan/<issue-id>.SolutionPlan.md` | Approved plan |
-| `<project-root>/harness/progress-log.md` | Implementation logs |
-| `<project-root>/guardrails/*` | All guardrail files |
-| `<project-root>/context/<issue-id>.context.md` | Task context |
+| `<project-root>/agent-context/plan/<issue-id>.SolutionPlan.md` | Approved plan |
+| `<project-root>/agent-context/harness/progress-log.md` | Implementation logs |
+| `<project-root>/agent-context/guardrails/*` | All guardrail files |
+| `<project-root>/agent-context/context/<issue-id>.context.md` | Task context |
 | Validation output | Test/Architecture results |
 
 ---
@@ -53,7 +53,7 @@ Functional correctness is table stakes. The hard part is catching structural and
 | File | Purpose |
 |------|---------|
 | Code Review document | Review findings |
-| `<project-root>/harness/progress-log.md` | Review summary |
+| `<project-root>/agent-context/harness/progress-log.md` | Review summary |
 
 ---
 

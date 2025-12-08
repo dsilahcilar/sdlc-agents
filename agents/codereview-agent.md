@@ -16,8 +16,8 @@ Run `pwd` to confirm your working directory before any operation.
 ## Stack Context
 
 DO NOT detect the stack. Use:
-- `<project-root>/plan/<issue-id>.SolutionPlan.md` - Section 1.1
-- `<project-root>/context/<issue-id>.context.md` - Technology Stack
+- `<project-root>/agent-context/plan/<issue-id>.SolutionPlan.md` - Section 1.1
+- `<project-root>/agent-context/context/<issue-id>.context.md` - Technology Stack
 
 If stack context is missing, STOP and escalate.
 
@@ -26,14 +26,14 @@ If stack context is missing, STOP and escalate.
 ## Inputs
 
 1. Diff or changed files
-2. `<project-root>/plan/<issue-id>.SolutionPlan.md`
-3. `<project-root>/harness/progress-log.md`
+2. `<project-root>/agent-context/plan/<issue-id>.SolutionPlan.md`
+3. `<project-root>/agent-context/harness/progress-log.md`
 4. Test/Architecture output from:
-   - `<project-root>/harness/run-feature.sh <feature-id>`
-   - `<project-root>/harness/run-arch-tests.sh`
-   - `<project-root>/harness/run-quality-gates.sh`
-5. `<project-root>/guardrails/*`
-6. Relevant playbook entries via `<project-root>/context/<issue-id>.context.md`
+   - `<project-root>/agent-context/harness/run-feature.sh <feature-id>`
+   - `<project-root>/agent-context/harness/run-arch-tests.sh`
+   - `<project-root>/agent-context/harness/run-quality-gates.sh`
+5. `<project-root>/agent-context/guardrails/*`
+6. Relevant playbook entries via `<project-root>/agent-context/context/<issue-id>.context.md`
 
 ---
 
@@ -176,7 +176,7 @@ If stack context is missing, STOP and escalate.
 
 ## Handoff
 
-1. Update `<project-root>/harness/progress-log.md`
+1. Update `<project-root>/agent-context/harness/progress-log.md`
 2. If approved: Ready for merge
 3. If changes requested: Return to Coding Agent
 4. Pass findings to **Retro Agent**

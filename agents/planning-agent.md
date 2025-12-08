@@ -18,12 +18,12 @@ Run `pwd` to confirm your working directory before any operation.
 Before planning, read:
 
 1. The request (issue, ticket, or requirement)
-2. `<project-root>/harness/feature-requirements.json`
-3. `<project-root>/guardrails/architecture-as-guardrail.md`
-4. `<project-root>/guardrails/architecture-rules.md`
-5. `<project-root>/context/domain-heuristics.md`
-6. `<project-root>/context/risk-patterns.md`
-7. `<project-root>/memory/learning-playbook.md` (filter to relevant module/framework)
+2. `<project-root>/agent-context/harness/feature-requirements.json`
+3. `<project-root>/agent-context/guardrails/architecture-as-guardrail.md`
+4. `<project-root>/agent-context/guardrails/architecture-rules.md`
+5. `<project-root>/agent-context/context/domain-heuristics.md`
+6. `<project-root>/agent-context/context/risk-patterns.md`
+7. `<project-root>/agent-context/memory/learning-playbook.md` (filter to relevant module/framework)
 8. `skills/stack-detection.md`
 
 ---
@@ -67,7 +67,7 @@ For each affected feature in `feature-requirements.json`:
 
 ## Output
 
-Create `<project-root>/plan/<issue-id>.SolutionPlan.md`:
+Create `<project-root>/agent-context/plan/<issue-id>.SolutionPlan.md`:
 
 ```markdown
 # Solution Plan: <title>
@@ -181,8 +181,8 @@ From `learning-playbook.md`:
 
 ## Handoff
 
-1. Append entry to `<project-root>/harness/progress-log.md`
+1. Append entry to `<project-root>/agent-context/harness/progress-log.md`
 2. Request **Architect Agent** review
 3. Generate context file using `templates/context-template.md`:
-   - Output: `<project-root>/context/<issue-id>.context.md`
+   - Output: `<project-root>/agent-context/context/<issue-id>.context.md`
    - Include: stack info, validation commands, curated playbook entries

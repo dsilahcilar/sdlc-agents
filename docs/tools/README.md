@@ -1,6 +1,6 @@
 # Tools Registry - Progressive Disclosure System
 
-> Documentation for `agentDirectory/tools/`
+> Documentation for `agents/tools/`
 
 > "Like a well-organized manual that starts with a table of contents, then specific chapters, and finally detailed appendix."
 
@@ -72,19 +72,19 @@ Instead of embedding shell scripts in prompts, agents:
 
 ```markdown
 When you need to analyze package structure:
-1. See tools registry: agentDirectory/tools/README.md → "Discovery Tools"
-2. Read tool details: agentDirectory/tools/discovery/list-packages.md
-3. Execute: agentDirectory/tools/discovery/list-packages.sh
+1. See tools registry: agents/tools/README.md → "Discovery Tools"
+2. Read tool details: agents/tools/discovery/list-packages.md
+3. Execute: agents/tools/discovery/list-packages.sh
 ```
 
 ### From Shell
 
 ```bash
 # Run any tool directly
-./agentDirectory/tools/discovery/list-packages.sh
+./agents/tools/discovery/list-packages.sh
 
 # With arguments (if supported)
-./agentDirectory/tools/stack/java/archunit.sh --verbose
+./agents/tools/stack/java/archunit.sh --verbose
 ```
 
 ---
@@ -146,7 +146,7 @@ Contains:
 ## Usage
 
 \`\`\`bash
-agentDirectory/tools/<category>/<name>.sh [options]
+agents/tools/<category>/<name>.sh [options]
 \`\`\`
 
 ## Output Format
@@ -167,7 +167,7 @@ agentDirectory/tools/<category>/<name>.sh [options]
 ## Example
 
 \`\`\`bash
-$ agentDirectory/tools/<category>/<name>.sh
+$ agents/tools/<category>/<name>.sh
 <example output>
 \`\`\`
 ```

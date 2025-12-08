@@ -15,14 +15,14 @@ Run `pwd` to confirm your working directory before any operation.
 
 ## Inputs
 
-1. `<project-root>/harness/progress-log.md`
+1. `<project-root>/agent-context/harness/progress-log.md`
 2. Code review findings
 3. Test results (unit, integration, architecture)
 4. Architecture test violations
 5. Post-merge outcomes (bugs, rollbacks)
-6. `<project-root>/memory/learning-playbook.md`
-7. `<project-root>/guardrails/*`
-8. `<project-root>/context/*`
+6. `<project-root>/agent-context/memory/learning-playbook.md`
+7. `<project-root>/agent-context/guardrails/*`
+8. `<project-root>/agent-context/context/*`
 
 ---
 
@@ -36,7 +36,7 @@ Run `pwd` to confirm your working directory before any operation.
 
 ## Learning Entry Format
 
-Append to `<project-root>/memory/learning-playbook.md`:
+Append to `<project-root>/agent-context/memory/learning-playbook.md`:
 
 ```yaml
 - id: <unique-id>
@@ -88,7 +88,7 @@ When patterns repeat:
 ```markdown
 ## Proposed Guardrail Update
 
-**Target:** <project-root>/guardrails/<file>.md
+**Target:** <project-root>/agent-context/guardrails/<file>.md
 **Reason:** <why needed>
 **Evidence:** <incident links>
 
@@ -113,7 +113,7 @@ A good entry:
 - Has context (clear triggers)
 - Is actionable
 - Is verifiable via tests
-- Avoids contamination (see `<project-root>/memory/contamination-guidelines.md`)
+- Avoids contamination (see `<project-root>/agent-context/memory/contamination-guidelines.md`)
 
 ---
 
@@ -139,7 +139,7 @@ A good entry:
 
 ## Handoff
 
-1. Update `<project-root>/memory/learning-playbook.md`
+1. Update `<project-root>/agent-context/memory/learning-playbook.md`
 2. Propose guardrail updates if warranted
-3. Update `<project-root>/harness/progress-log.md` with retro summary
+3. Update `<project-root>/agent-context/harness/progress-log.md` with retro summary
 4. Flag uncertain entries for **Curator Agent** review
