@@ -1,0 +1,85 @@
+{
+  "schema_version": "1.0",
+  "description": "Configuration for retrieving relevant learning playbook entries. Agents use these weights to score and filter entries for task-specific context.",
+
+  "scoring": {
+    "weights": {
+      "importance": 0.35,
+      "relevance": 0.40,
+      "recency": 0.25
+    },
+    "relevance_factors": {
+      "same_module": 0.30,
+      "same_language": 0.20,
+      "same_framework": 0.25,
+      "same_domain": 0.15,
+      "similar_risk_level": 0.10
+    },
+    "notes": "Importance reflects the criticality of applying the lesson. Relevance is computed from context match. Recency favors recent lessons but doesn't dominate."
+  },
+
+  "retrieval_limits": {
+    "planning_agent": {
+      "max_entries": 10,
+      "min_score": 0.5,
+      "notes": "Planning needs broad context to anticipate issues"
+    },
+    "architect_agent": {
+      "max_entries": 12,
+      "min_score": 0.6,
+      "notes": "Architect needs comprehensive structural lessons"
+    },
+    "coding_agent": {
+      "max_entries": 8,
+      "min_score": 0.7,
+      "notes": "Coding needs focused, directly relevant lessons only"
+    },
+    "review_agent": {
+      "max_entries": 6,
+      "min_score": 0.6,
+      "notes": "Review needs patterns to check against"
+    },
+    "retro_agent": {
+      "max_entries": 20,
+      "min_score": 0.3,
+      "notes": "Retro needs to see related past work for pattern detection"
+    },
+    "curator_agent": {
+      "max_entries": 50,
+      "min_score": 0.0,
+      "notes": "Curator needs to see all entries for maintenance"
+    }
+  },
+
+  "context_file_generation": {
+    "enabled": true,
+    "output_path": "context/<issue-id>.context.md",
+    "include_sections": [
+      "reusable_guidelines",
+      "what_worked",
+      "what_failed",
+      "architecture_violations"
+    ],
+    "exclude_sections": [
+      "related_entries",
+      "needs_review"
+    ],
+    "notes": "Context files should be concise and directly actionable"
+  },
+
+  "filters": {
+    "by_module": true,
+    "by_language": true,
+    "by_framework": true,
+    "by_domain": false,
+    "exclude_needs_review": true,
+    "notes": "Filtering by domain is optional as it may be too restrictive"
+  },
+
+  "anti_brevity_bias": {
+    "min_guidelines_per_entry": 1,
+    "max_entries_per_context": 8,
+    "prefer_specific_over_generic": true,
+    "notes": "Balance between brevity bias (too little context) and context overload (too much)"
+  }
+}

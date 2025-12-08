@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0",
+  "description": "Feature registry for SDLC agent tracking. All features start as 'failing' and progress through 'in_progress' to 'passing'.",
+  "statuses": {
+    "failing": "Feature not yet implemented or tests failing",
+    "in_progress": "Currently being worked on",
+    "passing": "Feature complete and all tests passing",
+    "blocked": "Work paused due to external dependency or question"
+  },
+  "features": [
+    {
+      "id": "EXAMPLE-001",
+      "title": "Example Feature",
+      "description": "This is a placeholder feature. Replace with real features from your project.",
+      "module": "core",
+      "status": "failing",
+      "risk_level": "low",
+      "tags": ["example", "placeholder"],
+      "architectural_notes": "No special architectural considerations.",
+      "acceptance_criteria": [
+        "Replace this with real acceptance criteria"
+      ],
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  ],
+  "metadata": {
+    "last_updated": "2024-01-01T00:00:00Z",
+    "total_features": 1,
+    "by_status": {
+      "failing": 1,
+      "in_progress": 0,
+      "passing": 0,
+      "blocked": 0
+    }
+  }
+}
