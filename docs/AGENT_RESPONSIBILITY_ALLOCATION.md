@@ -23,7 +23,7 @@ These agents run **before** or **at the start** of a task and are responsible fo
 |-------|--------------|-------------------------------|
 | **Initializer Agent** | Project setup (once) | ✅ Detect and document in harness |
 | **Architecture Discovery Agent** | Legacy project analysis (once) | ✅ Detect and document in report |
-| **Planning Agent** | Start of each task | ✅ Detect and include in Solution Plan + Context file |
+| **Planning Agent** | Start of each feature | ✅ Detect and include in feature.md + task files |
 
 ### Context Consumers (Receive Stack)
 
@@ -31,43 +31,24 @@ These agents run **after** planning and receive context from upstream agents. Th
 
 | Agent | What It Receives | Source |
 |-------|------------------|--------|
-| **Architect Agent** | Stack info in Solution Plan Section 1.1 | Planning Agent |
-| **Coding Agent** | Stack info in Context file | Planning Agent |
-| **Code Review Agent** | Stack info in Solution Plan + Context file | Planning Agent |
+| **Architect Agent** | Stack info in feature.md | Planning Agent |
+| **Coding Agent** | Stack info in task file and/or feature.md | Planning Agent |
+| **Code Review Agent** | Stack info in feature.md + task files | Planning Agent |
 | **Retro Agent** | Raw logs (doesn't need stack) | N/A |
 | **Curator Agent** | Playbook entries (doesn't need stack) | N/A |
 
 ---
 
-## Solution Plan: Technology Stack Section
+## Feature File: Technology Stack Section
 
-The Planning Agent now adds a **Section 1.1: Technology Stack** to every Solution Plan:
-
-```markdown
-## 1.1 Technology Stack
-
-**Stack:** <detected stack, e.g., java, typescript, python>
-**Build System:** <e.g., Maven, Gradle, npm>
-**Skill Reference:** `skills/stacks/<stack>.md`
-**Architecture Tool:** <e.g., ArchUnit, dependency-cruiser>
-**Validation Commands:**
-- Build: `<command>`
-- Test: `<command>`
-- Architecture Check: `<command>`
-```
-
----
-
-## Context File: Technology Stack Section
-
-The Context file (`<project-root>/agent-context/context/<issue-id>.context.md`) now includes:
+The Planning Agent adds a **Technology Stack** section to every `feature.md`:
 
 ```markdown
 ## Technology Stack
 
-**Stack:** <detected stack>
-**Skill Reference:** `skills/stacks/<stack>.md`
+**Stack:** <detected stack, e.g., java, typescript, python>
 **Build System:** <e.g., Maven, Gradle, npm>
+**Skill Reference:** `skills/stacks/<stack>.md`
 **Architecture Tool:** <e.g., ArchUnit, dependency-cruiser>
 
 ### Validation Commands
@@ -81,22 +62,38 @@ The Context file (`<project-root>/agent-context/context/<issue-id>.context.md`) 
 
 ---
 
+## Task File: Self-Contained Context
+
+Each task file contains all context needed for implementation:
+
+- **Objective** - What to accomplish
+- **What to Do** - Numbered steps
+- **Files to Create/Modify** - Exact paths
+- **Architectural Rules** - Rules for THIS task
+- **Validation** - Commands to run
+- **Done Criteria** - Checklist for completion
+
+The Coding Agent reads **one task file** as its primary input.
+
+---
+
 ## Benefits
 
 1. **Reduced contextual load** - Downstream agents don't waste cycles on environment discovery
-2. **Single source of truth** - Stack is determined once, documented clearly
-3. **Clear escalation path** - If context is missing, agents know to escalate to Planning Agent
-4. **Better LLM performance** - Focused context improves accuracy
-5. **Clearer agent boundaries** - Each agent has a well-defined role
+2. **Task isolation** - Each task file is self-contained
+3. **Single source of truth** - Stack is determined once, embedded in context
+4. **Clear escalation path** - If context is missing, agents know to escalate to Planning Agent
+5. **Better LLM performance** - Focused context improves accuracy
+6. **Clearer agent boundaries** - Each agent has a well-defined role
 
 ---
 
 ## Anti-Patterns to Avoid
 
-1. ❌ **Coding Agent detecting stack** - It should receive this in its context
-2. ❌ **Code Review Agent loading stack-detection.md** - Already in Solution Plan
+1. ❌ **Coding Agent detecting stack** - It should receive this in its task file
+2. ❌ **Code Review Agent loading stack-detection.md** - Already in feature.md
 3. ❌ **Architect Agent discovering stack** - Already provided by Planning Agent
-4. ❌ **Missing stack context in plans** - Planning Agent must include it
+4. ❌ **Missing stack context in features** - Planning Agent must include it
 
 ---
 
@@ -106,17 +103,16 @@ The Context file (`<project-root>/agent-context/context/<issue-id>.context.md`) 
 |-------|-------------------------|
 | Coding Agent | STOP and escalate to Planning Agent |
 | Code Review Agent | STOP and escalate to Planning Agent |
-| Architect Agent | REJECT plan, return to Planning Agent |
+| Architect Agent | REJECT feature, return to Planning Agent |
 
 ---
 
-## Files Modified
+## Key Files
 
-- `agents/planning-agent.md` - Added stack detection responsibility and Technology Stack section
-- `agents/coding-agent.md` - Changed to receive pre-assembled stack context
-- `agents/codereview-agent.md` - Changed to receive pre-assembled stack context
-- `agents/architect-agent.md` - Changed to receive stack from Solution Plan
-- `agents/initializer-agent.md` - Clarified as context provider
-- `agents/architecture-discovery-agent.md` - Clarified as context provider
-- `templates/context-template.md` - Context file template (moved from context/)
-- `skills/README.md` - Updated responsibility allocation documentation
+- `agents/planning-agent.md` - Creates feature.md + task files with stack context
+- `agents/coding-agent.md` - Receives self-contained task files
+- `agents/codereview-agent.md` - Reviews with feature/task context
+- `agents/architect-agent.md` - Reviews feature.md structure
+- `agents/initializer-agent.md` - Sets up features/ directory
+- `templates/features/feature-template.md` - Feature template
+- `templates/features/tasks/task-template.md` - Task template

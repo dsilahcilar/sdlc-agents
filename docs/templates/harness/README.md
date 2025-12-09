@@ -15,6 +15,15 @@ These are **template scripts** that the Initializer Agent copies to your project
 | `run-arch-tests.sh` | Run architecture validation | After every significant change |
 | `run-quality-gates.sh` | Full quality check | Before code review |
 
+### Task Management Scripts
+
+| Script | Purpose | When to Run |
+|--------|---------|-------------|
+| `next-task.sh <feature-id>` | Get next pending task | Before starting work |
+| `start-task.sh <task-file>` | Mark task as in_progress | When starting a task |
+| `complete-task.sh <task-file>` | Mark task as done | After completing a task |
+| `list-features.sh` | Show all features and status | For progress overview |
+
 ---
 
 ## Stack Detection
@@ -34,7 +43,7 @@ All scripts automatically detect your technology stack:
 
 ---
 
-## Files
+## Core Scripts
 
 ### `init-project.sh`
 
@@ -72,24 +81,70 @@ Full quality check including:
 
 ---
 
-## Data Files
+## Task Management Scripts
 
-### `feature-requirements.json`
+### `next-task.sh`
 
-Tracks all features and their status:
-```json
-{
-  "features": [
-    {
-      "id": "FEAT-001",
-      "title": "User Authentication",
-      "status": "failing|in_progress|passing",
-      "module": "auth",
-      "risk_level": "high"
-    }
-  ]
-}
+Finds the next pending task for a feature:
+
+```bash
+./harness/next-task.sh FEAT-001
+# Output: features/FEAT-001/tasks/T02-add-repository.md
 ```
+
+Looks for tasks with `status: pending` in frontmatter, sorted by filename.
+
+### `start-task.sh`
+
+Marks a task as `in_progress`:
+
+```bash
+./harness/start-task.sh features/FEAT-001/tasks/T01-create-entity.md
+```
+
+Also updates the feature status to `in_progress` if it was `pending`.
+
+### `complete-task.sh`
+
+Marks a task as `done`:
+
+```bash
+./harness/complete-task.sh features/FEAT-001/tasks/T01-create-entity.md
+```
+
+When all tasks are complete, automatically updates the feature status to `passing`.
+
+### `list-features.sh`
+
+Shows all features and their progress:
+
+```bash
+./harness/list-features.sh
+```
+
+Output:
+```
+=== Feature Status ===
+
+🔄 FEAT-001: User Authentication
+   Status: in_progress | Risk: 🔴 high
+   Tasks: 2/5 done | 1 pending | 2 in progress | 0 blocked
+
+⏳ FEAT-002: User Profile
+   Status: pending | Risk: 🟢 low
+   Tasks: 0/3 done | 3 pending | 0 in progress | 0 blocked
+
+=== Summary ===
+Total: 2 features
+  ⏳ Pending: 1
+  🔄 In Progress: 1
+  ✅ Passing: 0
+  🚫 Blocked: 0
+```
+
+---
+
+## Data Files
 
 ### `progress-log.md`
 

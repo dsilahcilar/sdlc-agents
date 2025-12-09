@@ -17,10 +17,9 @@ Run `pwd` to confirm your working directory before any operation.
 
 1. `<project-root>/agent-context/memory/learning-playbook.md`
 2. New entries from Retro Agent
-3. `<project-root>/agent-context/memory/contamination-guidelines.md`
-4. `<project-root>/agent-context/memory/retrieval-config.json`
-5. `<project-root>/agent-context/guardrails/*`
-6. `<project-root>/agent-context/harness/progress-log.md`
+3. `$SDLC_AGENTS/agents/guardrails/contamination-guidelines.md`
+4. `<project-root>/agent-context/guardrails/*`
+5. `<project-root>/agent-context/harness/progress-log.md`
 
 ---
 
@@ -42,7 +41,7 @@ Run `pwd` to confirm your working directory before any operation.
 
 ### 3. Prevent Contamination
 
-Apply `<project-root>/agent-context/memory/contamination-guidelines.md`:
+Apply `$SDLC_AGENTS/agents/guardrails/contamination-guidelines.md`:
 - Reject one-off hacks
 - Reject confidential data
 - Reject contradictory entries without resolution
@@ -137,9 +136,7 @@ archived_to: <project-root>/agent-context/memory/archive/learning-playbook-archi
 
 1. Updated `<project-root>/agent-context/memory/learning-playbook.md`
 2. Archived entries in `<project-root>/agent-context/memory/archive/` (if any)
-3. Updated `<project-root>/agent-context/memory/retrieval-config.json` (if needed)
-4. Updated `<project-root>/agent-context/memory/contamination-guidelines.md` (if new anti-patterns)
-5. Curation log in `<project-root>/agent-context/harness/progress-log.md`
+3. Curation log in `<project-root>/agent-context/harness/progress-log.md`
 
 ---
 

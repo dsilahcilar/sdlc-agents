@@ -16,10 +16,10 @@ if [ -z "$FEATURE_ID" ]; then
     echo "Usage: $0 <feature-id>"
     echo ""
     echo "Examples:"
-    echo "  $0 FEAT-123"
+    echo "  $0 FEAT-001"
     echo "  $0 user-authentication"
     echo ""
-    echo "The feature ID should match an entry in harness/feature-requirements.json"
+    echo "The feature ID should match a directory in features/"
     exit 1
 fi
 
@@ -28,19 +28,18 @@ echo "[run-feature] Running tests for feature: $FEATURE_ID"
 echo "[run-feature] ============================================"
 
 # -----------------------------------------------------------------------------
-# 1. Look up feature in requirements
+# 1. Look up feature module from feature.md
 # -----------------------------------------------------------------------------
-if [ -f "harness/feature-requirements.json" ]; then
-    if command -v jq >/dev/null 2>&1; then
-        FEATURE_MODULE=$(jq -r ".features[] | select(.id == \"$FEATURE_ID\") | .module" harness/feature-requirements.json 2>/dev/null || echo "")
-        if [ -n "$FEATURE_MODULE" ] && [ "$FEATURE_MODULE" != "null" ]; then
-            echo "[run-feature] Feature module: $FEATURE_MODULE"
-        fi
-    else
-        echo "[run-feature] jq not available, running full test suite"
+FEATURE_FILE="../features/$FEATURE_ID/feature.md"
+if [ -f "$FEATURE_FILE" ]; then
+    # Extract module from frontmatter
+    FEATURE_MODULE=$(grep -E "^module:" "$FEATURE_FILE" 2>/dev/null | head -1 | sed 's/module: *//' | tr -d '[:space:]')
+    if [ -n "$FEATURE_MODULE" ]; then
+        echo "[run-feature] Feature module: $FEATURE_MODULE"
     fi
 else
-    echo "[run-feature] feature-requirements.json not found"
+    echo "[run-feature] Feature file not found: $FEATURE_FILE"
+    echo "[run-feature] Running full test suite"
 fi
 
 # -----------------------------------------------------------------------------

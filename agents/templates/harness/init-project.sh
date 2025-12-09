@@ -17,34 +17,38 @@ echo "[init-project] Starting project initialization..."
 # -----------------------------------------------------------------------------
 echo "[init-project] Detecting build system..."
 
-if [ -f "pom.xml" ]; then
+# Determine project root (go up two levels from harness directory)
+PROJECT_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+echo "[init-project] Project root: $PROJECT_ROOT"
+
+if [ -f "$PROJECT_ROOT/pom.xml" ]; then
     echo "[init-project] Detected Maven project"
     echo "[init-project] Running 'mvn -q -DskipTests compile'..."
-    mvn -q -DskipTests compile || {
+    (cd "$PROJECT_ROOT" && mvn -q -DskipTests compile) || {
         echo "[init-project] WARNING: Maven compile failed"
     }
-elif [ -f "build.gradle" ] || [ -f "build.gradle.kts" ]; then
+elif [ -f "$PROJECT_ROOT/build.gradle" ] || [ -f "$PROJECT_ROOT/build.gradle.kts" ]; then
     echo "[init-project] Detected Gradle project"
     echo "[init-project] Running './gradlew assemble'..."
-    ./gradlew assemble --quiet || {
+    (cd "$PROJECT_ROOT" && ./gradlew assemble --quiet) || {
         echo "[init-project] WARNING: Gradle assemble failed"
     }
-elif [ -f "package.json" ]; then
+elif [ -f "$PROJECT_ROOT/package.json" ]; then
     echo "[init-project] Detected Node.js project"
     echo "[init-project] Running 'npm install'..."
-    npm install || {
+    (cd "$PROJECT_ROOT" && npm install) || {
         echo "[init-project] WARNING: npm install failed"
     }
-elif [ -f "Cargo.toml" ]; then
+elif [ -f "$PROJECT_ROOT/Cargo.toml" ]; then
     echo "[init-project] Detected Rust project"
     echo "[init-project] Running 'cargo build'..."
-    cargo build --quiet || {
+    (cd "$PROJECT_ROOT" && cargo build --quiet) || {
         echo "[init-project] WARNING: cargo build failed"
     }
-elif [ -f "go.mod" ]; then
+elif [ -f "$PROJECT_ROOT/go.mod" ]; then
     echo "[init-project] Detected Go project"
     echo "[init-project] Running 'go build ./...'..."
-    go build ./... || {
+    (cd "$PROJECT_ROOT" && go build ./...) || {
         echo "[init-project] WARNING: go build failed"
     }
 else
@@ -83,7 +87,7 @@ fi
 # -----------------------------------------------------------------------------
 echo "[init-project] Verifying artifact directories..."
 
-for dir in memory guardrails context plan; do
+for dir in memory context features; do
     if [ -d "$dir" ]; then
         echo "[init-project] ✓ $dir/ exists"
     else
@@ -101,8 +105,8 @@ echo "[init-project] Initialization complete!"
 echo "[init-project] ============================================"
 echo ""
 echo "[init-project] Next steps:"
-echo "[init-project]   1. Review harness/feature-requirements.json"
+echo "[init-project]   1. Create first feature in features/<feature-id>/"
 echo "[init-project]   2. Customize harness scripts for your project"
-echo "[init-project]   3. Add ArchUnit tests to verify architecture"
+echo "[init-project]   3. Add architecture tests to verify structure"
 echo "[init-project]   4. Run ./harness/run-quality-gates.sh"
 echo ""

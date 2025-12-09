@@ -156,8 +156,8 @@ else
 fi
 
 # Resolve to absolute paths
-SDLC_AGENTS_PATH=$(cd "$SDLC_AGENTS_PATH" 2>/dev/null && pwd) || {
-    log_error "Invalid sdlc-agents path: $1"
+SDLC_AGENTS_PATH=$(cd "$SDLC_AGENTS" 2>/dev/null && pwd) || {
+    log_error "Invalid sdlc-agents path: $SDLC_AGENTS"
     exit 1
 }
 PROJECT_ROOT=$(cd "$PROJECT_ROOT" 2>/dev/null && pwd) || {
@@ -188,35 +188,25 @@ AGENT_CONTEXT="$PROJECT_ROOT/agent-context"
 mkdir -p "$AGENT_CONTEXT"
 
 # Step 1: Copy harness templates
-log_info "Step 1/6: Copying harness templates..."
+log_info "Step 1/4: Copying harness templates..."
 copy_directory "$TEMPLATES_PATH/harness" "$AGENT_CONTEXT/harness" "$FORCE"
 make_executable "$AGENT_CONTEXT/harness"
 
 # Step 2: Copy memory templates
-log_info "Step 2/6: Copying memory templates..."
+log_info "Step 2/4: Copying memory templates..."
 copy_directory "$TEMPLATES_PATH/memory" "$AGENT_CONTEXT/memory" "$FORCE"
 
-# Step 3: Copy guardrails templates
-log_info "Step 3/6: Copying guardrails templates..."
-copy_directory "$TEMPLATES_PATH/guardrails" "$AGENT_CONTEXT/guardrails" "$FORCE"
-
-# Step 4: Copy context templates
-log_info "Step 4/6: Copying context templates..."
+# Step 3: Copy context templates
+log_info "Step 3/4: Copying context templates..."
 copy_directory "$TEMPLATES_PATH/context" "$AGENT_CONTEXT/context" "$FORCE"
 
-# Step 5: Copy context-template.md to templates/
-log_info "Step 5/6: Copying context-template.md..."
-mkdir -p "$AGENT_CONTEXT/templates"
-copy_file "$TEMPLATES_PATH/context-template.md" "$AGENT_CONTEXT/templates/context-template.md" "$FORCE"
-
-# Step 6: Create plan directory
-log_info "Step 6/6: Creating plan directory..."
-if [ ! -d "$AGENT_CONTEXT/plan" ]; then
-    mkdir -p "$AGENT_CONTEXT/plan"
-    log_info "Created: $AGENT_CONTEXT/plan"
-else
-    log_warn "Directory exists: $AGENT_CONTEXT/plan"
-fi
+# Step 4: Copy features templates
+log_info "Step 4/4: Copying features templates..."
+mkdir -p "$AGENT_CONTEXT/features"
+copy_file "$TEMPLATES_PATH/features/README.md" "$AGENT_CONTEXT/features/README.md" "$FORCE"
+copy_file "$TEMPLATES_PATH/features/feature-template.md" "$AGENT_CONTEXT/features/feature-template.md" "$FORCE"
+mkdir -p "$AGENT_CONTEXT/features/tasks"
+copy_file "$TEMPLATES_PATH/features/tasks/task-template.md" "$AGENT_CONTEXT/features/tasks/task-template.md" "$FORCE"
 
 # Summary
 echo ""
@@ -226,16 +216,17 @@ echo "=========================================="
 echo ""
 echo "Created structure:"
 echo "  $PROJECT_ROOT/agent-context/"
-echo "  ├── harness/           (scripts + tracking)"
+echo "  ├── harness/           (scripts + task tracking)"
 echo "  ├── memory/            (learning + retrieval)"
-echo "  ├── guardrails/        (architecture rules)"
 echo "  ├── context/           (domain heuristics)"
-echo "  ├── templates/         (context template)"
-echo "  └── plan/              (implementation plans)"
+echo "  └── features/          (feature specs + tasks)"
+echo "      ├── feature-template.md"
+echo "      └── tasks/"
+echo "          └── task-template.md"
 echo ""
 echo "Next steps for the LLM:"
 echo "  1. Detect stack and customize harness scripts"
-echo "  2. Fill in feature-requirements.json"
+echo "  2. Create first feature using features/feature-template.md"
 echo "  3. Run architecture discovery (if legacy project)"
 echo "  4. Verify health: init-project.sh, run-arch-tests.sh"
 echo "  5. Commit changes"

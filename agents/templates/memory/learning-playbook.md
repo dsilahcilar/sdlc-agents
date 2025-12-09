@@ -11,10 +11,10 @@ It is an **evolving playbook** - not a static prompt, but accumulated wisdom tha
 
 1. **Retro Agent** analyzes completed work and adds new entries
 2. **Curator Agent** maintains quality and resolves conflicts
-3. **Planning/Coding Agents** query this file via `context/<issue-id>.context.md`
+3. **Planning/Coding Agents** query this file via curated entries in feature/task files
 4. Entries are structured for machine retrieval using importance, relevance, and recency scoring
 
-**IMPORTANT:** Coding Agent should NOT read this file directly. Instead, Planning Agent curates relevant entries into `context/<issue-id>.context.md`.
+**IMPORTANT:** Coding Agent should NOT read this file directly. Instead, Planning Agent curates relevant entries into feature.md and task files.
 
 ---
 
@@ -90,7 +90,7 @@ It is an **evolving playbook** - not a static prompt, but accumulated wisdom tha
       files: []
 
   what_worked:
-    - "Using structured plan files (SolutionPlan.md) prevents scope creep"
+    - "Using structured feature and task files prevents scope creep"
     - "Running architecture tests after every significant change catches violations early"
     - "Logging progress in progress-log.md enables session continuity"
 
@@ -102,8 +102,8 @@ It is an **evolving playbook** - not a static prompt, but accumulated wisdom tha
   architecture_violations: []
 
   reusable_guidelines:
-    - "When starting a new feature, always create plan/<id>.SolutionPlan.md first"
-    - "When coding, use only context/<id>.context.md, not the full playbook"
+    - "When starting a new feature, always create features/<id>/feature.md and task files first"
+    - "When coding, use only the task file, not the full playbook"
     - "When in doubt about architecture, stop and escalate rather than guess"
 
   debt:

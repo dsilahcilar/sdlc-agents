@@ -13,7 +13,7 @@
 | **Role** | Change evaluation |
 | **Code Access** | Read-only |
 | **Runs When** | After coding |
-| **Stack Detection** | ❌ Receives from Solution Plan + Context file |
+| **Stack Detection** | ❌ Receives from feature.md + task files |
 
 ---
 
@@ -28,7 +28,7 @@ Functional correctness is table stakes. The hard part is catching structural and
 ## Responsibilities
 
 1. **Stack Context** - Uses pre-assembled context (does NOT detect stack)
-2. **Plan Alignment** - All tasks implemented, no unplanned scope
+2. **Task Alignment** - All tasks implemented, no unplanned scope
 3. **Architecture Validation** - Layer violations, coupling issues
 4. **Debt Assessment** - Structural and generative debt introduced
 5. **Test Coverage** - Gaps identified and documented
@@ -40,10 +40,10 @@ Functional correctness is table stakes. The hard part is catching structural and
 | File | Purpose |
 |------|---------|
 | Changed files (diff) | Code to review |
-| `<project-root>/agent-context/plan/<issue-id>.SolutionPlan.md` | Approved plan |
+| `<project-root>/agent-context/features/<feature-id>/feature.md` | Feature context |
+| `<project-root>/agent-context/features/<feature-id>/tasks/*.md` | Task specifications |
 | `<project-root>/agent-context/harness/progress-log.md` | Implementation logs |
 | `<project-root>/agent-context/guardrails/*` | All guardrail files |
-| `<project-root>/agent-context/context/<issue-id>.context.md` | Task context |
 | Validation output | Test/Architecture results |
 
 ---
@@ -59,10 +59,10 @@ Functional correctness is table stakes. The hard part is catching structural and
 
 ## Review Checklist
 
-### 1. Plan Alignment
-- [ ] All plan tasks are implemented
+### 1. Task Alignment
+- [ ] All tasks are implemented
 - [ ] No unplanned scope was added
-- [ ] No plan tasks were skipped
+- [ ] No tasks were skipped
 - [ ] Implementation matches intended design
 
 ### 2. Architecture-as-Guardrail

@@ -22,7 +22,7 @@
 1. **Run Setup Script** - Executes `setup.sh` to copy all templates atomically
 2. **Stack Detection** - Detects and documents technology stack using `skills/stack-detection.md`
 3. **Stack Customization** - Updates copied templates for detected stack
-4. **Feature Registration** - Fills in `feature-requirements.json` with initial features
+4. **Feature Creation** - Creates initial feature using `features/feature-template.md`
 5. **Architecture Discovery** (legacy projects only) - Analyzes existing codebase patterns, generates rules
 6. **Health Verification** - Ensures harness scripts run without error
 
@@ -52,17 +52,15 @@ This approach increases determinism by handling all file copying in a single scr
 | `<project-root>/agent-context/harness/run-feature.sh` | Per-feature test runner |
 | `<project-root>/agent-context/harness/run-arch-tests.sh` | Architecture validation |
 | `<project-root>/agent-context/harness/run-quality-gates.sh` | Full quality check |
-| `<project-root>/agent-context/harness/feature-requirements.json` | Feature registry |
+| `<project-root>/agent-context/harness/next-task.sh` | Get next pending task |
+| `<project-root>/agent-context/harness/start-task.sh` | Mark task as in_progress |
+| `<project-root>/agent-context/harness/complete-task.sh` | Mark task as done |
+| `<project-root>/agent-context/harness/list-features.sh` | Show feature status |
 | `<project-root>/agent-context/harness/progress-log.md` | Session log |
+| `<project-root>/agent-context/features/` | Feature templates |
 | `<project-root>/agent-context/memory/learning-playbook.md` | Knowledge base |
-| `<project-root>/agent-context/memory/retrieval-config.json` | Retrieval config |
-| `<project-root>/agent-context/memory/contamination-guidelines.md` | Quality rules |
-| `<project-root>/agent-context/guardrails/architecture-as-guardrail.md` | Principles |
-| `<project-root>/agent-context/guardrails/architecture-rules.md` | Rules |
-| `<project-root>/agent-context/guardrails/generative-debt-checklist.md` | Debt checklist |
 | `<project-root>/agent-context/context/domain-heuristics.md` | Domain patterns |
 | `<project-root>/agent-context/context/risk-patterns.md` | Failure modes |
-| `<project-root>/templates/context-template.md` | Context file template |
 | `docs/architecture-discovery-report.md` | Analysis results (if legacy project) |
 
 ---
@@ -82,8 +80,8 @@ This approach increases determinism by handling all file copying in a single scr
    Update harness scripts with stack-specific commands
    │
    ▼
-4. FILL FEATURE-REQUIREMENTS.JSON
-   Add at least one feature
+4. CREATE INITIAL FEATURE
+   Copy feature-template.md to features/FEAT-001/feature.md
    │
    ▼
 5. ARCHITECTURE DISCOVERY (conditional)

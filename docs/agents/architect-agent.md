@@ -1,6 +1,6 @@
 # Architect Agent
 
-> Evaluates proposed plans from the perspective of structural integrity, modularity, and long-term maintainability.
+> Evaluates feature plans from the perspective of structural integrity, modularity, and long-term maintainability.
 
 **Agent Definition:** [`agents/architect-agent.md`](../../agents/architect-agent.md)
 
@@ -13,7 +13,7 @@
 | **Role** | Structural review |
 | **Code Access** | None |
 | **Runs When** | After planning |
-| **Stack Detection** | ❌ Receives from Solution Plan Section 1.1 |
+| **Stack Detection** | ❌ Receives from feature.md Technology Stack section |
 
 ---
 
@@ -27,7 +27,7 @@ LLMs are notoriously weak at architectural decisions. This agent provides a dedi
 
 ## Responsibilities
 
-1. **Stack Context** - Uses pre-assembled context from Solution Plan (does NOT detect stack)
+1. **Stack Context** - Uses pre-assembled context from feature.md (does NOT detect stack)
 2. **Structural Validation** - Detects hallucinated coupling, layer violations
 3. **Generative Debt Prevention** - Requires explicit documentation of shortcuts
 4. **Guardrail Updates** - Suggests new architecture rules
@@ -38,14 +38,14 @@ LLMs are notoriously weak at architectural decisions. This agent provides a dedi
 
 | File | Purpose |
 |------|---------|
-| `<project-root>/agent-context/plan/<issue-id>.SolutionPlan.md` | Plan to review (includes Technology Stack section) |
-| `<project-root>/agent-context/guardrails/architecture-as-guardrail.md` | Principles |
-| `<project-root>/agent-context/guardrails/architecture-rules.md` | Rules |
-| `<project-root>/agent-context/guardrails/generative-debt-checklist.md` | Debt checklist |
+| `<project-root>/agent-context/features/<feature-id>/feature.md` | Feature to review (includes Technology Stack section) |
+| `<project-root>/agent-context/features/<feature-id>/tasks/*.md` | Task specifications |
+| Architecture tests (per stack) | Architectural rules |
+| `guardrails/generative-debt-checklist.md` | Debt checklist |
 | `<project-root>/agent-context/context/domain-heuristics.md` | Domain patterns |
 | `<project-root>/agent-context/context/risk-patterns.md` | Failure modes |
 | `<project-root>/agent-context/memory/learning-playbook.md` | Past lessons |
-| `skills/stacks/<stack>.md` | Stack-specific tool (from Solution Plan) |
+| `skills/stacks/<stack>.md` | Stack-specific tool (from feature.md) |
 
 ---
 
@@ -53,9 +53,8 @@ LLMs are notoriously weak at architectural decisions. This agent provides a dedi
 
 | File | Action |
 |------|--------|
-| `<project-root>/agent-context/plan/<issue-id>.SolutionPlan.md` | Append Section 9: Architecture Review |
+| `<project-root>/agent-context/features/<feature-id>/feature.md` | Append Architecture Review section |
 | `<project-root>/agent-context/harness/progress-log.md` | Updated with review summary |
-| `<project-root>/agent-context/context/<issue-id>.context.md` | Updated with architectural constraints |
 
 ---
 
@@ -78,7 +77,7 @@ From `guardrails/generative-debt-checklist.md`:
 
 | Decision | Meaning |
 |----------|---------|
-| **Approved** | Plan is structurally sound, Coding Agent can proceed |
+| **Approved** | Feature is structurally sound, Coding Agent can proceed |
 | **Approved with conditions** | Must address findings before coding |
 | **Rejected** | Planning Agent must revise |
 
@@ -88,11 +87,11 @@ From `guardrails/generative-debt-checklist.md`:
 
 Escalate to human architect when:
 
-1. **Fundamental boundary changes** - Plan requires redefining module boundaries
-2. **New architectural patterns** - Plan introduces patterns not in existing guardrails
+1. **Fundamental boundary changes** - Feature requires redefining module boundaries
+2. **New architectural patterns** - Feature introduces patterns not in existing guardrails
 3. **Conflicting requirements** - Architectural purity vs performance optimization trade-off
 4. **Missing context** - Not enough information to assess structural impact
-5. **Historical debt** - Plan depends on paying down existing debt first
+5. **Historical debt** - Feature depends on paying down existing debt first
 
 ---
 
@@ -120,4 +119,4 @@ Escalate to human architect when:
 ## Handoff
 
 - If approved → **[Coding Agent](./coding-agent.md)**
-- If rejected → **[Planning Agent](./planning-agent.md)** (revise plan)
+- If rejected → **[Planning Agent](./planning-agent.md)** (revise feature)

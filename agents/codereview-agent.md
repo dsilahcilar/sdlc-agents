@@ -16,8 +16,7 @@ Run `pwd` to confirm your working directory before any operation.
 ## Stack Context
 
 DO NOT detect the stack. Use:
-- `<project-root>/agent-context/plan/<issue-id>.SolutionPlan.md` - Section 1.1
-- `<project-root>/agent-context/context/<issue-id>.context.md` - Technology Stack
+- `<project-root>/agent-context/features/<feature-id>/feature.md` - Technology Stack section
 
 If stack context is missing, STOP and escalate.
 
@@ -26,20 +25,20 @@ If stack context is missing, STOP and escalate.
 ## Inputs
 
 1. Diff or changed files
-2. `<project-root>/agent-context/plan/<issue-id>.SolutionPlan.md`
-3. `<project-root>/agent-context/harness/progress-log.md`
-4. Test/Architecture output from:
+2. `<project-root>/agent-context/features/<feature-id>/feature.md`
+3. `<project-root>/agent-context/features/<feature-id>/tasks/*.md`
+4. `<project-root>/agent-context/harness/progress-log.md`
+5. Test/Architecture output from:
    - `<project-root>/agent-context/harness/run-feature.sh <feature-id>`
    - `<project-root>/agent-context/harness/run-arch-tests.sh`
    - `<project-root>/agent-context/harness/run-quality-gates.sh`
-5. `<project-root>/agent-context/guardrails/*`
-6. Relevant playbook entries via `<project-root>/agent-context/context/<issue-id>.context.md`
+6. `<project-root>/agent-context/guardrails/*`
 
 ---
 
 ## Review Checklist
 
-### 1. Plan Alignment
+### 1. Task Alignment
 - [ ] All tasks implemented
 - [ ] No unplanned scope
 - [ ] No tasks skipped
@@ -83,7 +82,7 @@ If stack context is missing, STOP and escalate.
 ## Output
 
 ```markdown
-# Code Review: <issue-id>
+# Code Review: <feature-id>
 
 **Reviewer:** Code Review Agent
 **Date:** <ISO8601>
@@ -93,11 +92,11 @@ If stack context is missing, STOP and escalate.
 ## 1. Summary
 <1-2 sentence assessment>
 
-## 2. Plan Alignment
+## 2. Task Alignment
 
-| Plan Task | Status | Notes |
-|-----------|--------|-------|
-| T1 | Complete/Partial/Missing | ... |
+| Task | Status | Notes |
+|------|--------|-------|
+| T01 | Complete/Partial/Missing | ... |
 
 **Unplanned changes:**
 - <scope creep>

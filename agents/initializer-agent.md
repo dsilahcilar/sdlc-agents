@@ -46,13 +46,68 @@ Based on detected stack, update these files:
 | `$PROJECT_ROOT/agent-context/harness/run-quality-gates.sh` | Set lint/format/test commands |
 | `$PROJECT_ROOT/agent-context/harness/run-feature.sh` | Set test runner for stack |
 
-### Step 4: Fill feature-requirements.json
+### Step 4: Create Initial Feature
 
-Edit `$PROJECT_ROOT/agent-context/harness/feature-requirements.json`:
+Create first feature using the template:
 
-Add at least one feature. Include discovered technical debt as features if legacy project.
+1. Copy `$PROJECT_ROOT/agent-context/features/feature-template.md` to `$PROJECT_ROOT/agent-context/features/FEAT-001/feature.md`
+2. Create `$PROJECT_ROOT/agent-context/features/FEAT-001/tasks/` directory
+3. Fill in feature details based on project analysis
+4. Include discovered technical debt as tasks if legacy project
 
-### Step 5: Architecture Discovery (Legacy Projects Only)
+### Step 5: Populate Domain Heuristics
+
+Edit `$PROJECT_ROOT/agent-context/context/domain-heuristics.md`:
+
+1. **Analyze project to identify business domains:**
+   - Scan package/module names for domain indicators (e.g., `payment`, `order`, `user`, `inventory`)
+   - Check README, docs, or class names for business terminology
+   - Look for domain models, entities, or value objects
+
+2. **For each identified domain, add a section:**
+   - Use the template structure in the file
+   - Include at least 3 invariants (rules that must never be violated)
+   - Include at least 3 heuristics (patterns that work well)
+   - Include at least 3 common failure modes
+   - Link to actual module paths in the project
+
+3. **Remove the placeholder example domain**
+
+4. **Common domains to look for:**
+   - Authentication & Authorization (if `auth`, `security`, `login` modules exist)
+   - Payments & Transactions (if `payment`, `billing`, `transaction` modules exist)
+   - Ordering & Commerce (if `order`, `cart`, `checkout` modules exist)
+   - User Management (if `user`, `account`, `profile` modules exist)
+   - Notifications (if `notification`, `email`, `messaging` modules exist)
+   - Inventory (if `inventory`, `stock`, `warehouse` modules exist)
+
+### Step 6: Populate Risk Patterns
+
+Edit `$PROJECT_ROOT/agent-context/context/risk-patterns.md`:
+
+1. **Analyze project for risk indicators:**
+   - Check for external service integrations (API clients, HTTP calls)
+   - Look for database operations (migrations, bulk operations)
+   - Identify cross-module dependencies
+   - Find security-sensitive code (auth, input handling, secrets)
+
+2. **For each identified risk, add a pattern:**
+   - Use unique ID format: `CATEGORY-NNN` (e.g., `STRUCT-001`, `SEC-002`)
+   - Describe signals that indicate the risk
+   - Explain why it's risky
+   - Document mitigation strategies
+   - Link to actual code locations
+
+3. **Remove the placeholder example pattern**
+
+4. **Common risks by category:**
+   - **STRUCT-**: Cross-module changes, domain-infra coupling, shared state
+   - **PROC-**: Large changes, skipped tests, continuing past blockers
+   - **INTEG-**: External APIs, sync calls in transactions, third-party deps
+   - **DATA-**: Schema migrations, bulk operations, data integrity
+   - **SEC-**: User input handling, secrets management, auth bypass
+
+### Step 7: Architecture Discovery (Legacy Projects Only)
 
 **SKIP if**:
 - Greenfield project (no existing code)
@@ -108,7 +163,7 @@ Add at least one feature. Include discovered technical debt as features if legac
 - Long-term: ...
 ```
 
-### Step 6: Verify Health
+### Step 8: Verify Health
 
 ```sh
 cd $PROJECT_ROOT/agent-context
@@ -119,7 +174,7 @@ cd $PROJECT_ROOT/agent-context
 
 All must complete without error.
 
-### Step 7: Log and Commit
+### Step 9: Log and Commit
 
 1. Update `$PROJECT_ROOT/agent-context/harness/progress-log.md` with initialization details
 2. Commit: `git commit -m "chore: initialize SDLC agent harness"`
@@ -143,11 +198,13 @@ All must complete without error.
 
 - [ ] Setup script ran successfully
 - [ ] Stack-specific customizations applied
-- [ ] `$PROJECT_ROOT/agent-context/harness/feature-requirements.json` has at least one feature
+- [ ] `$PROJECT_ROOT/agent-context/features/` has at least one feature directory
 - [ ] `$PROJECT_ROOT/agent-context/harness/init-project.sh` runs without error
 - [ ] `$PROJECT_ROOT/agent-context/harness/run-arch-tests.sh` runs without error
 - [ ] `$PROJECT_ROOT/agent-context/harness/run-quality-gates.sh` runs without error
 - [ ] All `$PROJECT_ROOT/agent-context/memory/`, `$PROJECT_ROOT/agent-context/guardrails/`, `$PROJECT_ROOT/agent-context/context/` files exist
+- [ ] `$PROJECT_ROOT/agent-context/context/domain-heuristics.md` has at least one project-specific domain
+- [ ] `$PROJECT_ROOT/agent-context/context/risk-patterns.md` has at least one project-specific risk pattern
 - [ ] Initial commit created
 - [ ] If legacy: `$PROJECT_ROOT/agent-context/docs/architecture-discovery-report.md` exists and reviewed
 

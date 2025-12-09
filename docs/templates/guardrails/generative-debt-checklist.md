@@ -1,10 +1,12 @@
-# Generative & Structural Debt Checklist
+# Generative & Structural Debt Checklist - Documentation
+
+> This document provides background context and rationale for the debt checklist used by agents. For the agent-specific instructions, see [`guardrails/generative-debt-checklist.md`](../../../agents/guardrails/generative-debt-checklist.md).
+
+## Context
 
 > "Generative debt: the implicit cost of rework caused by choosing an easy or limited solution now over a better but more time-consuming approach."
 
 > "When developing software, rushing to a functional solution creates low-quality, highly dependent components that cost far more to fix later than if they had been properly architected initially."
-
-This checklist helps agents identify and handle debt intentionally.
 
 ---
 
@@ -23,40 +25,6 @@ Shortcuts taken to ship faster that will require rework.
 - Missing error handling
 - Skipped tests
 - Duplicated code
-
----
-
-## The Checklist
-
-Use this checklist when planning, coding, or reviewing changes.
-
-### Before Writing Code
-
-| Question | If Yes... |
-|----------|-----------|
-| Am I about to bypass an abstraction layer? | Stop. Use the proper layer. |
-| Am I coupling modules that were independent? | Stop. Find an interface-based approach. |
-| Am I adding framework code to the domain layer? | Stop. Keep domain pure. |
-| Am I skipping the plan/design phase? | Stop. Create SolutionPlan.md first. |
-
-### While Writing Code
-
-| Question | If Yes... |
-|----------|-----------|
-| Am I hard-coding something configurable? | Document as debt. Create follow-up task. |
-| Am I skipping error handling for "happy path"? | Document as debt. Add error handling. |
-| Am I copying code instead of abstracting? | If < 3 occurrences, maybe OK. Otherwise, abstract. |
-| Am I adding a dependency without checking impact? | Check layer rules. Run ArchUnit. |
-| Am I writing code without tests? | Add tests. Tests are not optional. |
-
-### After Writing Code
-
-| Question | If Yes... |
-|----------|-----------|
-| Would I be embarrassed to show this code? | Refactor before committing. |
-| Am I saying "we'll fix it later"? | Document specifically what/when/how. |
-| Did I skip architecture tests? | Run `./harness/run-arch-tests.sh` now. |
-| Is there undocumented complexity? | Add comments or simplify. |
 
 ---
 
@@ -94,9 +62,7 @@ When facing a debt decision:
 
 ---
 
-## Documenting Debt
-
-When debt is intentional and justified, document it:
+## Documenting Debt Examples
 
 ### In Progress Log
 
@@ -147,35 +113,6 @@ These patterns almost always indicate problematic debt:
 | "It's just one place" | Duplication starts with one | Abstract if pattern emerges |
 | "The framework requires it" | Often an excuse | Isolate framework code |
 | "Let's ship and fix later" | Later rarely comes | Document with ticket |
-
----
-
-## Agent-Specific Guidance
-
-### Planning Agent
-- Identify potential debt points in the plan
-- Add "Debt Risks" section to SolutionPlan.md
-- Allocate tasks for known debt paydown
-
-### Architect Agent
-- Reject plans with hidden/undocumented debt
-- Require compensating controls for approved debt
-- Track debt trends across features
-
-### Coding Agent
-- Never take shortcuts without documenting
-- If tempted to shortcut, stop and ask
-- Run checklist before marking task complete
-
-### Code Review Agent
-- Flag undocumented shortcuts
-- Require follow-up tasks for debt
-- Check that documented debt has tickets
-
-### Retro Agent
-- Track which debt was created/paid
-- Identify patterns in debt accumulation
-- Update checklist when new patterns emerge
 
 ---
 

@@ -1,6 +1,6 @@
 # Coding Agent
 
-> Implements the approved plan incrementally, one task at a time, while strictly respecting architecture guardrails.
+> Implements ONE task at a time from a self-contained task file, while strictly respecting architecture guardrails.
 
 **Agent Definition:** [`agents/coding-agent.md`](../../agents/coding-agent.md)
 
@@ -13,7 +13,7 @@
 | **Role** | Implementation |
 | **Code Access** | Read/Write |
 | **Runs When** | After approval |
-| **Stack Detection** | ❌ Receives from Context file |
+| **Stack Detection** | ❌ Receives from task/feature file |
 
 ---
 
@@ -29,8 +29,8 @@
 
 ## Responsibilities
 
-1. **Stack Context** - Uses pre-assembled context (does NOT detect stack)
-2. **Incremental Implementation** - One task, one commit, one log entry
+1. **Task Execution** - Implements what the task file specifies
+2. **Stack Context** - Uses pre-assembled context (does NOT detect stack)
 3. **Architecture Compliance** - Architecture test failures are HARD ERRORS
 4. **Progress Logging** - Every action documented
 
@@ -40,12 +40,18 @@
 
 | File | Purpose |
 |------|---------|
-| `<project-root>/agent-context/plan/<issue-id>.SolutionPlan.md` | Approved plan |
-| `<project-root>/agent-context/context/<issue-id>.context.md` | Curated context (includes stack) |
-| `<project-root>/agent-context/harness/feature-requirements.json` | Feature registry |
+| `<project-root>/agent-context/features/<feature-id>/tasks/T<NN>-<name>.md` | **Primary input** - self-contained task |
+| `<project-root>/agent-context/features/<feature-id>/feature.md` | Optional broader context |
 | `<project-root>/agent-context/harness/progress-log.md` | Previous progress |
 
-**Important:** Does NOT read the full `learning-playbook.md` directly. Relevant entries are curated in `context.md`.
+**Key insight:** The task file contains ALL context needed:
+- What to do (numbered steps)
+- Files to create/modify
+- Architectural rules
+- Validation commands
+- Done criteria
+
+**Does NOT read** the full `learning-playbook.md` directly. Relevant entries are curated in task/feature files.
 
 ---
 
@@ -55,51 +61,72 @@
 |------|--------|
 | Source code files | Created/Modified |
 | Test files | Created/Modified |
+| Task file (frontmatter) | Status updated to `done` |
 | `<project-root>/agent-context/harness/progress-log.md` | Session entry appended |
-| `<project-root>/agent-context/harness/feature-requirements.json` | Status updated |
 
 ---
 
 ## Workflow Per Task
 
 ```
-1. SELECT TASK
-   - Choose next incomplete task from plan
-   - Identify corresponding feature ID
-   - Log: "Starting task T<n>: <description>"
-          │
-          ▼
-2. GATHER CONTEXT
-   - Open relevant source files
-   - Review context/<issue-id>.context.md
-   - Check applicable guardrails
-          │
-          ▼
-3. IMPLEMENT CHANGE
-   - Make the smallest change that works
+1. RECEIVE TASK FILE
+   - Receive path: features/<feature-id>/tasks/T01-xxx.md
+   - Read the task file completely
+           │
+           ▼
+2. START TASK
+   - Run: ./harness/start-task.sh <task-file>
+   - Log: "Starting task T<n>: <title>"
+           │
+           ▼
+3. GATHER CONTEXT
+   - Review "What to Do" section
+   - Review "Files to Create/Modify" section
+   - Review "Architectural Rules" section
+   - (Optional) Read feature.md for broader context
+           │
+           ▼
+4. IMPLEMENT CHANGE
+   - Follow the numbered steps exactly
    - Respect layer boundaries
-   - No new cross-module dependencies unless explicitly allowed
-          │
-          ▼
-4. RUN CHECKS
-   - harness/run-feature.sh <feature-id>
-   - harness/run-arch-tests.sh
-   - harness/run-quality-gates.sh (optional)
-          │
-          ▼
-5. EVALUATE RESULTS
+   - No changes outside task scope
+           │
+           ▼
+5. RUN CHECKS
+   - Run validation commands from task file
+   - ./harness/run-arch-tests.sh
+           │
+           ▼
+6. EVALUATE RESULTS
    - Tests pass? → Continue
    - Tests fail? → Fix or stop
    - Architecture tests fail? → HARD STOP
-          │
-          ▼
-6. LOG PROGRESS
+           │
+           ▼
+7. COMPLETE TASK
+   - Verify all Done Criteria met
+   - Run: ./harness/complete-task.sh <task-file>
    - Append to progress-log.md
-   - Update feature status in JSON
    - Commit with descriptive message
-          │
-          ▼
-   [Next task or done]
+           │
+           ▼
+   [Get next task or handoff]
+```
+
+---
+
+## Getting Next Task
+
+After completing a task:
+
+```bash
+./agent-context/harness/next-task.sh <feature-id>
+# Returns: features/<feature-id>/tasks/T02-xxx.md
+```
+
+If no pending tasks remain:
+```
+[next-task] All 5 tasks are done for FEAT-001
 ```
 
 ---
@@ -128,10 +155,10 @@ When `harness/run-arch-tests.sh` fails:
 Stop and escalate when:
 
 - [ ] Architecture test fails with non-trivial violation
-- [ ] Implementation reveals plan is incorrect
-- [ ] Required context is missing
+- [ ] Task specification is incorrect or unclear
+- [ ] Required context is missing from task file
 - [ ] Tests fail and fix is non-obvious
-- [ ] Scope creep: task is larger than expected
+- [ ] Scope creep: task is larger than described
 - [ ] Conflicting requirements discovered
 
 **Stopping is not failure. Unlogged problems are failure.**
@@ -140,11 +167,11 @@ Stop and escalate when:
 
 ## Constraints
 
-- **No plan changes** - If the plan is wrong, stop and escalate
+- **One task file = one unit of work** - Don't mix tasks
+- **No task changes** - If task is wrong, stop and escalate
 - **No architecture violations** - Architecture test failures block progress
-- **No hidden shortcuts** - All debt must be logged
-- **No context overload** - Use only `context/<issue-id>.context.md`, not full playbook
-- **No multi-task batching** - One task, one commit, one log entry
+- **No hidden shortcuts** - Use Debt Checklist in task file
+- **No context exploring** - Use only task file + optional feature.md
 
 ---
 
@@ -154,12 +181,16 @@ Stop and escalate when:
 |--------------|--------------|
 | "I'll fix the tests later" | Tests must pass before proceeding |
 | "It's just a small violation" | Violations compound |
-| "The plan didn't mention this" | Stop and ask, don't assume |
-| "I know a better way" | Follow the approved plan |
+| "The task didn't mention this" | Stop and ask, don't assume |
+| "I know a better way" | Follow the task specification |
 | "I'll document it later" | Log as you go, not after |
+| Reading files not in task | Stay focused on task scope |
 
 ---
 
 ## Handoff
 
-→ **[Code Review Agent](./codereview-agent.md)**
+After completing all tasks:
+
+1. Verify: `./harness/list-features.sh` shows feature as `passing`
+2. → **[Code Review Agent](./codereview-agent.md)** with feature directory path

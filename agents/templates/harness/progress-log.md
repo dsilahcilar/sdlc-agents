@@ -10,8 +10,8 @@ Each session should append a new entry following the template below.
 ```markdown
 ### Session <ISO8601 datetime> - <Agent Name>
 
-**Issue/Feature:** <id or description>
-**Plan file:** plan/<id>.SolutionPlan.md (if applicable)
+**Feature:** <feature-id>
+**Task:** <task-id> (if applicable)
 
 **Summary:**
 <1-2 sentence summary of what was accomplished>

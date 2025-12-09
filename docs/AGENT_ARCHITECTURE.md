@@ -70,10 +70,14 @@ Total: ~800 tokens vs. ~4000+ if loading everything
 
 ### 4. Architecture-as-Guardrail
 
+Architectural rules are defined in code, not documentation:
+
 ```
-Human-readable principles → Deterministic rules → Automated tests
-      ↓                           ↓                      ↓
-architecture-as-guardrail.md → architecture-rules.md → ArchUnit/etc.
+Architecture Tests (ArchUnit, dependency-cruiser, etc.) = Source of Truth
+     ↓
+Agents read tests directly to understand rules
+     ↓
+./harness/run-arch-tests.sh validates compliance
 ```
 
 ### 5. Fail Fast & Document
@@ -228,39 +232,36 @@ skills/
 ### Project Workspace Structure
 
 ```
-your-project/                      
-├── plan/                          # Created by Planning Agent
-│   └── <issue-id>.SolutionPlan.md │  → Reviewed by Architect Agent
-│                                  │  → Referenced by Coding Agent
-│                                  │  → Evaluated by Code Review Agent
+your-project/agent-context/
+├── features/                      # Created by Planning Agent
+│   └── FEAT-001/
+│       ├── feature.md             │  → Feature context and metadata
+│       │                          │  → Reviewed by Architect Agent
+│       └── tasks/
+│           ├── T01-xxx.md         │  → Self-contained task for Coding Agent
+│           └── T02-xxx.md
 │
 ├── harness/                       # Created by Initializer Agent
 │   ├── init-project.sh            # Run once to set up environment
-│   ├── run-feature.sh             # Run per-task by Coding Agent
+│   ├── run-feature.sh             # Run per-feature by Coding Agent
 │   ├── run-arch-tests.sh          # Run after changes by Coding Agent
 │   ├── run-quality-gates.sh       # Run before review
-│   ├── feature-requirements.json  # Updated by Planning/Coding Agents
+│   ├── next-task.sh               # Get next pending task
+│   ├── start-task.sh              # Mark task as in_progress
+│   ├── complete-task.sh           # Mark task as done
+│   ├── list-features.sh           # Show feature status
 │   └── progress-log.md            # Updated by ALL agents
 │
 ├── memory/                        # Created by Initializer Agent
 │   ├── learning-playbook.md       │  → Read by Planning Agent (filtered)
 │   │                              │  → Written by Retro Agent
 │   │                              │  → Curated by Curator Agent
-│   ├── retrieval-config.json      # Scoring weights for context selection
-│   ├── contamination-guidelines.md # Quality rules for lessons
 │   └── archive/                   # Archived entries (by Curator)
 │
-├── guardrails/                    # Created by Initializer Agent
-│   ├── architecture-as-guardrail.md  # Human-readable principles
-│   │                                 # → Updated by Architect Agent
-│   ├── architecture-rules.md         # Deterministic rules
-│   │                                 # → Updated by Architect/Retro Agents
-│   └── generative-debt-checklist.md  # Debt awareness checklist
-│                                     # → Used by Architect/Code Review
+│   # Note: Guardrails (like generative-debt-checklist.md, contamination-guidelines.md)
+│   # are static references in agents/guardrails/, not copied per project
 │
 ├── context/                       # Created by Initializer Agent
-│   ├── <issue-id>.context.md      │  → Created by Planning Agent
-│   │                              │  → Primary input for Coding Agent
 │   ├── domain-heuristics.md       # Domain-specific patterns
 │   └── risk-patterns.md           # Common failure modes
 │
@@ -275,35 +276,40 @@ your-project/
                            │
            ┌───────────────┼───────────────┐
            ▼               ▼               ▼
-       harness/        memory/        guardrails/
-         │               │                │
+       harness/        memory/        features/
+         │               │           (templates)
          ▼               │                │
     PLANNING AGENT ──────┼────────────────┤
          │               │                │
          ├──────────▶ (reads playbook)    │
          │               │                │
-    ┌────┴────┐          │                │
-    ▼         ▼          │                │
-  plan/   context/       │                │
-    │         │          │                │
-    ▼         │          │                │
+         ▼               │                │
+    features/<id>/       │                │
+    ├── feature.md       │                │
+    └── tasks/           │                │
+        ├── T01.md       │                │
+        └── T02.md       │                │
+         │               │                │
+         ▼               │                │
  ARCHITECT AGENT ────────┼────────────────┤
-    │         │          │                │
-    ▼         ▼          │                │
+   (reviews feature.md)  │                │
+         │               │                │
+         ▼               │                │
  CODING AGENT ───────────┼────────────────┤
-    │         │          │                │
-    │    (updates        │                │
-    │    progress-log)   │                │
-    ▼         │          │                │
+   (reads task files)    │                │
+         │               │                │
+         │    (updates   │                │
+         │    progress-log)               │
+         ▼               │                │
  CODE REVIEW AGENT ──────┼────────────────┘
-    │         │          │
-    ▼         ▼          │
-  RETRO AGENT ───────────┤
-    │                    │
-    │            (writes lessons)
-    │                    │
-    ▼                    ▼
- CURATOR AGENT ──────▶ memory/
+         │               │
+         ▼               │
+   RETRO AGENT ──────────┤
+         │               │
+         │       (writes lessons)
+         │               │
+         ▼               ▼
+  CURATOR AGENT ──────▶ memory/
               (curates playbook)
 ```
 
@@ -329,10 +335,10 @@ graph TD
 
 | From | To | What's Passed |
 |------|-----|---------------|
-| Initializer | Planning | Harness, guardrails, memory structure, discovery report (if legacy) |
-| Planning | Architect | Solution Plan with stack context |
-| Planning | Coding | Context file with curated lessons |
-| Architect | Coding | Approval/rejection with conditions |
+| Initializer | Planning | Harness, templates, memory structure, discovery report (if legacy) |
+| Planning | Architect | `features/<id>/feature.md` for review |
+| Planning | Coding | `features/<id>/tasks/T<NN>.md` (self-contained task files) |
+| Architect | Coding | Approval/rejection of feature.md |
 | Coding | Code Review | Changed files, progress log |
 | Code Review | Coding | Review findings, required changes |
 | Code Review | Retro | Review findings, observations |
