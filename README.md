@@ -66,6 +66,41 @@ You're ready. Start with the **Planning Agent** for your first task.
 
 ---
 
+## Custom Extensibility
+
+Extend agent behavior **without modifying core agent files**.
+
+After initialization, your project includes an `extensions/` folder:
+
+```
+agent-context/extensions/
+├── _all-agents/        # Rules applied to ALL agents
+│   └── *.md
+├── coding-agent/       # Rules for Coding Agent only
+│   └── *.md
+├── architect-agent/    # Rules for Architect Agent only
+│   └── *.md
+└── ...                 # (one folder per agent)
+```
+
+### How It Works
+
+1. Drop a `.md` file into the appropriate folder
+2. Agents automatically read and apply these instructions
+3. Custom rules **take precedence** over core behavior on conflict
+
+### Example Use Cases
+
+| Extension File | Purpose |
+|----------------|---------|
+| `_all-agents/security-policy.md` | Enforce security rules across all agents |
+| `coding-agent/style-guide.md` | Team coding conventions |
+| `architect-agent/company-standards.md` | Company-wide architecture decisions |
+
+See [`extensions/README.md`](./agents/templates/extensions/README.md) for detailed examples.
+
+---
+
 ## Documentation
 
 | 📄 Document | Description |
