@@ -176,3 +176,15 @@ Before writing each file, verify:
 2. Append entry to `<project-root>/agent-context/harness/progress-log.md`
 3. Request **Architect Agent** review of feature.md
 4. Run `./agent-context/harness/list-features.sh` to confirm structure
+
+---
+
+## Custom Instructions
+
+Before proceeding, check for project-specific extensions:
+
+1. **Global rules**: Read all `.md` files in `<project-root>/agent-context/extensions/_all-agents/`
+2. **Agent-specific**: Read all `.md` files in `<project-root>/agent-context/extensions/planning-agent/`
+
+Apply these instructions as additional constraints. If a custom instruction conflicts with core behavior, **custom instructions take precedence**.
+

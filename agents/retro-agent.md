@@ -143,3 +143,15 @@ A good entry:
 2. Propose guardrail updates if warranted
 3. Update `<project-root>/agent-context/harness/progress-log.md` with retro summary
 4. Flag uncertain entries for **Curator Agent** review
+
+---
+
+## Custom Instructions
+
+Before proceeding, check for project-specific extensions:
+
+1. **Global rules**: Read all `.md` files in `<project-root>/agent-context/extensions/_all-agents/`
+2. **Agent-specific**: Read all `.md` files in `<project-root>/agent-context/extensions/retro-agent/`
+
+Apply these instructions as additional constraints. If a custom instruction conflicts with core behavior, **custom instructions take precedence**.
+

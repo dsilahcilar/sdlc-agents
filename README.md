@@ -1,6 +1,6 @@
 # SDLC Agents
 
-**Stop AI from generating technical debt. Build software that stays maintainable.**
+** Build software that stays maintainable.**
 
 [![GitHub Copilot](https://img.shields.io/badge/GitHub%20Copilot-Agent%20Mode-blue?logo=github)](https://github.com/features/copilot)
 [![Multi-Agent](https://img.shields.io/badge/Architecture-Multi--Agent-green)](./docs/AGENT_ARCHITECTURE.md)

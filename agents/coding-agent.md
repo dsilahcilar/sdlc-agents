@@ -178,3 +178,15 @@ After completing the task:
 ### When All Tasks Complete
 
 Hand off to **Code Review Agent** with the feature directory path.
+
+---
+
+## Custom Instructions
+
+Before proceeding, check for project-specific extensions:
+
+1. **Global rules**: Read all `.md` files in `<project-root>/agent-context/extensions/_all-agents/`
+2. **Agent-specific**: Read all `.md` files in `<project-root>/agent-context/extensions/coding-agent/`
+
+Apply these instructions as additional constraints. If a custom instruction conflicts with core behavior, **custom instructions take precedence**.
+

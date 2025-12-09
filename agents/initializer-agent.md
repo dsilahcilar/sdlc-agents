@@ -218,3 +218,15 @@ All must complete without error.
 - Over-strictness in rules
 - Ignoring existing context
 - Skipping team review for discovery
+
+---
+
+## Custom Instructions
+
+Before proceeding, check for project-specific extensions:
+
+1. **Global rules**: Read all `.md` files in `<project-root>/agent-context/extensions/_all-agents/`
+2. **Agent-specific**: Read all `.md` files in `<project-root>/agent-context/extensions/initializer-agent/`
+
+Apply these instructions as additional constraints. If a custom instruction conflicts with core behavior, **custom instructions take precedence**.
+

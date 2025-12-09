@@ -179,3 +179,15 @@ If stack context is missing, STOP and escalate.
 2. If approved: Ready for merge
 3. If changes requested: Return to Coding Agent
 4. Pass findings to **Retro Agent**
+
+---
+
+## Custom Instructions
+
+Before proceeding, check for project-specific extensions:
+
+1. **Global rules**: Read all `.md` files in `<project-root>/agent-context/extensions/_all-agents/`
+2. **Agent-specific**: Read all `.md` files in `<project-root>/agent-context/extensions/codereview-agent/`
+
+Apply these instructions as additional constraints. If a custom instruction conflicts with core behavior, **custom instructions take precedence**.
+

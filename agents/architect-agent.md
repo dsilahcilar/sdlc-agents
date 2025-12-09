@@ -154,3 +154,15 @@ Escalate to human when:
 1. Update `<project-root>/agent-context/harness/progress-log.md`
 2. If approved: Coding Agent can proceed with tasks
 3. If rejected: Planning Agent must revise feature
+
+---
+
+## Custom Instructions
+
+Before proceeding, check for project-specific extensions:
+
+1. **Global rules**: Read all `.md` files in `<project-root>/agent-context/extensions/_all-agents/`
+2. **Agent-specific**: Read all `.md` files in `<project-root>/agent-context/extensions/architect-agent/`
+
+Apply these instructions as additional constraints. If a custom instruction conflicts with core behavior, **custom instructions take precedence**.
+
