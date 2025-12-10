@@ -53,16 +53,12 @@ Each phase has a **specialized agent** that does one thing well:
 
 ## Quick Start
 
-**1.** Add `sdlc-agents` to your GitHub Copilot context  
-**2.** Invoke the **Initializer Agent**:
+**1.** Copy `/agents` directory in your project folder
 
-```
-Initialize this project. SDLC templates are at /path/to/sdlc-agents
-```
+**2.** Execute `/initializer-agent`  
+*The agent detects your stack, copies templates, and runs a health check*
 
-**3.** The agent detects your stack, copies templates, and runs a health check
-
-You're ready. Start with the **Planning Agent** for your first task.
+**3.** You're ready. Start with the **Planning Agent** for your first task.
 
 ---
 
