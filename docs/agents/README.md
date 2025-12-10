@@ -58,4 +58,3 @@ This directory contains detailed documentation for each agent in the SDLC multi-
 
 - [Agent Architecture Overview](../AGENT_ARCHITECTURE.md)
 - [Agent Responsibility Allocation](../AGENT_RESPONSIBILITY_ALLOCATION.md)
-- [Progressive Disclosure](../PROGRESSIVE_DISCLOSURE.md)

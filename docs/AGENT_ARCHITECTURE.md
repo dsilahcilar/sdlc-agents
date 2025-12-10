@@ -432,6 +432,3 @@ graph TD
 |----------|-------------|
 | [Agent Details](./agents/) | Individual agent documentation (responsibilities, I/O, workflow) |
 | [Agent Responsibility Allocation](./AGENT_RESPONSIBILITY_ALLOCATION.md) | Context providers vs. context consumers |
-| [Progressive Disclosure](./PROGRESSIVE_DISCLOSURE.md) | Progressive disclosure pattern for context optimization |
-| [Workspace Separation](./WORKSPACE_SEPARATION.md) | SDLC agents repository vs. project workspace |
-| [Migration to Stack-Based Architecture](./MIGRATION_TO_STACK_BASED_ARCHITECTURE.md) | Stack-based guardrail approach |

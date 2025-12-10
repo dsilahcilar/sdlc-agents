@@ -108,6 +108,7 @@ See [`extensions/README.md`](./agents/templates/extensions/README.md) for detail
 | [Agent Architecture](./docs/AGENT_ARCHITECTURE.md) | System design, file lifecycle, data flow |
 | [Agent Responsibilities](./docs/AGENT_RESPONSIBILITY_ALLOCATION.md) | Context providers vs. consumers |
 | [Individual Agents](./docs/agents/README.md) | Detailed specs for each agent |
+| [Comparison with Spec-Kit](./docs/COMPARISON_WITH_SPEC_KIT.md) | When to use SDLC Agents vs. Spec-Kit |
 
 ---
 
