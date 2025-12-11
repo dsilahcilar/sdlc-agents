@@ -9,6 +9,7 @@ Tool: **Import Linter**
 
 **Import Linter** - Enforces architectural constraints on Python imports.
 
+**Setup:**
 ```bash
 pip install import-linter
 ```

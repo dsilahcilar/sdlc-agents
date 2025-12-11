@@ -7,25 +7,19 @@ Tools: **Dependency Cruiser**, **Madge**, **ESLint**
 
 ## Architecture Enforcement Tools
 
-### Primary: Dependency Cruiser
-
+**Primary: Dependency Cruiser**
 ```bash
 npm install --save-dev dependency-cruiser
 npx depcruise --init
 ```
 
-### Secondary: Madge (circular dependency detection)
-
+**Secondary: Madge** (circular dependency detection)
 ```bash
-# Via npx (auto-installed)
 npx madge --circular --extensions ts,tsx,js,jsx src/
 ```
 
-### Tertiary: ESLint import rules
-
-```bash
-npm install --save-dev eslint-plugin-import
-```
+**Tertiary: ESLint import rules**
+- Add `eslint-plugin-import` as dev dependency
 
 ---
 

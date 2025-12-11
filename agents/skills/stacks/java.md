@@ -9,20 +9,13 @@ Tool: **ArchUnit**
 
 **ArchUnit** - Unit tests for architecture rules over JVM bytecode.
 
-```xml
-<!-- Maven: pom.xml -->
-<dependency>
-    <groupId>com.tngtech.archunit</groupId>
-    <artifactId>archunit-junit5</artifactId>
-    <version>1.2.1</version>
-    <scope>test</scope>
-</dependency>
-```
-
-```kotlin
-// Gradle: build.gradle.kts
-testImplementation("com.tngtech.archunit:archunit-junit5:1.2.1")
-```
+**Setup:**
+1. Add `com.tngtech.archunit:archunit-junit5` as a test dependency
+2. Find the latest version:
+   ```bash
+   mvn versions:display-dependency-updates -Dincludes=com.tngtech.archunit:archunit-junit5
+   ```
+3. For Gradle projects: use `testImplementation` dependency configuration
 
 ---
 

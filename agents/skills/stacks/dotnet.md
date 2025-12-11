@@ -7,17 +7,11 @@ Tools: **ArchUnitNET**, **NsDepCop**
 
 ## Architecture Enforcement Tools
 
-### ArchUnitNET (recommended)
-```bash
-dotnet add package TngTech.ArchUnitNET.xUnit
-# or
-dotnet add package TngTech.ArchUnitNET.NUnit
-```
+**ArchUnitNET (recommended)**
+- Add `TngTech.ArchUnitNET.xUnit` or `TngTech.ArchUnitNET.NUnit` test package
 
-### NsDepCop (alternative)
-```bash
-dotnet add package NsDepCop.Analyzer
-```
+**NsDepCop (alternative)**
+- Add `NsDepCop.Analyzer` package
 
 ---
 
