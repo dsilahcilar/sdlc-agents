@@ -188,3 +188,19 @@ Before proceeding, check for project-specific extensions:
 
 Apply these instructions as additional constraints. If a custom instruction conflicts with core behavior, **custom instructions take precedence**.
 
+---
+
+## Custom Skills
+
+Before planning, check for project-specific skills:
+
+1. Read `<project-root>/agent-context/extensions/skills/README.md` (if exists)
+2. Load relevant skills based on task domain or technology
+3. Custom skills supplement core skills in `agents/skills/`
+
+Custom skills may provide:
+- Domain-specific patterns and heuristics
+- Custom architecture validation approaches
+- Project-specific tool usage guides
+
+**Important:** Embed relevant custom skill content into feature.md and task files. Downstream agents (Coding, Code Review) are context consumers and should not load skills directly.

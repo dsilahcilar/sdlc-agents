@@ -76,6 +76,9 @@ agent-context/extensions/
 │   └── *.md
 ├── architect-agent/    # Rules for Architect Agent only
 │   └── *.md
+├── skills/             # Custom project skills
+│   ├── domain/         # Domain-specific knowledge
+│   └── patterns/       # Architecture patterns
 └── ...                 # (one folder per agent)
 ```
 
