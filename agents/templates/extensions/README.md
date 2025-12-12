@@ -29,9 +29,30 @@ extensions/
 │   └── *.md
 ├── planning-agent/        # Applied only to Planning Agent
 │   └── *.md
-└── retro-agent/           # Applied only to Retro Agent
-    └── *.md
+├── retro-agent/           # Applied only to Retro Agent
+│   └── *.md
+└── skills/                # Custom project skills
+    ├── README.md          # Skill registry and format guide
+    ├── domain/            # Domain-specific skills
+    ├── patterns/          # Architecture patterns
+    └── tools/             # Custom tools
 ```
+
+---
+
+## Custom Skills
+
+The `skills/` subfolder contains project-specific skills that agents load on-demand using Progressive Disclosure.
+
+| Folder | Purpose |
+|--------|---------|
+| `domain/` | Domain-specific knowledge (payments, compliance, etc.) |
+| `patterns/` | Custom architecture patterns (CQRS, saga, etc.) |
+| `tools/` | Project-specific tools and scripts |
+
+Skills are **capabilities and knowledge**, while extensions are **behavioral rules**. Both supplement core agent behavior.
+
+See [`skills/README.md`](./skills/README.md) for format details.
 
 ---
 

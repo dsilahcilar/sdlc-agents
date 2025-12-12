@@ -161,4 +161,3 @@ Before proceeding, check for project-specific extensions:
 2. **Agent-specific**: Read all `.md` files in `<project-root>/agent-context/extensions/retro-agent/`
 
 Apply these instructions as additional constraints. If a custom instruction conflicts with core behavior, **custom instructions take precedence**.
-
