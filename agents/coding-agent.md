@@ -74,6 +74,13 @@ Use the commands specified in the task file's Validation section:
 ./agent-context/harness/run-arch-tests.sh
 ```
 
+For comprehensive validation before marking task complete:
+
+```bash
+# Full quality gates (includes tests, architecture, static analysis, coverage, security, and metrics)
+./agent-context/harness/run-quality-gates.sh
+```
+
 If task file doesn't specify test command, use feature.md's Validation Commands table.
 
 ---

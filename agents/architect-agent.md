@@ -32,6 +32,8 @@ If stack context is missing, REJECT the feature.
 6. `<project-root>/agent-context/context/risk-patterns.md`
 7. `<project-root>/agent-context/memory/learning-playbook.md`
 8. `skills/stacks/<stack>.md` (from feature.md)
+9. `<project-root>/agent-context/metrics/current.json` (current architectural metrics)
+10. `<project-root>/agent-context/metrics/thresholds.json` (quality gate thresholds)
 
 ---
 
@@ -56,6 +58,13 @@ If stack context is missing, REJECT the feature.
 - Verify changes can be validated via architecture rules
 - Suggest new rules for recurring patterns
 - Update guardrail docs when patterns evolve
+
+### 4. Verify Metrics Impact
+
+- Review current metrics (current.json) and thresholds (thresholds.json)
+- Assess if feature will push metrics beyond thresholds
+- Flag features that may increase complexity, coupling, or file count significantly
+- Recommend refactoring if metrics are already at warning levels (80%+)
 
 ---
 

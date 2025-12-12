@@ -20,27 +20,10 @@ FAILURES=0
 # -----------------------------------------------------------------------------
 # Stack Detection (see skills/stack-detection.md for details)
 # -----------------------------------------------------------------------------
-detect_stack() {
-    if [ -f "pom.xml" ] || [ -f "build.gradle" ] || [ -f "build.gradle.kts" ]; then
-        echo "java"
-    elif [ -f "package.json" ]; then
-        echo "typescript"
-    elif [ -f "pyproject.toml" ] || [ -f "setup.py" ] || [ -f "requirements.txt" ]; then
-        echo "python"
-    elif [ -f "go.mod" ]; then
-        echo "go"
-    elif [ -f "Cargo.toml" ]; then
-        echo "rust"
-    elif ls ./*.csproj >/dev/null 2>&1 || ls ./*.sln >/dev/null 2>&1; then
-        echo "dotnet"
-    elif [ -f "Gemfile" ]; then
-        echo "ruby"
-    elif [ -f "composer.json" ]; then
-        echo "php"
-    else
-        echo "unknown"
-    fi
-}
+# Source shared stack detection utility
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+# shellcheck source=harness/lib/stack-detection.sh
+. "$SCRIPT_DIR/lib/stack-detection.sh"
 
 STACK=$(detect_stack)
 echo "[arch-tests] Detected stack: $STACK"
