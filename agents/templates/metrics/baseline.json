@@ -1,0 +1,42 @@
+{
+    "timestamp": "2025-01-01T00:00:00+00:00",
+    "snapshot_type": "baseline",
+    "stack": "unknown",
+    "description": "Initial project metrics baseline - update by running harness/collect-metrics.sh",
+    "metrics": {
+        "architecture": {
+            "total_files": 0,
+            "total_directories": 0,
+            "max_directory_depth": 0,
+            "average_files_per_directory": 0.0,
+            "file_distribution": {
+                "by_extension": {},
+                "by_size": {
+                    "small_0_100_lines": 0,
+                    "medium_100_500_lines": 0,
+                    "large_500_1000_lines": 0,
+                    "xlarge_1000_plus_lines": 0
+                }
+            }
+        },
+        "complexity": {
+            "average_function_lines": 0.0,
+            "max_function_lines": 0,
+            "average_class_lines": 0.0,
+            "max_class_lines": 0,
+            "functions_exceeding_threshold": 0,
+            "classes_exceeding_threshold": 0
+        },
+        "coupling": {
+            "total_dependencies": 0,
+            "circular_dependencies": 0,
+            "architecture_violations": 0,
+            "max_dependencies_per_module": 0
+        },
+        "testing": {
+            "total_test_files": 0,
+            "test_to_code_ratio": 0.0,
+            "coverage_percent": 0.0
+        }
+    }
+}

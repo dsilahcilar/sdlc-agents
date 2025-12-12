@@ -23,6 +23,8 @@ Run `pwd` to confirm your working directory before any operation.
 6. `<project-root>/agent-context/memory/learning-playbook.md`
 7. `<project-root>/agent-context/guardrails/*`
 8. `<project-root>/agent-context/context/*`
+9. `<project-root>/agent-context/metrics/current.json` (current architectural metrics)
+10. `<project-root>/agent-context/metrics/history/*.json` (historical metric snapshots for trend analysis)
 
 ---
 
@@ -75,9 +77,14 @@ For each completed feature:
 
 1. **Timeline**: What was planned vs. actual? Where were deviations?
 2. **Architecture**: Boundaries respected? New dependencies? Did tests catch issues?
-3. **Debt**: What was introduced/paid? Net position?
-4. **Root cause**: Why did problems occur? Could earlier agents have prevented them?
-5. **Generalization**: Specific or broader pattern? Generalizable lesson?
+3. **Metrics Trends**:
+   - Compare current.json with historical snapshots
+   - Identify concerning trends (increasing complexity, circular dependencies, decreasing coverage)
+   - Note metrics approaching thresholds (warnings at 80%+)
+   - Document correlation between metric changes and feature work
+4. **Debt**: What was introduced/paid? Net position?
+5. **Root cause**: Why did problems occur? Could earlier agents have prevented them?
+6. **Generalization**: Specific or broader pattern? Generalizable lesson?
 
 ---
 

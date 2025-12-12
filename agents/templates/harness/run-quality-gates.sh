@@ -58,7 +58,7 @@ extract_errors() {
 # 1. Run all tests
 # -----------------------------------------------------------------------------
 run_tests() {
-    echo "[quality-gates] [1/5] Running full test suite..."
+    echo "[quality-gates] [1/6] Running full test suite..."
     log "=== PHASE 1: TESTS ==="
 
     if [ -f "pom.xml" ]; then
@@ -82,7 +82,7 @@ run_tests() {
 # 2. Run architecture tests
 # -----------------------------------------------------------------------------
 run_arch() {
-    echo "[quality-gates] [2/5] Running architecture tests..."
+    echo "[quality-gates] [2/6] Running architecture tests..."
     log "=== PHASE 2: ARCHITECTURE TESTS ==="
 
     if [ -f "harness/run-arch-tests.sh" ]; then
@@ -97,7 +97,7 @@ run_arch() {
 # 3. Run static analysis
 # -----------------------------------------------------------------------------
 run_static_analysis() {
-    echo "[quality-gates] [3/5] Running static analysis..."
+    echo "[quality-gates] [3/6] Running static analysis..."
     log "=== PHASE 3: STATIC ANALYSIS ==="
 
     if [ -f "pom.xml" ]; then
@@ -141,7 +141,7 @@ run_static_analysis() {
 # 4. Check code coverage (optional)
 # -----------------------------------------------------------------------------
 run_coverage() {
-    echo "[quality-gates] [4/5] Checking code coverage..."
+    echo "[quality-gates] [4/6] Checking code coverage..."
     log "=== PHASE 4: COVERAGE ==="
 
     if [ -f "pom.xml" ]; then
@@ -168,7 +168,7 @@ run_coverage() {
 # 5. Security scan (optional)
 # -----------------------------------------------------------------------------
 run_security() {
-    echo "[quality-gates] [5/5] Running security checks..."
+    echo "[quality-gates] [5/6] Running security checks..."
     log "=== PHASE 5: SECURITY ==="
 
     if [ -f "pom.xml" ]; then
@@ -186,6 +186,36 @@ run_security() {
     fi
 
     log "Security check complete"
+}
+
+# -----------------------------------------------------------------------------
+# 6. Code metrics
+# -----------------------------------------------------------------------------
+run_metrics() {
+    echo "[quality-gates] [6/6] Checking code metrics..."
+    log "=== PHASE 6: METRICS ==="
+
+    if [ -f "harness/collect-metrics.sh" ]; then
+        run_cmd "Collect metrics" ./harness/collect-metrics.sh || return 1
+        
+        # Compare metrics - warnings are acceptable, failures are not
+        if ./harness/compare-metrics.sh >> "$LOG_FILE" 2>&1; then
+            log "Metrics: PASSED"
+            ./harness/archive-metrics.sh >> "$LOG_FILE" 2>&1 || log "Archive skipped"
+            return 0
+        else
+            EXIT_CODE=$?
+            log "Metrics: WARNING/FAILED (exit code: $EXIT_CODE)"
+            if [ $EXIT_CODE -eq 2 ]; then
+                return 1  # Failures cause quality gate to fail
+            else
+                return 0  # Warnings don't fail the gate
+            fi
+        fi
+    else
+        echo "[quality-gates] No metrics collection script found"
+        log "No metrics collection script found"
+    fi
 }
 
 # -----------------------------------------------------------------------------
@@ -214,6 +244,13 @@ fi
 
 run_coverage && GATE_RESULTS="${GATE_RESULTS}✓ Coverage check complete\n" || GATE_RESULTS="${GATE_RESULTS}○ Coverage check skipped/info\n"
 run_security && GATE_RESULTS="${GATE_RESULTS}✓ Security check complete\n" || GATE_RESULTS="${GATE_RESULTS}○ Security check skipped/info\n"
+
+if run_metrics; then
+    GATE_RESULTS="${GATE_RESULTS}✓ Metrics check passed\n"
+else
+    GATE_RESULTS="${GATE_RESULTS}✗ Metrics check FAILED\n"
+    FAILURES=$((FAILURES + 1))
+fi
 
 # -----------------------------------------------------------------------------
 # 7. Summary (concise output for LLM context)
