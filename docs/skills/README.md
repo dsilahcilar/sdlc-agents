@@ -241,3 +241,18 @@ This keeps context usage minimal and focused, with clear responsibility separati
 | tools/<category>/<tool>.sh | 0 | Never (just execute) |
 
 **Typical session: 800 tokens** for all skill/tool knowledge.
+
+---
+
+## Custom Skills
+
+For project-specific skills, consumers can add skills to `agent-context/extensions/skills/`:
+
+| Location | Purpose |
+|----------|---------|
+| `agents/skills/` | Core skills (stack-specific, provided by SDLC Agents) |
+| `extensions/skills/` | Custom project skills (added by consumers) |
+
+Custom skills follow the same format as core skills and are loaded on-demand using Progressive Disclosure. Agents always check `extensions/skills/README.md` for available custom skills.
+
+See [`extensions/skills/README.md`](../../agents/templates/extensions/skills/README.md) for format details.
