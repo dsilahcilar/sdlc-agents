@@ -1,0 +1,22 @@
+{
+  "timestamp": "2025-12-12T09:13:34+0000",
+  "snapshot_type": "current",
+  "stack": "unknown",
+  "metrics": {
+    "architecture": {
+      "total_files": 70,
+      "total_directories": 30,
+      "max_directory_depth": 3,
+      "average_files_per_directory": 2.33
+    },
+    "coupling": {
+      "circular_dependencies": 0,
+      "architecture_violations": 0
+    },
+    "testing": {
+      "total_test_files": 0,
+      "test_to_code_ratio": 0,
+      "coverage_percent": 0
+    }
+  }
+}

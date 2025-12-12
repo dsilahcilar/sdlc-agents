@@ -1,0 +1,44 @@
+{
+    "schema_version": "1.0",
+    "description": "Architectural metric thresholds to prevent complexity creep and architectural erosion",
+    "project_type": "auto-detect",
+    "architecture_metrics": {
+        "files": {
+            "max_total_files": 500,
+            "max_files_per_directory": 50,
+            "warn_threshold_percent": 80,
+            "description": "Track file count growth to prevent excessive project expansion"
+        },
+        "nesting": {
+            "max_directory_depth": 6,
+            "warn_threshold": 5,
+            "description": "Limit directory nesting to maintain project navigability"
+        },
+        "complexity": {
+            "max_cyclomatic_complexity": 15,
+            "warn_cyclomatic_complexity": 10,
+            "max_function_lines": 50,
+            "max_class_lines": 500,
+            "max_functions_over_threshold": 5,
+            "description": "Prevent function and class bloat. CCN >15 is considered high complexity."
+        },
+        "coupling": {
+            "max_dependencies_per_module": 10,
+            "max_circular_dependencies": 0,
+            "architecture_violations_allowed": 0,
+            "description": "Enforce loose coupling and prevent circular dependencies"
+        }
+    },
+    "test_metrics": {
+        "min_coverage_percent": 70,
+        "min_test_to_code_ratio": 0.5,
+        "warn_coverage_percent": 75,
+        "description": "Ensure adequate test coverage"
+    },
+    "notes": [
+        "Thresholds should be adjusted based on project size and complexity",
+        "warn_threshold_percent applies to all metrics with max values (80% = warning, 100% = failure)",
+        "Set to 0 for metrics that should never occur (e.g., circular dependencies)",
+        "Update this file when project characteristics change significantly"
+    ]
+}

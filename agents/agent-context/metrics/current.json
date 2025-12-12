@@ -1,0 +1,29 @@
+{
+  "timestamp": "2025-12-12T09:52:26+0000",
+  "snapshot_type": "current",
+  "stack": "unknown",
+  "metrics": {
+    "architecture": {
+      "total_files": 72,
+      "total_directories": 31,
+      "max_directory_depth": 3,
+      "average_files_per_directory": 2.32
+    },
+    "complexity": {
+      "average_cyclomatic_complexity": 0,
+      "max_cyclomatic_complexity": 0,
+      "functions_over_threshold": 0,
+      "average_function_length": 0,
+      "max_function_length": 0
+    },
+    "coupling": {
+      "circular_dependencies": 0,
+      "architecture_violations": 0
+    },
+    "testing": {
+      "total_test_files": 0,
+      "test_to_code_ratio": 0,
+      "coverage_percent": 0
+    }
+  }
+}
