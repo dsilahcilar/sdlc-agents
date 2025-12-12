@@ -255,4 +255,36 @@ For project-specific skills, consumers can add skills to `agent-context/extensio
 
 Custom skills follow the same format as core skills and are loaded on-demand using Progressive Disclosure. Agents always check `extensions/skills/README.md` for available custom skills.
 
-See [`extensions/skills/README.md`](../../agents/templates/extensions/skills/README.md) for format details.
+### Use Case Examples
+
+The [`extensions/skills/README.md`](../../agents/templates/extensions/skills/README.md) includes comprehensive examples for:
+
+| Category | Example | Description |
+|----------|---------|-------------|
+| **Testing** | `domain/bdd-testing.md` | BDD patterns with Gherkin/Cucumber |
+| **Security** | `domain/security-owasp.md` | OWASP Top 10 guidelines |
+| **Integrations** | `domain/kafka-integration.md` | Event streaming patterns |
+| **Legacy** | `domain/legacy-migration.md` | Strangler fig, database migrations |
+| **Domain** | `domain/payments.md` | Payment processing invariants |
+| **Patterns** | `patterns/saga-pattern.md` | Distributed transaction patterns |
+| **Tools** | `tools/internal-api.sh` | Custom project tooling |
+
+### End-to-End Workflow
+
+See the [How Agents Use Custom Skills](../../agents/templates/extensions/skills/README.md#end-to-end-workflow-how-agents-use-custom-skills) section for a complete walkthrough showing:
+
+1. Agent discovers skills via README registry
+2. Agent selectively loads relevant skills
+3. Agent applies invariants and patterns
+4. Agent uses custom tools
+
+### Troubleshooting
+
+See the [Troubleshooting](../../agents/templates/extensions/skills/README.md#troubleshooting) section for solutions to common issues:
+
+- Skill not being loaded
+- Skill conflicts with core skills
+- Agent ignoring invariants
+- Tool script failures
+- Skills too large
+
