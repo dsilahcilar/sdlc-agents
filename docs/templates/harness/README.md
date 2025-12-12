@@ -13,7 +13,15 @@ These are **template scripts** that the Initializer Agent copies to your project
 | `init-project.sh` | One-time environment setup | Once, at project initialization |
 | `run-feature.sh <id>` | Run tests for a specific feature | During development, per feature |
 | `run-arch-tests.sh` | Run architecture validation | After every significant change |
-| `run-quality-gates.sh` | Full quality check | Before code review |
+| `run-quality-gates.sh` | Full quality check (6 phases) | Before code review |
+
+### Metrics Scripts
+
+| Script | Purpose | When to Run |
+|--------|---------|-------------|
+| `collect-metrics.sh` | Collect architectural metrics | Automatically via quality gates |
+| `compare-metrics.sh` | Compare against thresholds | Automatically via quality gates |
+| `archive-metrics.sh` | Archive historical snapshots | Automatically via quality gates |
 
 ### Task Management Scripts
 
@@ -74,10 +82,12 @@ Runs architecture validation using stack-appropriate tools:
 ### `run-quality-gates.sh`
 
 Full quality check including:
-- Unit tests
-- Architecture tests
-- Code coverage
-- Static analysis
+1. Unit tests
+2. Architecture tests
+3. Static analysis
+4. Code coverage
+5. Security checks
+6. Metrics validation (collect, compare, archive)
 
 ---
 

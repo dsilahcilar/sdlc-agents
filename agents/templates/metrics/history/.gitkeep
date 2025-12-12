@@ -1,0 +1,2 @@
+# This directory stores historical metric snapshots
+# Retention: Last 30 snapshots (managed by archive-metrics.sh)
