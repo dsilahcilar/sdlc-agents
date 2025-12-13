@@ -20,7 +20,7 @@ LLMs write code fast—but they also generate **hidden costs**:
 | **Structural Debt** | Code violates architectural boundaries. Coupling creeps in unnoticed. |
 | **Generative Debt** | Quick fixes today become expensive rewrites tomorrow. |
 | **Amnesia** | The same mistakes repeat across tasks—agents don't learn. |
-| **Brevity Bias** | Limited context windows mean missed patterns and inconsistencies. |
+| **Context Management** | Naive prompt stuffing wastes tokens and dilutes attention. |
 
 **Result**: Your codebase degrades faster than you can refactor.
 
@@ -28,7 +28,7 @@ LLMs write code fast—but they also generate **hidden costs**:
 
 ## The Solution
 
-**SDLC Agents** bring engineering discipline to AI-assisted development:
+**SDLC Agents** bring engineering discipline to AI-assisted development through **advanced context engineering**:
 
 ```
 Planning → Architect → Coding → Code Review → Retro
@@ -52,6 +52,49 @@ Each phase has a **specialized agent** that does one thing well:
 - **Continual Learning**: Lessons from past work inform future decisions
 - **Progressive Disclosure**: Agents load only what they need, staying focused
 - **Automated Guardrails**: Rules are enforced, not just documented
+
+---
+
+## Core Capabilities
+
+What makes SDLC Agents different from other AI coding assistants:
+
+| Capability | What It Means |
+|------------|---------------|
+| 🎯 **Progressive Disclosure** | Agents load only contextually relevant knowledge—no bloated prompts |
+| 🧠 **Self-Learning** | Retro agent captures lessons; knowledge accumulates across tasks |
+| 🔌 **Extension Support** | Add custom skills without modifying core agent files |
+| ⚡ **Dynamic Skill Selection** | Use `#SkillName` to include, `!SkillName` to exclude skills |
+| 🏗️ **Architecture-First** | Structure is validated before implementation begins |
+| 🤝 **Multi-Agent Orchestration** | Specialized agents with clear handoffs and responsibilities |
+
+### How Skills Work
+
+```mermaid
+flowchart LR
+    A[User Request] --> B{Planning Agent}
+    B --> C[Detect Stack]
+    B --> D[Parse #skill Directives]
+    C --> E[Load Only Needed Skills]
+    D --> E
+    E --> F[Embed in Feature/Task]
+    F --> G[Downstream Agents]
+```
+
+### Example: Dynamic Skill Selection
+
+```bash
+# Use TDD pattern for this implementation
+"Implement user authentication #TDD"
+
+# Use spec-driven development with Java stack
+"Add order processing API #spec-driven #java"
+
+# Exclude a skill you don't need
+"Add event processing !Kafka"
+```
+
+See [Skills Documentation](./docs/skills/README.md) for the full skill system.
 
 ---
 
@@ -121,6 +164,7 @@ See [`extensions/README.md`](./agents/templates/extensions/README.md) for detail
 | 📄 Document | Description |
 |------------|-------------|
 | [Multi-Assistant Support](./docs/MULTI_ASSISTANT_SUPPORT.md) | Setup for Copilot, Claude, Cursor, Windsurf, Aider |
+| [Skills System](./docs/skills/README.md) | Progressive disclosure, skill directives, custom skills |
 | [Agent Architecture](./docs/AGENT_ARCHITECTURE.md) | System design, file lifecycle, data flow |
 | [Agent Responsibilities](./docs/AGENT_RESPONSIBILITY_ALLOCATION.md) | Context providers vs. consumers |
 | [Individual Agents](./docs/agents/README.md) | Detailed specs for each agent |
