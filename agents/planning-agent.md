@@ -18,8 +18,8 @@ Run `pwd` to confirm your working directory before any operation.
 Before planning, read:
 
 1. The request (issue, ticket, or requirement)
-2. `<project-root>/agent-context/context/domain-heuristics.md`
-3. `<project-root>/agent-context/context/risk-patterns.md`
+2. `<project-root>/agent-context/extensions/skills/domain/project-domains.md`
+3. `<project-root>/agent-context/extensions/skills/domain/project-risks.md`
 4. `<project-root>/agent-context/memory/learning-playbook.md` (filter to relevant module/framework)
 5. `skills/stack-detection.md`
 6. Architecture tests (see Objective 2.5)
@@ -34,6 +34,42 @@ Using `skills/stack-detection.md`:
 - Detect stack at project root (per-directory for monorepos)
 - Identify skill file: `skills/stacks/<detected>.md`
 - Record in feature.md and task files
+
+### 1.5 Parse Skill Directives
+
+Parse explicit skill directives from the user request:
+
+```bash
+# Parse directives from user prompt
+DIRECTIVES=$($SDLC_AGENTS/tools/skills/parse-skill-directives.sh "$USER_PROMPT")
+
+# Output: {"includes": ["tdd"], "excludes": ["kafka"], "only_mode": false}
+```
+
+**Directive syntax:**
+- `#SkillName` — Force-load skill (e.g., `#TDD`, `#Security`)
+- `#Skill1,Skill2` — Force-load multiple skills
+- `!SkillName` — Force-exclude skill (e.g., `!Kafka`)
+- `#only:Skills` — Disable auto-detection, use only listed skills
+
+**Resolution order** (explicit includes always win):
+1. If `only_mode` is true → skip auto-detection, use only listed skills
+2. Else → start with auto-detected stack + add includes − excludes
+
+**Resolve skill names to paths:**
+```bash
+SKILL_PATHS=$($SDLC_AGENTS/tools/skills/resolve-skills.sh java tdd)
+# → /path/to/skills/stacks/java.md
+# → WARNING: Skill 'tdd' not found (if no custom skill exists)
+```
+
+**Document in feature file** (Section 1.1):
+```markdown
+## Technology Stack
+- Primary Stack: Java (auto-detected)
+- Explicit Skills: TDD, Saga (from #TDD,Saga)
+- Skills Loaded: stacks/java.md
+```
 
 ### 2. Clarify Requirements
 
@@ -192,15 +228,21 @@ Apply these instructions as additional constraints. If a custom instruction conf
 
 ## Custom Skills
 
+**Automatic Discovery:**
 Before planning, check for project-specific skills:
-
 1. Read `<project-root>/agent-context/extensions/skills/README.md` (if exists)
 2. Load relevant skills based on task domain or technology
 3. Custom skills supplement core skills in `agents/skills/`
+
+**Explicit Selection (via Directives):**
+Users can override auto-detection using skill directives (see Section 1.5):
+- Parsed directives take precedence over automatic discovery
+- Resolution order: only_mode → auto-detected + includes − excludes
 
 Custom skills may provide:
 - Domain-specific patterns and heuristics
 - Custom architecture validation approaches
 - Project-specific tool usage guides
 
-**Important:** Embed relevant custom skill content into feature.md and task files. Downstream agents (Coding, Code Review) are context consumers and should not load skills directly.
+**Embedding into Context:**
+Embed relevant custom skill content into feature.md and task files. Downstream agents (Coding, Code Review) are context consumers and should not load skills directly.

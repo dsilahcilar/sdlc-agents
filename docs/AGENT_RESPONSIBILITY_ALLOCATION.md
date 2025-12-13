@@ -10,30 +10,37 @@ Having different agents reduces contextual load and enables well-defined roles. 
 
 - **Stack detection** was being done by downstream agents (Coding, Code Review) when it should be part of their pre-assembled context
 - **Environment discovery** was being repeated per-agent instead of being done once during planning
+- **Skill loading** was unclear — which agents should load skills vs. receive embedded context?
 
 ---
 
-## Solution: Context Providers vs. Context Consumers
+## Solution: Bootstrap → Producer → Consumers
 
-### Context Providers (Detect Stack)
+### Bootstrap Agent (One-Time Setup)
 
-These agents run **before** or **at the start** of a task and are responsible for discovering the environment and providing context to downstream agents:
+This agent runs **once** to create the project structure. It neither produces context for other agents nor consumes context:
 
-| Agent | When It Runs | Stack Detection Responsibility |
-|-------|--------------|-------------------------------|
-| **Initializer Agent** | Project setup (once) | ✅ Detect and document in harness |
-| **Architecture Discovery Agent** | Legacy project analysis (once) | ✅ Detect and document in report |
-| **Planning Agent** | Start of each feature | ✅ Detect and include in feature.md + task files |
+| Agent | When It Runs | Responsibility |
+|-------|--------------|----------------|
+| **Initializer Agent** | Project setup (once) | ✅ Creates directory structure, detects stack, scaffolds templates |
 
-### Context Consumers (Receive Stack)
+### Context Producer (Embeds Knowledge)
 
-These agents run **after** planning and receive context from upstream agents. They should **NOT** detect the stack themselves:
+This agent **reads** skills, domains, risks, and other knowledge sources and **embeds** them into artifacts for downstream agents:
+
+| Agent | When It Runs | Context Production Responsibility |
+|-------|--------------|-----------------------------------|
+| **Planning Agent** | Start of each feature | ✅ Detects stack, loads skills/domains/risks, embeds into feature.md + task files |
+
+### Context Consumers (Receive Embedded Context)
+
+These agents run **after** planning and receive pre-assembled context. They should **NOT** load skills or detect the stack themselves:
 
 | Agent | What It Receives | Source |
 |-------|------------------|--------|
-| **Architect Agent** | Stack info in feature.md | Planning Agent |
-| **Coding Agent** | Stack info in task file and/or feature.md | Planning Agent |
-| **Code Review Agent** | Stack info in feature.md + task files | Planning Agent |
+| **Architect Agent** | Stack info + embedded rules in feature.md | Planning Agent |
+| **Coding Agent** | Stack info + embedded rules in task file and/or feature.md | Planning Agent |
+| **Code Review Agent** | Stack info + embedded rules in feature.md + task files | Planning Agent |
 | **Retro Agent** | Raw logs (doesn't need stack) | N/A |
 | **Curator Agent** | Playbook entries (doesn't need stack) | N/A |
 
@@ -85,6 +92,7 @@ The Coding Agent reads **one task file** as its primary input.
 4. **Clear escalation path** - If context is missing, agents know to escalate to Planning Agent
 5. **Better LLM performance** - Focused context improves accuracy
 6. **Clearer agent boundaries** - Each agent has a well-defined role
+7. **Proper separation** - Bootstrap (Initializer) → Producer (Planning) → Consumers (all others)
 
 ---
 
@@ -94,6 +102,8 @@ The Coding Agent reads **one task file** as its primary input.
 2. ❌ **Code Review Agent loading stack-detection.md** - Already in feature.md
 3. ❌ **Architect Agent discovering stack** - Already provided by Planning Agent
 4. ❌ **Missing stack context in features** - Planning Agent must include it
+5. ❌ **Downstream agents loading skills directly** - Only Planning Agent loads skills; others receive embedded context
+6. ❌ **Initializer Agent with Custom Instructions section** - It's a bootstrap utility, not a context producer/consumer
 
 ---
 

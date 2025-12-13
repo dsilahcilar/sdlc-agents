@@ -25,8 +25,6 @@ extensions/
 │   └── *.md
 ├── curator-agent/         # Applied only to Curator Agent
 │   └── *.md
-├── initializer-agent/     # Applied only to Initializer Agent
-│   └── *.md
 ├── planning-agent/        # Applied only to Planning Agent
 │   └── *.md
 ├── retro-agent/           # Applied only to Retro Agent
@@ -42,7 +40,7 @@ extensions/
 
 ## Custom Skills
 
-The `skills/` subfolder contains project-specific skills that agents load on-demand using Progressive Disclosure.
+The `skills/` subfolder contains project-specific skills that are loaded using Progressive Disclosure.
 
 | Folder | Purpose |
 |--------|---------|
@@ -50,9 +48,84 @@ The `skills/` subfolder contains project-specific skills that agents load on-dem
 | `patterns/` | Custom architecture patterns (CQRS, saga, etc.) |
 | `tools/` | Project-specific tools and scripts |
 
+**Important distinction:**
+- **Planning Agent** — Directly loads skills from `skills/` and embeds them into `feature.md` and task files
+- **Other Agents** (Coding, Architect, Code Review, etc.) — Read the *embedded* context from feature.md and task files; they don't load skills directly
+
 Skills are **capabilities and knowledge**, while extensions are **behavioral rules**. Both supplement core agent behavior.
 
 See [`skills/README.md`](./skills/README.md) for format details.
+
+---
+
+## Skills vs Extensions: When to Use Which?
+
+### Use Custom Skills When:
+
+✅ Providing domain knowledge (payments, compliance)  
+✅ Teaching patterns (CQRS, saga, event sourcing)  
+✅ Documenting project-specific tools  
+✅ Adding reusable heuristics and invariants  
+✅ Knowledge is loaded on-demand (progressive disclosure)
+
+**Examples:**
+
+1. **Domain Knowledge:** "Our payment domain requires idempotency keys"  
+   → Create `extensions/skills/domain/payments.md`
+
+2. **Architecture Pattern:** "We use CQRS with event sourcing for order processing"  
+   → Create `extensions/skills/patterns/cqrs-orders.md`
+
+3. **Custom Tools:** "Our monitoring setup uses custom Datadog metrics"  
+   → Create `extensions/skills/tools/datadog-monitoring.md`
+
+4. **Internal Library Guide:** "Here's how to use our `@company/auth-sdk` for OAuth flows"  
+   → Create `extensions/skills/tools/auth-sdk-guide.md`
+
+5. **Optional TDD:** "Enable TDD approach for specific tasks when needed"  
+   → Create `extensions/skills/patterns/tdd.md`  
+   → Use with `#TDD` directive to opt-in per task
+
+### Use Extensions When:
+
+✅ Enforcing coding standards (naming, formatting)  
+✅ Setting architecture rules (module boundaries)  
+✅ Customizing agent behavior  
+✅ Adding required process steps  
+✅ Rules apply to ALL tasks (not domain-specific)
+
+**Examples:**
+
+1. **Coding Standards:** "All public methods must have JSDoc"  
+   → Create `extensions/coding-agent/style-guide.md`
+
+2. **Architecture Rules:** "Domain layer cannot depend on infrastructure"  
+   → Create `extensions/architect-agent/dependency-rules.md`
+
+3. **Process Requirements:** "All error responses must include correlation IDs"  
+   → Create `extensions/_all-agents/error-handling.md`
+
+4. **Development Process:** "Always write tests first (TDD) for ALL tasks"  
+   → Create `extensions/coding-agent/tdd-requirements.md`  
+   → Enforced for every task, no opt-out
+
+5. **Technology Mandates:** "MUST use `@company/auth-sdk` for all authentication"  
+   → Create `extensions/_all-agents/required-libraries.md`
+
+> **💡 Key Insight:** The same concept (like TDD or a library) can be **either** a skill or extension:
+> - **Skill** = Flexible, opt-in per task (use `#TDD` directive)
+> - **Extension** = Mandatory, always enforced
+> 
+> Choose based on whether you want flexibility or enforcement.
+
+### Decision Matrix:
+
+| Question | Skills | Extensions |
+|----------|--------|------------|
+| Loaded on-demand? | Yes | No (always) |
+| Domain/pattern specific? | Yes | No (general) |
+| Includes examples? | Yes | Optional |
+| Modifies agent behavior? | No | Yes |
 
 ---
 

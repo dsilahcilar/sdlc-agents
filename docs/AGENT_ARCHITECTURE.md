@@ -63,10 +63,18 @@ Total: ~800 tokens vs. ~4000+ if loading everything
 
 ### 3. Context Providers vs. Context Consumers
 
-| Type | Agents | Responsibility |
-|------|--------|----------------|
-| **Context Providers** | Initializer, Planning | Detect stack, document in artifacts |
-| **Context Consumers** | Architect, Coding, Code Review, Retro, Curator | Receive pre-assembled context |
+**The initializer agent is neither a provider nor a consumer** — it's a **bootstrap utility** that creates the project structure one time.
+
+| Type | Agents | What They Do | Custom Instructions? |
+|------|--------|--------------|---------------------|
+| **Bootstrap** | Initializer | Creates project structure and detects stack | ❌ No — doesn't consume context |
+| **Context Producer** | Planning | Consumes skills/domains/risks, embeds into feature/task files | ✅ Yes — reads custom skills and instructions |
+| **Context Consumer** | Architect, Coding, Code Review, Retro, Curator | Reads feature/task files (pre-assembled context) | ✅ Yes — reads custom instructions only (not skills) |
+
+**Key distinction:**
+- **Planning Agent**: Reads raw skills/domains/risks and *embeds them* into feature.md and task files
+- **Other Agents**: Read the *embedded* context from feature.md and task files (they don't load skills directly)
+- **Initializer Agent**: Neither produces context for agents nor consumes it — just scaffolds the directory structure
 
 ### 4. Architecture-as-Guardrail
 

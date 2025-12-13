@@ -174,16 +174,3 @@ Before proceeding, check for project-specific extensions:
 2. **Agent-specific**: Read all `.md` files in `<project-root>/agent-context/extensions/architect-agent/`
 
 Apply these instructions as additional constraints. If a custom instruction conflicts with core behavior, **custom instructions take precedence**.
-
----
-
-## Custom Skills
-
-Before reviewing, check for project-specific skills:
-
-1. Read `<project-root>/agent-context/extensions/skills/README.md` (if exists)
-2. Load skills relevant to feature domain or architecture patterns
-3. Custom skills supplement core skills in `agents/skills/`
-
-Use custom skills for project-specific architectural patterns or validation approaches.
-

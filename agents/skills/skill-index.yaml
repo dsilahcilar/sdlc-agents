@@ -1,0 +1,69 @@
+# Skill Index
+# Canonical skill name → file path mapping
+# Case-insensitive lookup, supports aliases
+
+skills:
+  # ============================================
+  # Stack skills (auto-detected from project files)
+  # ============================================
+  java:
+    path: stacks/java.md
+    aliases: [kotlin, jvm, maven, gradle]
+    auto_detect: true
+  
+  typescript:
+    path: stacks/typescript.md
+    aliases: [ts, javascript, js, node]
+    auto_detect: true
+  
+  python:
+    path: stacks/python.md
+    aliases: [py]
+    auto_detect: true
+  
+  go:
+    path: stacks/go.md
+    aliases: [golang]
+    auto_detect: true
+  
+  rust:
+    path: stacks/rust.md
+    aliases: [cargo]
+    auto_detect: true
+  
+  dotnet:
+    path: stacks/dotnet.md
+    aliases: [csharp, cs, ".net"]
+    auto_detect: true
+  
+  ruby:
+    path: stacks/ruby.md
+    aliases: [rb, rails]
+    auto_detect: true
+  
+  php:
+    path: stacks/php.md
+    aliases: [laravel]
+    auto_detect: true
+
+  # ============================================
+  # Pattern skills (on-demand, user must request)
+  # ============================================
+  layered:
+    path: patterns/layered.md
+    auto_detect: false
+  
+  hexagonal:
+    path: patterns/hexagonal.md
+    aliases: [ports-and-adapters, clean-architecture, clean]
+    auto_detect: false
+  
+  modular-monolith:
+    path: patterns/modular-monolith.md
+    aliases: [modular]
+    auto_detect: false
+  
+  microservices:
+    path: patterns/microservices.md
+    aliases: [micro]
+    auto_detect: false

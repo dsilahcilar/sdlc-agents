@@ -4,7 +4,8 @@ title: <Feature Title>  <!-- REQUIRED: Human-readable feature name -->
 status: pending  <!-- ENUM: pending | in_progress | passing | blocked -->
 module: <primary-module>  <!-- REQUIRED: Main module/package this affects -->
 risk_level: low  <!-- ENUM: low | medium | high -->
-skill_reference: <path-to-skill>  <!-- REQUIRED: e.g., skills/stacks/kotlin.md -->
+skill_reference: <path-to-stack-skill>  <!-- REQUIRED: Primary stack skill, e.g., skills/stacks/kotlin.md -->
+custom_skills: []  <!-- OPTIONAL: List of custom skill paths, e.g., ['extensions/skills/domain/payment.md'] -->
 created_at: <ISO8601>  <!-- REQUIRED: Use current timestamp -->
 updated_at: <ISO8601>  <!-- REQUIRED: Use current timestamp -->
 ---
@@ -28,9 +29,19 @@ updated_at: <ISO8601>  <!-- REQUIRED: Use current timestamp -->
 ## Technology Stack
 
 **Stack:** <detected stack>  <!-- e.g., Kotlin + Spring Boot -->
-**Skill Reference:** `skills/stacks/<stack>.md`
+**Stack Skill:** `skills/stacks/<stack>.md`
 **Build System:** <e.g., Maven, Gradle, npm>
 **Architecture Tool:** <e.g., ArchUnit, dependency-cruiser>
+
+**Custom Skills Loaded:**
+<!-- List any custom skills used for this feature. Delete this section if none. -->
+- `<custom skill path 1>` (if any)
+- `<custom skill path 2>`
+
+**Skill Directives:** <!-- Optional: If user specified explicit includes/excludes -->
+<!-- Delete this section if no directives were used -->
+- Includes: `#TDD`, `#Saga`
+- Excludes: `!Legacy`
 
 ### Validation Commands
 
@@ -106,10 +117,13 @@ Before saving this feature file, verify:
 - [ ] id is unique and follows naming convention (e.g., feat-xxx-yyy)
 - [ ] status is one of: pending, in_progress, passing, blocked
 - [ ] risk_level is one of: low, medium, high
-- [ ] skill_reference points to actual skill file
+- [ ] skill_reference points to actual stack skill file
+- [ ] custom_skills is an array (can be empty []) and paths are valid
 - [ ] created_at/updated_at use ISO8601 format (YYYY-MM-DDTHH:MM:SSZ)
 - [ ] All commands in Validation Commands table are executable
 - [ ] Architectural Constraints are extracted from real tests
 - [ ] Task table matches actual task files in tasks/ directory
 - [ ] Sections without content say "No X found" rather than leaving placeholders
+- [ ] Delete "Custom Skills Loaded" section if no custom skills used
+- [ ] Delete "Skill Directives" section if no directives were specified
 -->

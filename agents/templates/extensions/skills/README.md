@@ -35,6 +35,103 @@ Skills are loaded in this order (later supplements earlier):
 
 ---
 
+## Skill Directives
+
+Custom skills can be explicitly selected using directives in your prompt:
+
+```
+"Implement payment feature #payments,saga !legacy"
+```
+
+| Directive | Effect |
+|-----------|--------|
+| `#payments` | Force-load `domain/payments.md` |
+| `#saga` | Force-load `patterns/saga-pattern.md` |
+| `!legacy` | Exclude legacy skill (if auto-detected) |
+
+### Registering Custom Skills
+
+Add custom skills to a local `skill-index.yaml`:
+
+```yaml
+# extensions/skills/skill-index.yaml
+skills:
+  payments:
+    path: domain/payments.md
+    aliases: [payment, billing]
+  saga:
+    path: patterns/saga-pattern.md
+    aliases: [saga-pattern]
+  security-owasp:
+    path: domain/security-owasp.md
+    aliases: [owasp, security]
+```
+
+Custom skill indexes are merged with core skills. Custom skills take precedence on name conflicts.
+
+---
+
+## Maintaining the Skill Index
+
+### Adding New Skills
+
+When you create a new custom skill file:
+
+1. **Add entry to `skill-index.yaml`**:
+   ```yaml
+   my-new-skill:
+     path: domain/my-new-skill.md
+     aliases: [alias1, alias2]
+   ```
+
+2. **Follow naming conventions**:
+   - Use lowercase with hyphens: `payment-processing`
+   - Keep IDs concise but descriptive
+   - Avoid abbreviations unless standard (e.g., `jwt` is OK)
+   - Start with a letter, use only alphanumeric, hyphens, or underscores
+
+3. **Test resolution**:
+   ```bash
+   $SDLC_AGENTS/agents/tools/skills/resolve-skills.sh my-new-skill
+   ```
+   
+   Expected output:
+   ```
+   /path/to/agent-context/extensions/skills/domain/my-new-skill.md
+   ```
+
+### Deprecating Skills
+
+When phasing out an old skill:
+
+1. **Add deprecation notice to the skill file**:
+   ```markdown
+   > [!WARNING]
+   > **DEPRECATED**: This skill is deprecated. Use `#new-skill` instead.
+   ```
+
+2. **Keep entry in index for backward compatibility**:
+   ```yaml
+   old-skill:
+     path: domain/old-skill.md
+     aliases: [legacy-name]
+     # Note: Deprecated, use new-skill instead
+   ```
+
+3. **After 2-3 releases, archive**:
+   - Move file to `archive/deprecated/old-skill.md`
+   - Remove from `skill-index.yaml`
+   - Document in project changelog
+
+### Best Practices
+
+- **Update both file and index**: When renaming a skill file, update the path in `skill-index.yaml`
+- **Use aliases for transitions**: Add the old name as an alias when renaming
+- **Test after changes**: Always run `resolve-skills.sh` to verify your changes
+- **Document in README**: Update this README when adding notable new skills
+
+---
+
 ## Skill Format
 
 Each skill file should include:

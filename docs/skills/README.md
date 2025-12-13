@@ -37,26 +37,90 @@ We use progressive disclosure with **clear responsibility separation**:
 
 ### Level 1: Table of Contents (This File)
 
-Agent reads this file to understand what skills exist.
+**Planning Agent** reads this file to understand available skills.
 **Context cost: ~100 tokens**
 
 ### Level 2: Stack Detection (Planning Agent Only)
 
 **Only the Planning Agent** reads `stack-detection.md` to identify the technology stack.
-Downstream agents (Coding, Code Review, Architect) receive stack context in the Solution Plan and Context file.
+Other agents (Coding, Code Review, Architect) receive stack context embedded in feature.md and task files.
 **Context cost: ~200 tokens** (one-time, during planning)
 
-### Level 3: Skill File
+### Level 3: Skill File (Planning Agent Only)
 
-Agent loads only the detected stack's skill file (e.g., `stacks/java.md`).
+**Planning Agent** loads the detected stack's skill file (e.g., `stacks/java.md`) and **embeds** relevant content into feature.md and task files.
+Other agents consume the *embedded* content, not the raw skill files.
 **Context cost: ~400 tokens**
 
 ### Level 4: Tool Execution
 
-Agent uses tools from `agents/tools/` - only reading tool description when needed.
+Agents use tools from `agents/tools/` - only reading tool description when needed.
 **Context cost: ~100 tokens per tool**
 
-**Total for typical task: ~800 tokens** (vs. ~4000+ if loading everything)
+**Total for typical planning session: ~800 tokens** (vs. ~4000+ if loading everything)
+
+---
+
+## Explicit Skill Selection
+
+Users can explicitly control which skills are loaded using directives in their prompt.
+
+### Syntax
+
+| Directive | Meaning | Example |
+|-----------|---------|---------|
+| `#SkillName` | Force-load skill | `#TDD` |
+| `#Skill1,Skill2` | Force-load multiple | `#TDD,Security` |
+| `!SkillName` | Force-exclude skill | `!Kafka` |
+| `#only:X,Y` | Load ONLY these skills | `#only:TDD` |
+
+### Examples
+
+```
+# Auto-detect stack + add TDD skill
+"Implement user authentication #TDD"
+
+# Auto-detect but exclude Kafka
+"Add event processing !Kafka"
+
+# Combine includes and excludes  
+"Implement payment flow #Saga,Security !Legacy"
+
+# Disable auto-detection, use only TDD
+"Write tests for UserService #only:TDD"
+```
+
+### How It Works
+
+1. User includes directives in their prompt
+2. `parse-skill-directives.sh` extracts includes/excludes as JSON
+3. `resolve-skills.sh` maps skill names to file paths
+4. Agent loads resolved skill files
+
+For a detailed end-to-end workflow showing all phases from user input to agent consumption, see [Skill Directive Workflow](SKILL_DIRECTIVE_WORKFLOW.md).
+
+### Skill Names
+
+Skill names are case-insensitive and support aliases. See `skills/skill-index.yaml` for the full mapping.
+
+| Canonical Name | Aliases |
+|---------------|---------|
+| `java` | `kotlin`, `jvm`, `maven`, `gradle` |
+| `typescript` | `ts`, `javascript`, `js`, `node` |
+| `hexagonal` | `ports-and-adapters`, `clean-architecture` |
+
+---
+
+## Default Project Skills
+
+These skills are auto-included and scaffolded by the Initializer Agent into `extensions/skills/domain/`:
+
+| Skill | Purpose | Directive |
+|-------|---------|-----------|
+| `project-domains` | Business domain invariants, heuristics | `#domains` |
+| `project-risks` | Risk patterns & mitigations | `#risks` |
+
+To exclude from a task: `!domains` or `!risks`
 
 ---
 
@@ -212,19 +276,23 @@ find src/main -name "*.java" -o -name "*.kt" | sed 's|/[^/]*$||' | sort | uniq -
 
 Agents should:
 
-### Planning Agent (Context Provider)
+### Bootstrap Agent (Initializer)
+- Does **NOT** load skills
+- Creates directory structure only
+
+### Context Producer (Planning Agent)
 1. Read this README (table of contents)
 2. Read `stack-detection.md` (to detect stack)
 3. Read the detected stack's skill file
-4. Document stack, skill reference, and validation commands in Solution Plan and Context file
+4. Read custom skills from `extensions/skills/` if relevant
+5. **Embed** relevant skill content into feature.md and task files
 
-### Downstream Agents (Context Consumers)
-1. **First**: Read the context file (`<project-root>/agent-context/context/<issue-id>.context.md`)
-2. **Then**: Read only the skill file referenced in the context
-3. **Then**: Read tool description only when ready to execute
+### Context Consumers (All Other Agents)
+1. **First**: Read the feature.md and/or task files with embedded context
+2. **Then**: Read tool descriptions only when ready to execute
+3. **Never**: Load skills directly (only Planning Agent does this)
 4. **Never**: Read `stack-detection.md` (that's Planning Agent's job)
 5. **Never**: Read all stack skills at once
-6. **Never**: Read all tool implementations
 
 This keeps context usage minimal and focused, with clear responsibility separation.
 

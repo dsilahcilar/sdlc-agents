@@ -1,0 +1,17 @@
+# Project Skills Index
+# Maps project-specific skills for local skill resolution
+# These skills are scaffolded by the Initializer Agent
+
+skills:
+  # ============================================
+  # Project-specific domain skills (auto-included)
+  # ============================================
+  project-domains:
+    path: domain/project-domains.md
+    aliases: [domains, domain-heuristics]
+    auto_include: true
+  
+  project-risks:
+    path: domain/project-risks.md
+    aliases: [risks, risk-patterns]
+    auto_include: true
