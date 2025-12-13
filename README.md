@@ -1,9 +1,13 @@
 # SDLC Agents
 
-** Build software that stays maintainable.**
+**Build software that stays maintainable.**
 
-[![GitHub Copilot](https://img.shields.io/badge/GitHub%20Copilot-Agent%20Mode-blue?logo=github)](https://github.com/features/copilot)
 [![Multi-Agent](https://img.shields.io/badge/Architecture-Multi--Agent-green)](./docs/AGENT_ARCHITECTURE.md)
+[![GitHub Copilot](https://img.shields.io/badge/GitHub%20Copilot-✓-blue?logo=github)](./tools/github-copilot/README.md)
+[![Claude](https://img.shields.io/badge/Claude-✓-orange)](./tools/claude/README.md)
+[![Cursor](https://img.shields.io/badge/Cursor-✓-purple)](./tools/cursor/README.md)
+[![Windsurf](https://img.shields.io/badge/Windsurf-✓-teal)](./tools/windsurf/README.md)
+[![Aider](https://img.shields.io/badge/Aider-✓-yellow)](./tools/aider/README.md)
 
 ---
 
@@ -53,12 +57,24 @@ Each phase has a **specialized agent** that does one thing well:
 
 ## Quick Start
 
-**1.** Copy `/agents` directory in your project folder
+**1.** Clone or download SDLC Agents:
+```bash
+git clone https://github.com/dsilahcilar/sdlc-agents.git
+```
 
-**2.** Execute `/initializer-agent`  
-*The agent detects your stack, copies templates, and runs a health check*
+**2.** Run the installer for your AI tool:
+```bash
+./install.sh --ghcp --target /path/to/your/project    # GitHub Copilot
+./install.sh --claude --target /path/to/your/project  # Claude Code
+./install.sh --cursor --target /path/to/your/project  # Cursor
+./install.sh --all --target /path/to/your/project     # All tools
+```
 
-**3.** You're ready. Start with the **Planning Agent** for your first task.
+**3.** Run the **Initializer Agent** to set up your project structure.
+
+**4.** Start with the **Planning Agent** for your first task.
+
+See [Multi-Assistant Support](./docs/MULTI_ASSISTANT_SUPPORT.md) for detailed setup guides.
 
 ---
 
@@ -104,6 +120,7 @@ See [`extensions/README.md`](./agents/templates/extensions/README.md) for detail
 
 | 📄 Document | Description |
 |------------|-------------|
+| [Multi-Assistant Support](./docs/MULTI_ASSISTANT_SUPPORT.md) | Setup for Copilot, Claude, Cursor, Windsurf, Aider |
 | [Agent Architecture](./docs/AGENT_ARCHITECTURE.md) | System design, file lifecycle, data flow |
 | [Agent Responsibilities](./docs/AGENT_RESPONSIBILITY_ALLOCATION.md) | Context providers vs. consumers |
 | [Individual Agents](./docs/agents/README.md) | Detailed specs for each agent |
@@ -112,5 +129,5 @@ See [`extensions/README.md`](./agents/templates/extensions/README.md) for detail
 ---
 
 <p align="center">
-  <i>Designed for GitHub Copilot Agent Mode</i>
+  <i>Works with GitHub Copilot, Claude, Cursor, Windsurf, and Aider</i>
 </p>

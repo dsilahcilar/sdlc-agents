@@ -1,0 +1,42 @@
+# SDLC Agents
+
+This project uses SDLC Agents for structured, architecture-aware development.
+
+## Available Agents
+
+| Agent | File | Purpose |
+|-------|------|---------|
+| Planning | `agents/planning-agent.md` | Creates structured, implementable plans |
+| Coding | `agents/coding-agent.md` | Implements code following approved plans |
+| Architect | `agents/architect-agent.md` | Validates architectural decisions |
+| Code Review | `agents/codereview-agent.md` | Reviews code for quality and debt |
+| Retro | `agents/retro-agent.md` | Extracts lessons learned |
+| Curator | `agents/curator-agent.md` | Maintains knowledge quality |
+| Initializer | `agents/initializer-agent.md` | Sets up project structure |
+
+## How to Use
+
+1. **First time?** Ask Claude to run the initializer agent
+2. **New feature?** Use the planning agent to create a structured plan
+3. **Implementing?** Use the coding agent with task files
+4. **Done?** Use retro agent to capture lessons learned
+
+## Key Directories
+
+- `agents/` — Agent instructions and shared resources
+- `agent-context/` — Project-specific context (created by initializer)
+- `agent-context/features/` — Feature plans and task files
+- `agent-context/memory/` — Learning playbook
+
+## Quick Reference
+
+```
+# Start a new feature
+Read agents/planning-agent.md and create a plan for [description]
+
+# Implement a task
+Read agents/coding-agent.md and implement task T01 in [feature]
+
+# Review changes
+Read agents/codereview-agent.md and review the recent changes
+```

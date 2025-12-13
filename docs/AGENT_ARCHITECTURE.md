@@ -1,6 +1,6 @@
 # SDLC Agent Architecture Documentation
 
-> A comprehensive guide to the multi-agent system for continual learning SDLC around GitHub Copilot
+> A comprehensive guide to the multi-agent system for continual learning SDLC
 
 **Last Updated:** 2024-12-08
 

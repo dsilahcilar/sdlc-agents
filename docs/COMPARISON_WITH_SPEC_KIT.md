@@ -19,7 +19,7 @@ This document provides a detailed comparison between **SDLC Agents** and **Spec-
 | **Context Optimization** | ✅ Progressive disclosure | ⚠️ Template-based |
 | **Extensibility** | ✅ Per-agent extension folders | ⚠️ CLI options + templates |
 | **Tool Type** | Markdown instructions | CLI + slash commands |
-| **AI Support** | GitHub Copilot | 15+ agents |
+| **AI Support** | 5 tools (Copilot, Claude, Cursor, Windsurf, Aider) | 15+ agents |
 | **Setup** | Initializer Agent | `specify init` CLI |
 | **Escalation Protocol** | ✅ Defined between agents | ❌ None |
 | **Code Review** | ✅ Dedicated agent | ❌ Manual |
@@ -199,7 +199,7 @@ These frameworks are **not mutually exclusive**. You could:
 - ✅ Provides automated architectural enforcement
 - ✅ Built for long-term maintainability
 - ⚠️ Requires more upfront setup and discipline
-- ⚠️ Optimized for GitHub Copilot
+- ✅ Supports 5 AI tools (Copilot, Claude, Cursor, Windsurf, Aider)
 
 **Spec-Kit** is more accessible and flexible:
 - ✅ Focuses on the specification-to-implementation path
