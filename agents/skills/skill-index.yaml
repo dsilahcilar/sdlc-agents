@@ -67,3 +67,8 @@ skills:
     path: patterns/microservices.md
     aliases: [micro]
     auto_detect: false
+  
+  spec-driven:
+    path: patterns/spec-driven
+    aliases: [spec, specification-first, sdd]
+    auto_detect: false

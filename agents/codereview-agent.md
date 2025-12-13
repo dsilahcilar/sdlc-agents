@@ -33,6 +33,20 @@ If stack context is missing, STOP and escalate.
 
 ---
 
+## Skills
+
+If the feature file includes pattern skills (e.g., `spec-driven`), load your role-specific content:
+
+```bash
+# Load skill content for Code Review Agent
+SKILL_FILES=$($SDLC_AGENTS/tools/skills/resolve-skills.sh --agent review <skill-name>)
+# → Returns _index.md (core concepts) + review.md (your verification instructions)
+```
+
+**Only read your portion.** Multi-file skills contain role-specific instructions. The `--agent review` flag ensures you only load what's relevant to code review.
+
+---
+
 ## Review Checklist
 
 ### 1. Task Alignment

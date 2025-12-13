@@ -6,6 +6,9 @@ module: <primary-module>  <!-- REQUIRED: Main module/package this affects -->
 risk_level: low  <!-- ENUM: low | medium | high -->
 skill_reference: <path-to-stack-skill>  <!-- REQUIRED: Primary stack skill, e.g., skills/stacks/kotlin.md -->
 custom_skills: []  <!-- OPTIONAL: List of custom skill paths, e.g., ['extensions/skills/domain/payment.md'] -->
+spec_driven: false  <!-- OPTIONAL: Set to true if using #spec-driven pattern -->
+spec_status: null  <!-- OPTIONAL: ENUM: draft | review | approved | implemented (only if spec_driven: true) -->
+spec_path: null  <!-- OPTIONAL: Path to specification file (only if spec_driven: true) -->
 created_at: <ISO8601>  <!-- REQUIRED: Use current timestamp -->
 updated_at: <ISO8601>  <!-- REQUIRED: Use current timestamp -->
 ---
@@ -16,6 +19,21 @@ updated_at: <ISO8601>  <!-- REQUIRED: Use current timestamp -->
 
 <!-- 2-3 sentences describing what this feature accomplishes and its business value -->
 <Replace with concrete description>
+
+## Specification
+
+<!-- OPTIONAL: Include this section only if spec_driven: true in frontmatter -->
+<!-- Delete this entire section if not using spec-driven workflow -->
+
+**Spec Status:** `<draft | review | approved | implemented>`
+**Spec Path:** `specs/<feature-id>-spec.md`
+
+### Spec Checklist
+- [ ] Requirements documented with acceptance criteria
+- [ ] Edge cases and error handling defined
+- [ ] API contracts specified (if applicable)
+- [ ] Data models documented
+- [ ] Spec reviewed and approved
 
 ## Acceptance Criteria
 

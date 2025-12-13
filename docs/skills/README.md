@@ -88,6 +88,12 @@ Users can explicitly control which skills are loaded using directives in their p
 
 # Disable auto-detection, use only TDD
 "Write tests for UserService #only:TDD"
+
+# Use spec-driven development pattern
+"Implement new API endpoint for order processing #spec-driven"
+
+# Spec-driven with stack and other patterns
+"Add payment integration #java #spec-driven #TDD"
 ```
 
 ### How It Works
@@ -145,7 +151,13 @@ skills/
     ├── layered.md         # Layered architecture
     ├── hexagonal.md       # Hexagonal/Ports & Adapters
     ├── modular-monolith.md
-    └── microservices.md
+    ├── microservices.md
+    └── spec-driven/       # Multi-file skill (agent-role based)
+        ├── _index.md      # Core concepts (always loaded)
+        ├── planning.md    # Planning Agent specific
+        ├── architect.md   # Architect Agent specific
+        ├── coding.md      # Coding Agent specific
+        └── review.md      # Code Review Agent specific
 
 tools/                     # Executable tools (Level 4)
 ├── README.md              # Tool registry
@@ -155,6 +167,39 @@ tools/                     # Executable tools (Level 4)
     ├── java/
     └── ts/
 ```
+
+### Multi-File Skills
+
+Some skills contain agent-role-specific instructions. Instead of a single `.md` file, they use a **directory structure**:
+
+| File | Purpose |
+|------|---------|
+| `_index.md` | Core concepts shared across all agents |
+| `planning.md` | Planning Agent specific instructions |
+| `architect.md` | Architect Agent validation logic |
+| `coding.md` | Coding Agent implementation rules |
+| `review.md` | Code Review Agent verification |
+
+**Loading with agent role:**
+```bash
+# Load only what Planning Agent needs
+resolve-skills.sh --agent planning spec-driven
+# → _index.md + planning.md
+```
+
+This enables **progressive disclosure** — agents only receive the instructions relevant to their role.
+
+### When to Use Multi-File Skills
+
+Use **multi-file skills** when:
+- Different agents need different instructions (e.g., planning vs. coding vs. review)
+- Skill has distinct phases (spec → validate → implement → review)
+- Content would exceed ~100 lines in a single file
+
+Use **single-file skills** when:
+- All agents need the same information
+- Skill is stack-specific (Java, TypeScript, etc.)
+- Content is concise (<100 lines)
 
 ---
 

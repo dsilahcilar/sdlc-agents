@@ -55,10 +55,14 @@ DIRECTIVES=$($SDLC_AGENTS/tools/skills/parse-skill-directives.sh "$USER_PROMPT")
 
 **Resolve skill names to paths:**
 ```bash
-SKILL_PATHS=$($SDLC_AGENTS/tools/skills/resolve-skills.sh java tdd)
-# → /path/to/skills/stacks/java.md
-# → WARNING: Skill 'tdd' not found (if no custom skill exists)
+# Load skill content for Planning Agent
+SKILL_PATHS=$($SDLC_AGENTS/tools/skills/resolve-skills.sh --agent planning java spec-driven)
+# → /path/to/skills/stacks/java.md (single-file skill)
+# → /path/to/skills/patterns/spec-driven/_index.md (core concepts)
+# → /path/to/skills/patterns/spec-driven/planning.md (your instructions)
 ```
+
+The `--agent planning` flag ensures you only load your relevant portion for multi-file skills.
 
 **Document in feature file** (Section 1.1):
 ```markdown
