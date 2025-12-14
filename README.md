@@ -34,6 +34,8 @@ LLMs write code fast—but they also generate **hidden costs**:
 Planning → Architect → Coding → Code Review → Retro
 ```
 
+> 💡 **Token Efficiency**: By loading only relevant context per task, SDLC Agents significantly reduce token consumption while improving model focus and output quality.
+
 Each phase has a **specialized agent** that does one thing well:
 
 | Agent | What It Does |
@@ -59,14 +61,14 @@ Each phase has a **specialized agent** that does one thing well:
 
 What makes SDLC Agents different from other AI coding assistants:
 
-| Capability | What It Means |
-|------------|---------------|
-| 🎯 **Progressive Disclosure** | Agents load only contextually relevant knowledge—no bloated prompts |
-| 🧠 **Self-Learning** | Retro agent captures lessons; knowledge accumulates across tasks |
-| 🔌 **Extension Support** | Add custom skills without modifying core agent files |
-| ⚡ **Dynamic Skill Selection** | Use `#SkillName` to include, `!SkillName` to exclude skills |
-| 🏗️ **Architecture-First** | Structure is validated before implementation begins |
-| 🤝 **Multi-Agent Orchestration** | Specialized agents with clear handoffs and responsibilities |
+| Capability | What It Means | Token Impact |
+|------------|---------------|---------------|
+| 🎯 **Progressive Disclosure** | Agents load only contextually relevant knowledge—no bloated prompts | **↓ 60-80% fewer tokens** vs. full-context |
+| 🧠 **Self-Learning** | Retro agent captures lessons; knowledge accumulates across tasks | Reuses learnings without re-explaining |
+| 🔌 **Extension Support** | Add custom skills without modifying core agent files | Load extensions only when relevant |
+| ⚡ **Dynamic Skill Selection** | Use `#SkillName` to include, `!SkillName` to exclude skills | **On-demand loading** saves tokens |
+| 🏗️ **Architecture-First** | Structure is validated before implementation begins | Prevents costly rework iterations |
+| 🤝 **Multi-Agent Orchestration** | Specialized agents with clear handoffs and responsibilities | Each agent loads minimal context |
 
 ### How Skills Work
 
