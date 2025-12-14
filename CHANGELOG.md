@@ -10,6 +10,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **GitHub Copilot Agent Support**: Proper support for custom agents in GitHub Copilot
+  - Creates `.github/agents/*.agent.md` files for each agent
+  - Each agent file has YAML frontmatter for GitHub Copilot discovery
+  - Agents are accessible via VS Code UI agent picker
+  - Automatic `.gitignore` update to exclude `.agents/` directory
 - **Multi-Assistant Support**: SDLC Agents now works with 5 AI coding assistants
   - GitHub Copilot
   - Claude Code
@@ -30,6 +35,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- **GitHub Copilot installation structure**: 
+  - Now creates `.github/agents/` directory with individual `.agent.md` files
+  - Uses `.agents/` (hidden directory) instead of `agents/` for symlink
+  - Automatically updates `.gitignore` to exclude `.agents/`
+  - Removed `copilot-instructions.md` (not needed)
 - **Agent files are now tool-agnostic**: Removed YAML frontmatter from all `agents/*.md` files
 - **Updated documentation**: `AGENT_ARCHITECTURE.md` and `COMPARISON_WITH_SPEC_KIT.md` updated to reflect multi-tool support
 
@@ -37,14 +47,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 If you were using SDLC Agents with GitHub Copilot before:
 
-1. **Re-run the installer:**
+1. **Re-run the installer** to get the new `.github/agents/` structure:
    ```bash
    ./install.sh --ghcp --target /path/to/your/project
    ```
 
-2. **Your existing `agents/` content is preserved** — the installer only updates configuration files
+2. **Your existing content is preserved** — the installer only updates configuration files
 
-3. **Optional**: Install support for additional tools with `--all` or specific tool flags
+3. **New usage**: In VS Code, open GitHub Copilot Chat and use the agent picker:
+   - Click the **@ icon** in the chat input
+   - Select an agent from the dropdown (e.g., planning-agent, coding-agent)
+   - Type your request
+
+4. **Clean up old structure** (optional):
+   - Remove old `agents/` symlink if it exists: `rm agents`
+   - The new `.agents/` directory is hidden and excluded from git
+
+5. **Optional**: Install support for additional tools with `--all` or specific tool flags
 
 ---
 

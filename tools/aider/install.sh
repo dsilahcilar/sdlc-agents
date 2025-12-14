@@ -69,19 +69,19 @@ CONFIG_FILE="$TARGET/.aider.conf.yml"
 if [ -f "$CONFIG_FILE" ]; then
     log_warn "File exists, skipping: $CONFIG_FILE"
 else
-    cat > "$CONFIG_FILE" << 'EOF'
+    cat > "$CONFIG_FILE" <<'EOF'
 # SDLC Agents Configuration for Aider
 # These files are loaded as read-only context
 
 read:
   # Core agents
-  - agents/planning-agent.md
-  - agents/coding-agent.md
-  - agents/architect-agent.md
-  - agents/codereview-agent.md
-  - agents/retro-agent.md
-  - agents/curator-agent.md
-  - agents/initializer-agent.md
+  - .agents/planning-agent.md
+  - .agents/coding-agent.md
+  - .agents/architect-agent.md
+  - .agents/codereview-agent.md
+  - .agents/retro-agent.md
+  - .agents/curator-agent.md
+  - .agents/initializer-agent.md
 
 # Note: For large projects, you may want to comment out agents
 # you don't need to reduce context size. The planning and coding
@@ -90,10 +90,10 @@ EOF
     log_info "Created: $CONFIG_FILE"
 fi
 
-# Link or copy agents directory
-AGENTS_TARGET="$TARGET/agents"
+# Link or copy .agents directory (hidden)
+AGENTS_TARGET="$TARGET/.agents"
 if [ -e "$AGENTS_TARGET" ]; then
-    log_warn "Agents directory exists, skipping: $AGENTS_TARGET"
+    log_warn ".agents directory exists, skipping: $AGENTS_TARGET"
 else
     if [ "$COPY_MODE" = true ]; then
         cp -r "$SDLC_AGENTS/agents" "$AGENTS_TARGET"
@@ -104,8 +104,29 @@ else
     fi
 fi
 
+# Update .gitignore to exclude .agents directory
+GITIGNORE_FILE="$TARGET/.gitignore"
+if [ -f "$GITIGNORE_FILE" ]; then
+    if grep -q "^\.agents/?$" "$GITIGNORE_FILE" 2>/dev/null; then
+        log_info ".gitignore already contains .agents entry"
+    else
+        echo "" >> "$GITIGNORE_FILE"
+        echo "# SDLC Agents (symlinked directory)" >> "$GITIGNORE_FILE"
+        echo ".agents/" >> "$GITIGNORE_FILE"
+        log_info "Added .agents/ to .gitignore"
+    fi
+else
+    cat > "$GITIGNORE_FILE" <<'EOF'
+# SDLC Agents (symlinked directory)
+.agents/
+EOF
+    log_info "Created .gitignore with .agents/ entry"
+fi
+
 echo ""
 log_info "Aider setup complete!"
+echo ""
+echo "✓ Created/updated .gitignore to exclude .agents/"
 echo ""
 echo "Next steps:"
 echo "  1. Run: aider"

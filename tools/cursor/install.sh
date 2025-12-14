@@ -89,29 +89,29 @@ Reference these agent files for specialized workflows:
 
 | Agent | File | Purpose |
 |-------|------|---------|
-| Planning | @agents/planning-agent.md | Creates structured plans |
-| Coding | @agents/coding-agent.md | Implements changes |
-| Architect | @agents/architect-agent.md | Validates architecture |
-| Code Review | @agents/codereview-agent.md | Reviews for quality |
-| Retro | @agents/retro-agent.md | Captures lessons |
-| Initializer | @agents/initializer-agent.md | Sets up project |
+| Planning | @.agents/planning-agent.md | Creates structured plans |
+| Coding | @.agents/coding-agent.md | Implements changes |
+| Architect | @.agents/architect-agent.md | Validates architecture |
+| Code Review | @.agents/codereview-agent.md | Reviews for quality |
+| Retro | @.agents/retro-agent.md | Captures lessons |
+| Initializer | @.agents/initializer-agent.md | Sets up project |
 
 ## Workflow
 
-1. **Initialize**: Use @agents/initializer-agent.md for first-time setup
-2. **Plan**: Use @agents/planning-agent.md to create feature plans
-3. **Architect**: Have @agents/architect-agent.md review plans
-4. **Code**: Use @agents/coding-agent.md to implement tasks
-5. **Review**: Run @agents/codereview-agent.md on changes
-6. **Learn**: Use @agents/retro-agent.md to capture lessons
+1. **Initialize**: Use @.agents/initializer-agent.md for first-time setup
+2. **Plan**: Use @.agents/planning-agent.md to create feature plans
+3. **Architect**: Have @.agents/architect-agent.md review plans
+4. **Code**: Use @.agents/coding-agent.md to implement tasks
+5. **Review**: Run @.agents/codereview-agent.md on changes
+6. **Learn**: Use @.agents/retro-agent.md to capture lessons
 EOF
     log_info "Created: $RULES_FILE"
 fi
 
-# Link or copy agents directory
-AGENTS_TARGET="$TARGET/agents"
+# Link or copy .agents directory (hidden)
+AGENTS_TARGET="$TARGET/.agents"
 if [ -e "$AGENTS_TARGET" ]; then
-    log_warn "Agents directory exists, skipping: $AGENTS_TARGET"
+    log_warn ".agents directory exists, skipping: $AGENTS_TARGET"
 else
     if [ "$COPY_MODE" = true ]; then
         cp -r "$SDLC_AGENTS/agents" "$AGENTS_TARGET"
@@ -122,10 +122,31 @@ else
     fi
 fi
 
+# Update .gitignore to exclude .agents directory
+GITIGNORE_FILE="$TARGET/.gitignore"
+if [ -f "$GITIGNORE_FILE" ]; then
+    if grep -q "^\.agents/?$" "$GITIGNORE_FILE" 2>/dev/null; then
+        log_info ".gitignore already contains .agents entry"
+    else
+        echo "" >> "$GITIGNORE_FILE"
+        echo "# SDLC Agents (symlinked directory)" >> "$GITIGNORE_FILE"
+        echo ".agents/" >> "$GITIGNORE_FILE"
+        log_info "Added .agents/ to .gitignore"
+    fi
+else
+    cat > "$GITIGNORE_FILE" <<'EOF'
+# SDLC Agents (symlinked directory)
+.agents/
+EOF
+    log_info "Created .gitignore with .agents/ entry"
+fi
+
 echo ""
 log_info "Cursor setup complete!"
 echo ""
+echo "✓ Created/updated .gitignore to exclude .agents/"
+echo ""
 echo "Next steps:"
-echo "  1. Reference @agents/initializer-agent.md to set up"
-echo "  2. Use @agents/planning-agent.md to start planning"
+echo "  1. Reference @.agents/initializer-agent.md to set up"
+echo "  2. Use @.agents/planning-agent.md to start planning"
 echo ""

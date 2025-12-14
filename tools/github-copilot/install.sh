@@ -1,7 +1,7 @@
 #!/bin/sh
 #
 # GitHub Copilot Install Script
-# Creates .github/copilot-instructions.md and symlinks agents/
+# Creates .github/agents/*.agent.md files and symlinks .agents/
 #
 # Usage: ./install.sh --target /path/to/project [--copy]
 #
@@ -64,52 +64,71 @@ echo "  Mode:    $([ "$COPY_MODE" = true ] && echo 'copy' || echo 'symlink')"
 echo "========================================"
 echo ""
 
-# Create .github directory
-GITHUB_DIR="$TARGET/.github"
-mkdir -p "$GITHUB_DIR"
+# Create .github/agents directory
+AGENTS_DIR="$TARGET/.github/agents"
+mkdir -p "$AGENTS_DIR"
 
-# Create copilot-instructions.md
-INSTRUCTIONS_FILE="$GITHUB_DIR/copilot-instructions.md"
-if [ -f "$INSTRUCTIONS_FILE" ]; then
-    log_warn "File exists, skipping: $INSTRUCTIONS_FILE"
-else
-    cat > "$INSTRUCTIONS_FILE" << 'EOF'
-# SDLC Agents
+# Helper function to create agent file
+create_agent_file() {
+    local agent_name="$1"
+    local agent_title="$2"
+    local agent_desc="$3"
+    local agent_file="$AGENTS_DIR/${agent_name}.agent.md"
+    
+    if [ -f "$agent_file" ]; then
+        log_warn "File exists, skipping: $agent_file"
+        return
+    fi
+    
+    cat > "$agent_file" <<EOF
+---
+name: ${agent_name}
+description: ${agent_desc}
+---
 
-This project uses SDLC Agents for structured, architecture-aware development.
+# ${agent_title}
 
-## Available Agents
+This agent is part of the SDLC Agents system for structured, architecture-aware development.
 
-| Agent | Purpose |
-|-------|---------|
-| @planning-agent | Creates structured, implementable plans |
-| @coding-agent | Implements code following approved plans |
-| @architect-agent | Validates architectural decisions |
-| @codereview-agent | Reviews code for quality and debt |
-| @retro-agent | Extracts lessons learned |
-| @curator-agent | Maintains knowledge quality |
-| @initializer-agent | Sets up project structure |
+## Instructions
 
-## How to Use
+The complete instructions for this agent are located in:
+\`.agents/${agent_name}.md\`
 
-1. Start with the **Initializer Agent** to set up project structure
-2. Use **Planning Agent** to create feature plans
-3. Have **Architect Agent** review plans
-4. Use **Coding Agent** to implement tasks
-5. Run **Code Review Agent** on changes
-6. Use **Retro Agent** after completing features
+Please read and follow those instructions carefully.
 
-## Agent Files
+## Agent Context
 
-See `agents/` directory for detailed agent instructions.
+This agent operates within the SDLC Agents workflow:
+- **Input**: Receives context from previous agents or user requests
+- **Process**: Follows the workflow defined in \`.agents/${agent_name}.md\`
+- **Output**: Produces artifacts for downstream agents or final deliverables
+
+## Extensions
+
+Check for project-specific customizations:
+1. **Global rules**: \`agent-context/extensions/_all-agents/*.md\`
+2. **Agent-specific**: \`agent-context/extensions/${agent_name}/*.md\`
+
+Custom instructions take precedence over core behavior.
 EOF
-    log_info "Created: $INSTRUCTIONS_FILE"
-fi
+    
+    log_info "Created: $agent_file"
+}
 
-# Link or copy agents directory
-AGENTS_TARGET="$TARGET/agents"
+# Create individual agent files
+create_agent_file "planning-agent" "Planning Agent" "Transforms requests into structured, architecture-aware plans with isolated tasks"
+create_agent_file "coding-agent" "Coding Agent" "Implements ONE task at a time from a self-contained task file"
+create_agent_file "architect-agent" "Architect Agent" "Evaluates feature plans for structural integrity, modularity, and maintainability"
+create_agent_file "codereview-agent" "Code Review Agent" "Reviews code for quality, debt, and architectural violations"
+create_agent_file "retro-agent" "Retro Agent" "Extracts lessons learned from completed work"
+create_agent_file "curator-agent" "Curator Agent" "Maintains knowledge quality and prevents playbook bloat"
+create_agent_file "initializer-agent" "Initializer Agent" "Sets up project structure and discovers existing architecture"
+
+# Link or copy .agents directory (hidden)
+AGENTS_TARGET="$TARGET/.agents"
 if [ -e "$AGENTS_TARGET" ]; then
-    log_warn "Agents directory exists, skipping: $AGENTS_TARGET"
+    log_warn ".agents directory exists, skipping: $AGENTS_TARGET"
 else
     if [ "$COPY_MODE" = true ]; then
         cp -r "$SDLC_AGENTS/agents" "$AGENTS_TARGET"
@@ -120,10 +139,34 @@ else
     fi
 fi
 
+# Update .gitignore to exclude .agents directory
+GITIGNORE_FILE="$TARGET/.gitignore"
+if [ -f "$GITIGNORE_FILE" ]; then
+    if grep -q "^\.agents/?$" "$GITIGNORE_FILE" 2>/dev/null; then
+        log_info ".gitignore already contains .agents entry"
+    else
+        echo "" >> "$GITIGNORE_FILE"
+        echo "# SDLC Agents (symlinked directory)" >> "$GITIGNORE_FILE"
+        echo ".agents/" >> "$GITIGNORE_FILE"
+        log_info "Added .agents/ to .gitignore"
+    fi
+else
+    cat > "$GITIGNORE_FILE" <<'EOF'
+# SDLC Agents (symlinked directory)
+.agents/
+EOF
+    log_info "Created .gitignore with .agents/ entry"
+fi
+
 echo ""
 log_info "GitHub Copilot setup complete!"
 echo ""
+echo "✓ Created .github/agents/ with individual agent files"
+echo "✓ Created/updated .gitignore to exclude .agents/"
+echo "✓ Agents are accessible via VS Code UI agent picker"
+echo ""
 echo "Next steps:"
-echo "  1. Run the initializer agent: @initializer-agent"
-echo "  2. Start planning: @planning-agent"
+echo "  1. Open GitHub Copilot Chat in VS Code"
+echo "  2. Click the agent picker (@ icon) to select an agent"
+echo "  3. Start with initializer-agent to set up project structure"
 echo ""

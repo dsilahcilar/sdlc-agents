@@ -57,28 +57,35 @@ The install script:
 ### GitHub Copilot
 
 **Creates:**
-- `.github/copilot-instructions.md`
-- `agents/` → symlink to sdlc-agents/agents
+- `.github/agents/*.agent.md` — Individual agent definitions
+- `.agents/` → symlink to sdlc-agents/agents
+- `.gitignore` — Updated to exclude `.agents/`
 
 **Usage:**
-```
-@planning-agent Create a feature for user authentication
-```
+Open GitHub Copilot Chat in VS Code, click the agent picker (@ icon), and select an agent:
+- Select **planning-agent** → "Create a feature for user authentication"
+- Select **architect-agent** → "Review the feature plan in agent-context/features/FEAT-001/feature.md"
+- Select **coding-agent** → "Implement task T01 from FEAT-001"
 
 See [tools/github-copilot/README.md](../tools/github-copilot/README.md)
+
 
 ---
 
 ### Claude Code
 
 **Creates:**
-- `CLAUDE.md`
-- `.claude/settings.local.json`
-- `agents/` → symlink to sdlc-agents/agents
+- `.claude/agents/*.md` — Individual subagent definitions
+- `.agents/` → symlink to sdlc-agents/agents
+- `.gitignore` — Updated to exclude `.agents/`
 
 **Usage:**
+Use Claude Code's subagent system:
 ```
-Read agents/planning-agent.md and create a plan for user authentication
+/agents                    # View all available subagents
+Use the planning-agent to create a plan for user authentication
+Use the coding-agent to implement task T01
+Use the codereview-agent to review my changes
 ```
 
 See [tools/claude/README.md](../tools/claude/README.md)
@@ -229,9 +236,10 @@ Installing multiple tools is safe—each creates its own configuration files wit
 ### GitHub Copilot
 
 **Agents not discovered:**
-- Ensure `.github/copilot-instructions.md` exists
-- Check that agent files are in `agents/` directory
-- Restart VS Code / JetBrains
+- Ensure `.github/agents/*.agent.md` files exist
+- Verify `.agents/` directory symlink is valid: `ls -la .agents/`
+- Check `.agents/` is excluded in `.gitignore`
+- Restart VS Code
 
 ### Claude Code
 

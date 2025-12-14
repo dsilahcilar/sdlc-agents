@@ -1,7 +1,7 @@
 #!/bin/sh
 #
 # Claude Code Install Script
-# Creates CLAUDE.md and .claude/ configuration
+# Creates .claude/agents/ subagents
 #
 # Usage: ./install.sh --target /path/to/project [--copy]
 #
@@ -64,48 +64,48 @@ echo "  Mode:    $([ "$COPY_MODE" = true ] && echo 'copy' || echo 'symlink')"
 echo "========================================"
 echo ""
 
-# Create CLAUDE.md from template
-CLAUDE_FILE="$TARGET/CLAUDE.md"
-TEMPLATE_FILE="$SCRIPT_DIR/CLAUDE.md.template"
+# Create .claude/agents directory
+AGENTS_DIR="$TARGET/.claude/agents"
+mkdir -p "$AGENTS_DIR"
 
-if [ -f "$CLAUDE_FILE" ]; then
-    log_warn "File exists, skipping: $CLAUDE_FILE"
-else
-    cp "$TEMPLATE_FILE" "$CLAUDE_FILE"
-    log_info "Created: $CLAUDE_FILE"
-fi
+# Helper function to create subagent file
+create_subagent() {
+    local agent_name="$1"
+    local agent_desc="$2"
+    local agent_file="$AGENTS_DIR/${agent_name}.md"
+    
+    if [ -f "$agent_file" ]; then
+        log_warn "File exists, skipping: $agent_file"
+        return
+    fi
+    
+    cat > "$agent_file" <<EOF
+---
+name: ${agent_name}
+description: ${agent_desc}
+---
 
-# Create .claude directory
-CLAUDE_DIR="$TARGET/.claude"
-mkdir -p "$CLAUDE_DIR"
+Read and follow the instructions in \`.agents/${agent_name}.md\`.
 
-# Create settings.local.json if it doesn't exist
-SETTINGS_FILE="$CLAUDE_DIR/settings.local.json"
-if [ -f "$SETTINGS_FILE" ]; then
-    log_warn "File exists, skipping: $SETTINGS_FILE"
-else
-    cat > "$SETTINGS_FILE" << 'EOF'
-{
-  "permissions": {
-    "allow": [
-      "Bash(tree:*)",
-      "Bash(mkdir:*)",
-      "Bash(chmod:*)",
-      "Bash(ls:*)",
-      "Bash(find:*)",
-      "Bash(grep:*)"
-    ],
-    "deny": []
-  }
-}
+This agent is part of the SDLC Agents system for structured, architecture-aware development.
 EOF
-    log_info "Created: $SETTINGS_FILE"
-fi
+    
+    log_info "Created subagent: $agent_file"
+}
 
-# Link or copy agents directory
-AGENTS_TARGET="$TARGET/agents"
+# Create individual subagent files
+create_subagent "planning-agent" "Use to create structured, architecture-aware plans with isolated tasks"
+create_subagent "coding-agent" "Use to implement ONE task at a time from a self-contained task file"
+create_subagent "architect-agent" "Use to evaluate feature plans for structural integrity and maintainability"
+create_subagent "codereview-agent" "Use proactively after code changes to review for quality, debt, and violations"
+create_subagent "retro-agent" "Use after completing features to extract lessons learned"
+create_subagent "curator-agent" "Use to maintain knowledge quality and prevent playbook bloat"
+create_subagent "initializer-agent" "Use for first-time project setup to discover architecture"
+
+# Link or copy .agents directory (hidden)
+AGENTS_TARGET="$TARGET/.agents"
 if [ -e "$AGENTS_TARGET" ]; then
-    log_warn "Agents directory exists, skipping: $AGENTS_TARGET"
+    log_warn ".agents directory exists, skipping: $AGENTS_TARGET"
 else
     if [ "$COPY_MODE" = true ]; then
         cp -r "$SDLC_AGENTS/agents" "$AGENTS_TARGET"
@@ -116,10 +116,33 @@ else
     fi
 fi
 
+# Update .gitignore to exclude .agents directory
+GITIGNORE_FILE="$TARGET/.gitignore"
+if [ -f "$GITIGNORE_FILE" ]; then
+    if grep -q "^\.agents/?$" "$GITIGNORE_FILE" 2>/dev/null; then
+        log_info ".gitignore already contains .agents entry"
+    else
+        echo "" >> "$GITIGNORE_FILE"
+        echo "# SDLC Agents (symlinked directory)" >> "$GITIGNORE_FILE"
+        echo ".agents/" >> "$GITIGNORE_FILE"
+        log_info "Added .agents/ to .gitignore"
+    fi
+else
+    cat > "$GITIGNORE_FILE" <<'EOF'
+# SDLC Agents (symlinked directory)
+.agents/
+EOF
+    log_info "Created .gitignore with .agents/ entry"
+fi
+
 echo ""
 log_info "Claude Code setup complete!"
 echo ""
+echo "✓ Created .claude/agents/ with 7 subagents"
+echo "✓ Created/updated .gitignore to exclude .agents/"
+echo ""
 echo "Next steps:"
-echo "  1. Ask Claude to read agents/initializer-agent.md"
-echo "  2. Start planning with agents/planning-agent.md"
+echo "  1. Run: /agents to see all available subagents"
+echo "  2. Use: 'Use the initializer-agent to set up project structure'"
+echo "  3. Use: 'Use the planning-agent to create a plan for [feature]'"
 echo ""
