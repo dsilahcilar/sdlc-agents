@@ -58,8 +58,8 @@ The install script:
 
 **Creates:**
 - `.github/agents/*.agent.md` — Individual agent definitions
-- `.agents/` → symlink to sdlc-agents/agents
-- `.gitignore` — Updated to exclude `.agents/`
+- `.sdlc-agents/` → symlink to sdlc-agents/agents
+- `.gitignore` — Updated to exclude `.sdlc-agents/`
 
 **Usage:**
 Open GitHub Copilot Chat in VS Code, click the agent picker (@ icon), and select an agent:
@@ -76,8 +76,8 @@ See [tools/github-copilot/README.md](../tools/github-copilot/README.md)
 
 **Creates:**
 - `.claude/agents/*.md` — Individual subagent definitions
-- `.agents/` → symlink to sdlc-agents/agents
-- `.gitignore` — Updated to exclude `.agents/`
+- `.sdlc-agents/` → symlink to sdlc-agents/agents
+- `.gitignore` — Updated to exclude `.sdlc-agents/`
 
 **Usage:**
 Use Claude Code's subagent system:
@@ -237,8 +237,8 @@ Installing multiple tools is safe—each creates its own configuration files wit
 
 **Agents not discovered:**
 - Ensure `.github/agents/*.agent.md` files exist
-- Verify `.agents/` directory symlink is valid: `ls -la .agents/`
-- Check `.agents/` is excluded in `.gitignore`
+- Verify `.sdlc-agents/` directory symlink is valid: `ls -la .sdlc-agents/`
+- Check `.sdlc-agents/` is excluded in `.gitignore`
 - Restart VS Code
 
 ### Claude Code

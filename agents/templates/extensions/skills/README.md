@@ -92,7 +92,7 @@ When you create a new custom skill file:
 
 3. **Test resolution**:
    ```bash
-   $SDLC_AGENTS/agents/tools/skills/resolve-skills.sh my-new-skill
+   .sdlc-agents/tools/skills/resolve-skills.sh my-new-skill
    ```
    
    Expected output:

@@ -195,8 +195,5 @@ fi
 
 log_info "Installation complete!"
 echo ""
-echo "Next steps:"
-echo "  1. Open your project in your preferred AI coding tool"
-echo "  2. Run the initializer agent to set up project structure"
-echo "  3. Start with the planning agent for your first feature"
+echo "See the tool-specific 'Next steps' above for how to get started."
 echo ""

@@ -38,7 +38,7 @@ Parse explicit skill directives from the user request:
 
 ```bash
 # Parse directives from user prompt
-DIRECTIVES=$($SDLC_AGENTS/tools/skills/parse-skill-directives.sh "$USER_PROMPT")
+DIRECTIVES=$(.sdlc-agents/tools/skills/parse-skill-directives.sh "$USER_PROMPT")
 
 # Output: {"includes": ["tdd"], "excludes": ["kafka"], "only_mode": false}
 ```
@@ -56,10 +56,10 @@ DIRECTIVES=$($SDLC_AGENTS/tools/skills/parse-skill-directives.sh "$USER_PROMPT")
 **Resolve skill names to paths:**
 ```bash
 # Load skill content for Planning Agent
-SKILL_PATHS=$($SDLC_AGENTS/tools/skills/resolve-skills.sh --agent planning java spec-driven)
-# → /path/to/skills/stacks/java.md (single-file skill)
-# → /path/to/skills/patterns/spec-driven/_index.md (core concepts)
-# → /path/to/skills/patterns/spec-driven/planning.md (your instructions)
+SKILL_PATHS=$(.sdlc-agents/tools/skills/resolve-skills.sh --agent planning java spec-driven)
+# → .sdlc-agents/skills/stacks/java.md (single-file skill)
+# → .sdlc-agents/skills/patterns/spec-driven/_index.md (core concepts)
+# → .sdlc-agents/skills/patterns/spec-driven/planning.md (your instructions)
 ```
 
 The `--agent planning` flag ensures you only load your relevant portion for multi-file skills.
@@ -157,7 +157,7 @@ When filling templates, follow these rules:
 Always read the full template file before creating output:
 
 ```bash
-cat $SDLC_AGENTS/templates/features/tasks/task-template.md
+cat .sdlc-agents/templates/features/tasks/task-template.md
 ```
 
 ### 2. Replace ALL Placeholders

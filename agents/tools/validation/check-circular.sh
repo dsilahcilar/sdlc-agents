@@ -13,22 +13,10 @@ SCAN_PATH="${1:-src}"
 echo "[circular] Checking for circular dependencies..."
 echo "[circular] ============================================"
 
-# Detect stack
-detect_stack() {
-    if [ -f "pom.xml" ] || [ -f "build.gradle" ] || [ -f "build.gradle.kts" ]; then
-        echo "java"
-    elif [ -f "package.json" ]; then
-        echo "typescript"
-    elif [ -f "pyproject.toml" ] || [ -f "setup.py" ] || [ -f "requirements.txt" ]; then
-        echo "python"
-    elif [ -f "go.mod" ]; then
-        echo "go"
-    elif [ -f "Cargo.toml" ]; then
-        echo "rust"
-    else
-        echo "unknown"
-    fi
-}
+# Source shared stack detection utility
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+# shellcheck source=../../templates/harness/lib/stack-detection.sh
+. "$SCRIPT_DIR/../../templates/harness/lib/stack-detection.sh"
 
 STACK=$(detect_stack)
 echo "[circular] Stack detected: $STACK"

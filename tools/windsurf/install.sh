@@ -82,35 +82,35 @@ This project uses SDLC Agents for structured, architecture-aware development.
 
 | Agent | File | Purpose |
 |-------|------|---------|
-| Planning | `.agents/planning-agent.md` | Creates structured plans |
-| Coding | `.agents/coding-agent.md` | Implements changes |
-| Architect | `.agents/architect-agent.md` | Validates architecture |
-| Code Review | `.agents/codereview-agent.md` | Reviews for quality |
-| Retro | `.agents/retro-agent.md` | Captures lessons |
-| Initializer | `.agents/initializer-agent.md` | Sets up project |
+| Planning | `.sdlc-agents/planning-agent.md` | Creates structured plans |
+| Coding | `.sdlc-agents/coding-agent.md` | Implements changes |
+| Architect | `.sdlc-agents/architect-agent.md` | Validates architecture |
+| Code Review | `.sdlc-agents/codereview-agent.md` | Reviews for quality |
+| Retro | `.sdlc-agents/retro-agent.md` | Captures lessons |
+| Initializer | `.sdlc-agents/initializer-agent.md` | Sets up project |
 
 ## Workflow
 
-1. **Initialize**: Read and follow `.agents/initializer-agent.md` for first-time setup
-2. **Plan**: Use `.agents/planning-agent.md` to create feature plans
-3. **Architect**: Have `.agents/architect-agent.md` review plans
-4. **Code**: Follow `.agents/coding-agent.md` to implement tasks
-5. **Review**: Apply `.agents/codereview-agent.md` on changes
-6. **Learn**: Use `.agents/retro-agent.md` to capture lessons
+1. **Initialize**: Read and follow `.sdlc-agents/initializer-agent.md` for first-time setup
+2. **Plan**: Use `.sdlc-agents/planning-agent.md` to create feature plans
+3. **Architect**: Have `.sdlc-agents/architect-agent.md` review plans
+4. **Code**: Follow `.sdlc-agents/coding-agent.md` to implement tasks
+5. **Review**: Apply `.sdlc-agents/codereview-agent.md` on changes
+6. **Learn**: Use `.sdlc-agents/retro-agent.md` to capture lessons
 
 ## Usage
 
 ```
-Read .agents/planning-agent.md and create a plan for [feature description]
+Read .sdlc-agents/planning-agent.md and create a plan for [feature description]
 ```
 EOF
     log_info "Created: $RULES_FILE"
 fi
 
-# Link or copy .agents directory (hidden)
-AGENTS_TARGET="$TARGET/.agents"
+# Link or copy .sdlc-agents directory (hidden)
+AGENTS_TARGET="$TARGET/.sdlc-agents"
 if [ -e "$AGENTS_TARGET" ]; then
-    log_warn ".agents directory exists, skipping: $AGENTS_TARGET"
+    log_warn ".sdlc-agents directory exists, skipping: $AGENTS_TARGET"
 else
     if [ "$COPY_MODE" = true ]; then
         cp -r "$SDLC_AGENTS/agents" "$AGENTS_TARGET"
@@ -121,31 +121,34 @@ else
     fi
 fi
 
-# Update .gitignore to exclude .agents directory
+# Update .gitignore to exclude .sdlc-agents directory
 GITIGNORE_FILE="$TARGET/.gitignore"
 if [ -f "$GITIGNORE_FILE" ]; then
-    if grep -q "^\.agents/?$" "$GITIGNORE_FILE" 2>/dev/null; then
-        log_info ".gitignore already contains .agents entry"
+    if grep -q "^\.sdlc-agents/?$" "$GITIGNORE_FILE" 2>/dev/null; then
+        log_info ".gitignore already contains .sdlc-agents entry"
     else
         echo "" >> "$GITIGNORE_FILE"
         echo "# SDLC Agents (symlinked directory)" >> "$GITIGNORE_FILE"
-        echo ".agents/" >> "$GITIGNORE_FILE"
-        log_info "Added .agents/ to .gitignore"
+        echo ".sdlc-agents/" >> "$GITIGNORE_FILE"
+        log_info "Added .sdlc-agents/ to .gitignore"
     fi
 else
     cat > "$GITIGNORE_FILE" <<'EOF'
 # SDLC Agents (symlinked directory)
-.agents/
+.sdlc-agents/
 EOF
-    log_info "Created .gitignore with .agents/ entry"
+    log_info "Created .gitignore with .sdlc-agents/ entry"
 fi
 
 echo ""
 log_info "Windsurf setup complete!"
 echo ""
-echo "✓ Created/updated .gitignore to exclude .agents/"
+echo "✓ Created/updated .gitignore to exclude .sdlc-agents/"
 echo ""
 echo "Next steps:"
-echo "  1. Ask Cascade to read .agents/initializer-agent.md"
-echo "  2. Start planning with .agents/planning-agent.md"
+echo "  1. Open your project in Windsurf"
+echo "  2. Run the initializer agent by typing:"
+echo "     'Read and follow the instructions in .sdlc-agents/initializer-agent.md'"
+echo "  3. Start planning features with:"
+echo "     'Read and follow .sdlc-agents/planning-agent.md to create a plan for [feature description]'"
 echo ""

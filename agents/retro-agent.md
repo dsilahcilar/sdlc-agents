@@ -117,7 +117,7 @@ A good entry:
 - Has context (clear triggers)
 - Is actionable
 - Is verifiable via tests
-- Avoids contamination (see `$SDLC_AGENTS/agents/guardrails/contamination-guidelines.md`)
+- Avoids contamination (see `.sdlc-agents/guardrails/contamination-guidelines.md`)
 
 ---
 

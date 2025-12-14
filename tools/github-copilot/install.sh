@@ -1,7 +1,7 @@
 #!/bin/sh
 #
 # GitHub Copilot Install Script
-# Creates .github/agents/*.agent.md files and symlinks .agents/
+# Creates .github/agents/*.agent.md files and symlinks .sdlc-agents/
 #
 # Usage: ./install.sh --target /path/to/project [--copy]
 #
@@ -93,7 +93,7 @@ This agent is part of the SDLC Agents system for structured, architecture-aware 
 ## Instructions
 
 The complete instructions for this agent are located in:
-\`.agents/${agent_name}.md\`
+\`.sdlc-agents/${agent_name}.md\`
 
 Please read and follow those instructions carefully.
 
@@ -101,7 +101,7 @@ Please read and follow those instructions carefully.
 
 This agent operates within the SDLC Agents workflow:
 - **Input**: Receives context from previous agents or user requests
-- **Process**: Follows the workflow defined in \`.agents/${agent_name}.md\`
+- **Process**: Follows the workflow defined in \`.sdlc-agents/${agent_name}.md\`
 - **Output**: Produces artifacts for downstream agents or final deliverables
 
 ## Extensions
@@ -125,10 +125,10 @@ create_agent_file "retro-agent" "Retro Agent" "Extracts lessons learned from com
 create_agent_file "curator-agent" "Curator Agent" "Maintains knowledge quality and prevents playbook bloat"
 create_agent_file "initializer-agent" "Initializer Agent" "Sets up project structure and discovers existing architecture"
 
-# Link or copy .agents directory (hidden)
-AGENTS_TARGET="$TARGET/.agents"
+# Link or copy .sdlc-agents directory (hidden)
+AGENTS_TARGET="$TARGET/.sdlc-agents"
 if [ -e "$AGENTS_TARGET" ]; then
-    log_warn ".agents directory exists, skipping: $AGENTS_TARGET"
+    log_warn ".sdlc-agents directory exists, skipping: $AGENTS_TARGET"
 else
     if [ "$COPY_MODE" = true ]; then
         cp -r "$SDLC_AGENTS/agents" "$AGENTS_TARGET"
@@ -139,34 +139,35 @@ else
     fi
 fi
 
-# Update .gitignore to exclude .agents directory
+# Update .gitignore to exclude .sdlc-agents directory
 GITIGNORE_FILE="$TARGET/.gitignore"
 if [ -f "$GITIGNORE_FILE" ]; then
-    if grep -q "^\.agents/?$" "$GITIGNORE_FILE" 2>/dev/null; then
-        log_info ".gitignore already contains .agents entry"
+    if grep -q "^\.sdlc-agents/?$" "$GITIGNORE_FILE" 2>/dev/null; then
+        log_info ".gitignore already contains .sdlc-agents entry"
     else
         echo "" >> "$GITIGNORE_FILE"
         echo "# SDLC Agents (symlinked directory)" >> "$GITIGNORE_FILE"
-        echo ".agents/" >> "$GITIGNORE_FILE"
-        log_info "Added .agents/ to .gitignore"
+        echo ".sdlc-agents/" >> "$GITIGNORE_FILE"
+        log_info "Added .sdlc-agents/ to .gitignore"
     fi
 else
     cat > "$GITIGNORE_FILE" <<'EOF'
 # SDLC Agents (symlinked directory)
-.agents/
+.sdlc-agents/
 EOF
-    log_info "Created .gitignore with .agents/ entry"
+    log_info "Created .gitignore with .sdlc-agents/ entry"
 fi
 
 echo ""
 log_info "GitHub Copilot setup complete!"
 echo ""
 echo "✓ Created .github/agents/ with individual agent files"
-echo "✓ Created/updated .gitignore to exclude .agents/"
+echo "✓ Created/updated .gitignore to exclude .sdlc-agents/"
 echo "✓ Agents are accessible via VS Code UI agent picker"
 echo ""
 echo "Next steps:"
 echo "  1. Open GitHub Copilot Chat in VS Code"
-echo "  2. Click the agent picker (@ icon) to select an agent"
-echo "  3. Start with initializer-agent to set up project structure"
+echo "  2. Click the agent picker (@ icon) and select 'initializer-agent'"
+echo "  3. Type: 'Follow the instructions in the .sdlc-agents/initializer-agent.md file'"
+echo "  4. Start planning features with '@planning-agent create a plan for [feature description]'"
 echo ""

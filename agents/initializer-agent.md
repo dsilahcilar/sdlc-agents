@@ -10,9 +10,8 @@ Run these commands to set your working directories:
 
 ```sh
 PROJECT_ROOT=$(pwd)
-SDLC_AGENTS=$(dirname "$(find . -name "initializer-agent.md" 2>/dev/null | head -1)")
+SDLC_AGENTS=".sdlc-agents"
 ```
-
 Verify both paths are set correctly before proceeding.
 
 ---

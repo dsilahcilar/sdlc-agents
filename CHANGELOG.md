@@ -8,13 +8,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- **Renamed `.agents/` to `.sdlc-agents/`**: More specific directory name to avoid conflicts with other tools that might use the generic `.agents` directory name. All install scripts, agent files, and documentation updated to use `.sdlc-agents/` consistently.
+
 ### Added
 
 - **GitHub Copilot Agent Support**: Proper support for custom agents in GitHub Copilot
   - Creates `.github/agents/*.agent.md` files for each agent
   - Each agent file has YAML frontmatter for GitHub Copilot discovery
   - Agents are accessible via VS Code UI agent picker
-  - Automatic `.gitignore` update to exclude `.agents/` directory
+  - Automatic `.gitignore` update to exclude `.sdlc-agents/` directory
 - **Multi-Assistant Support**: SDLC Agents now works with 5 AI coding assistants
   - GitHub Copilot
   - Claude Code
@@ -37,11 +41,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - **GitHub Copilot installation structure**: 
   - Now creates `.github/agents/` directory with individual `.agent.md` files
-  - Uses `.agents/` (hidden directory) instead of `agents/` for symlink
-  - Automatically updates `.gitignore` to exclude `.agents/`
+  - Uses `.sdlc-agents/` (hidden directory) instead of `agents/` for symlink
+  - Automatically updates `.gitignore` to exclude `.sdlc-agents/`
   - Removed `copilot-instructions.md` (not needed)
 - **Agent files are now tool-agnostic**: Removed YAML frontmatter from all `agents/*.md` files
 - **Updated documentation**: `AGENT_ARCHITECTURE.md` and `COMPARISON_WITH_SPEC_KIT.md` updated to reflect multi-tool support
+- **Simplified agent path handling**: 
+  - All agent files now use hardcoded `.sdlc-agents/` path instead of dynamic `find` command
+  - Replaced complex `SDLC_AGENTS=$(dirname "$(find . -name "initializer-agent.md" ...)")` with simple `SDLC_AGENTS=".sdlc-agents"`
+  - Updated all `$SDLC_AGENTS` references in agent files to use `.sdlc-agents/` directly
+  - More reliable and faster path resolution across all providers
 
 ### Migration Guide
 
@@ -61,7 +70,7 @@ If you were using SDLC Agents with GitHub Copilot before:
 
 4. **Clean up old structure** (optional):
    - Remove old `agents/` symlink if it exists: `rm agents`
-   - The new `.agents/` directory is hidden and excluded from git
+   - The new `.sdlc-agents/` directory is hidden and excluded from git
 
 5. **Optional**: Install support for additional tools with `--all` or specific tool flags
 

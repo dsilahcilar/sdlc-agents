@@ -139,13 +139,23 @@ shift $((OPTIND - 1))
 
 # Validate arguments
 if [ $# -eq 1 ]; then
-    # Only project root provided, auto-discover sdlc-agents
+    # Only project root provided, use default .sdlc-agents location
     PROJECT_ROOT="$1"
-    log_info "Auto-discovering sdlc-agents directory..."
-    SDLC_AGENTS=$(dirname "$(find . -name "initializer-agent.md" 2>/dev/null | head -1)")
-    if [ -z "$SDLC_AGENTS" ]; then
-        log_error "Could not find sdlc-agents directory. Please provide it explicitly."
-        usage
+    # Check if .sdlc-agents exists (standard install location)
+    if [ -d "$PROJECT_ROOT/.sdlc-agents" ]; then
+        SDLC_AGENTS="$PROJECT_ROOT/.sdlc-agents"
+        log_info "Using agents from: $SDLC_AGENTS"
+    else
+        # Fallback: try to find agents directory (for running from source repo)
+        log_info "Auto-discovering sdlc-agents directory..."
+        FOUND_AGENT=$(find . -name "initializer-agent.md" 2>/dev/null | head -1)
+        if [ -n "$FOUND_AGENT" ]; then
+            SDLC_AGENTS=$(dirname "$FOUND_AGENT")
+        else
+            log_error "Could not find agents directory."
+            log_error "Expected .sdlc-agents/ in project root or run install script first."
+            usage
+        fi
     fi
 elif [ $# -eq 2 ]; then
     PROJECT_ROOT="$1"

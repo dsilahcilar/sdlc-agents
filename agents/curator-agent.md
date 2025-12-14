@@ -14,7 +14,7 @@ Run `pwd` to confirm your working directory before any operation.
 
 1. `<project-root>/agent-context/memory/learning-playbook.md`
 2. New entries from Retro Agent
-3. `$SDLC_AGENTS/agents/guardrails/contamination-guidelines.md`
+3. `.sdlc-agents/guardrails/contamination-guidelines.md`
 4. `<project-root>/agent-context/guardrails/*`
 5. `<project-root>/agent-context/harness/progress-log.md`
 
@@ -38,7 +38,7 @@ Run `pwd` to confirm your working directory before any operation.
 
 ### 3. Prevent Contamination
 
-Apply `$SDLC_AGENTS/agents/guardrails/contamination-guidelines.md`:
+Apply `.sdlc-agents/guardrails/contamination-guidelines.md`:
 - Reject one-off hacks
 - Reject confidential data
 - Reject contradictory entries without resolution

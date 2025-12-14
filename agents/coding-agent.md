@@ -51,11 +51,9 @@ If the task file includes a `skill_reference` in frontmatter, load your role-spe
 
 ```bash
 # Load skill content for Coding Agent
-SKILL_FILES=$($SDLC_AGENTS/tools/skills/resolve-skills.sh --agent coding <skill-name>)
+SKILL_FILES=$(.sdlc-agents/tools/skills/resolve-skills.sh --agent coding <skill-name>)
 # → Returns _index.md (core concepts) + coding.md (your instructions)
 ```
-
-**Only read your portion.** Multi-file skills contain role-specific instructions. The `--agent coding` flag ensures you only load what's relevant to implementation.
 
 ---
 

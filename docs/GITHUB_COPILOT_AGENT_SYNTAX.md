@@ -31,11 +31,11 @@ your-project/
 │       ├── retro-agent.agent.md
 │       ├── curator-agent.agent.md
 │       └── initializer-agent.agent.md
-├── .agents/                              # ← Hidden: Full agent instructions (symlinked)
+├── .sdlc-agents/                              # ← Hidden: Full agent instructions (symlinked)
 │   ├── planning-agent.md
 │   ├── coding-agent.md
 │   └── ...
-└── .gitignore                            # ← Updated to exclude .agents/
+└── .gitignore                            # ← Updated to exclude .sdlc-agents/
 ```
 
 ## Agent File Format
@@ -55,7 +55,7 @@ This agent is part of the SDLC Agents system for structured, architecture-aware 
 ## Instructions
 
 The complete instructions for this agent are located in:
-`.agents/planning-agent.md`
+`.sdlc-agents/planning-agent.md`
 
 Please read and follow those instructions carefully.
 
@@ -63,7 +63,7 @@ Please read and follow those instructions carefully.
 
 This agent operates within the SDLC Agents workflow:
 - **Input**: Receives context from previous agents or user requests
-- **Process**: Follows the workflow defined in `.agents/planning-agent.md`
+- **Process**: Follows the workflow defined in `.sdlc-agents/planning-agent.md`
 - **Output**: Produces artifacts for downstream agents or final deliverables
 
 ## Extensions
@@ -82,7 +82,7 @@ Custom instructions take precedence over core behavior.
 3. **Parses** YAML frontmatter to get agent name and description
 4. **Registers** each agent in the UI agent picker
 5. **Loads** the full markdown content when the agent is selected
-6. **References** the detailed instructions in `.agents/<agent-name>.md`
+6. **References** the detailed instructions in `.sdlc-agents/<agent-name>.md`
 
 ## Usage in VS Code
 
@@ -125,8 +125,8 @@ Custom instructions take precedence over core behavior.
 
 This creates:
 - `.github/agents/*.agent.md` (7 agent files)
-- `.agents/` symlink to sdlc-agents/agents (hidden directory)
-- Updates `.gitignore` to exclude `.agents/`
+- `.sdlc-agents/` symlink to sdlc-agents/agents (hidden directory)
+- Updates `.gitignore` to exclude `.sdlc-agents/`
 
 ### Existing Projects (Migration)
 
@@ -139,8 +139,8 @@ If you previously installed SDLC Agents, re-run the installer:
 The installer will:
 - ✅ Create `.github/agents/` directory
 - ✅ Create individual `.agent.md` files
-- ✅ Create `.agents/` symlink (hidden)
-- ✅ Update `.gitignore` to exclude `.agents/`
+- ✅ Create `.sdlc-agents/` symlink (hidden)
+- ✅ Update `.gitignore` to exclude `.sdlc-agents/`
 - ✅ Preserve your existing `agent-context/` directory
 
 ### Clean Up Old Installation
@@ -151,8 +151,8 @@ If you have an old `agents/` directory (not hidden):
 # Remove old symlink
 rm agents
 
-# The new .agents/ directory is hidden and git-ignored
-ls -la .agents/  # Verify it exists
+# The new .sdlc-agents/ directory is hidden and git-ignored
+ls -la .sdlc-agents/  # Verify it exists
 ```
 
 ## Technical Details
@@ -167,7 +167,7 @@ ls -la .agents/  # Verify it exists
 | `tools` | No | Specific tools the agent can access (defaults to all) |
 | `infer` | No | Whether Copilot can auto-invoke this agent (defaults to true) |
 
-### Why We Use `.agents/` (Hidden Directory)
+### Why We Use `.sdlc-agents/` (Hidden Directory)
 
 1. **Cleaner project root**: Hidden directory doesn't clutter the file explorer
 2. **Git-friendly**: Automatically excluded via `.gitignore`
@@ -177,7 +177,7 @@ ls -la .agents/  # Verify it exists
 ### Why We Use References
 
 Instead of duplicating the full agent instructions in each `.agent.md` file, we:
-1. **Keep the source of truth** in `.agents/<agent-name>.md`
+1. **Keep the source of truth** in `.sdlc-agents/<agent-name>.md`
 2. **Reference it** from `.github/agents/<agent-name>.agent.md`
 3. **Benefits**:
    - Single source of truth for agent instructions
@@ -202,13 +202,13 @@ Instead of duplicating the full agent instructions in each `.agent.md` file, we:
 **Symptoms**: Agent responds but doesn't follow SDLC workflow
 
 **Solutions**:
-1. Verify `.agents/` symlink is valid: `ls -la .agents/`
-2. Check that `.agents/<agent-name>.md` exists
-3. Ensure the reference path in `.agent.md` is correct (`.agents/` not `agents/`)
+1. Verify `.sdlc-agents/` symlink is valid: `ls -la .sdlc-agents/`
+2. Check that `.sdlc-agents/<agent-name>.md` exists
+3. Ensure the reference path in `.agent.md` is correct (`.sdlc-agents/` not `agents/`)
 
 ### Symlink Issues (Windows)
 
-**Symptoms**: `.agents/` directory not accessible
+**Symptoms**: `.sdlc-agents/` directory not accessible
 
 **Solutions**:
 Use copy mode instead of symlink:
@@ -218,14 +218,14 @@ Use copy mode instead of symlink:
 
 ### .gitignore Not Updated
 
-**Symptoms**: `.agents/` directory appears in git status
+**Symptoms**: `.sdlc-agents/` directory appears in git status
 
 **Solutions**:
 Manually add to `.gitignore`:
 ```bash
 echo "" >> .gitignore
 echo "# SDLC Agents (symlinked directory)" >> .gitignore
-echo ".agents/" >> .gitignore
+echo ".sdlc-agents/" >> .gitignore
 ```
 
 ## References
@@ -238,7 +238,7 @@ echo ".agents/" >> .gitignore
 
 - **2024-12-14**: 
   - Implemented proper custom agent support with `.github/agents/` directory structure
-  - Changed to `.agents/` (hidden directory) for agent instructions
+  - Changed to `.sdlc-agents/` (hidden directory) for agent instructions
   - Added automatic `.gitignore` updates
   - Removed `copilot-instructions.md` (not needed)
   - Clarified that agents are selected via UI picker, not `@syntax`

@@ -22,11 +22,14 @@ FAILURES=0
 # -----------------------------------------------------------------------------
 # Source shared stack detection utility
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+
 # shellcheck source=harness/lib/stack-detection.sh
 . "$SCRIPT_DIR/lib/stack-detection.sh"
 
-STACK=$(detect_stack)
+STACK=$(detect_stack "$PROJECT_ROOT")
 echo "[arch-tests] Detected stack: $STACK"
+echo "[arch-tests] Project root: $PROJECT_ROOT"
 
 # -----------------------------------------------------------------------------
 # Run stack-specific tests
@@ -34,12 +37,12 @@ echo "[arch-tests] Detected stack: $STACK"
 case "$STACK" in
     java)
         # See: skills/stacks/java.md
-        if grep -q "archunit" pom.xml build.gradle* 2>/dev/null; then
+        if grep -q "archunit" "$PROJECT_ROOT/pom.xml" "$PROJECT_ROOT"/build.gradle* 2>/dev/null; then
             echo "[arch-tests] Running ArchUnit..."
-            if [ -f "pom.xml" ]; then
-                mvn test -Dtest="*Arch*" -DfailIfNoTests=false || FAILURES=$((FAILURES + 1))
+            if [ -f "$PROJECT_ROOT/pom.xml" ]; then
+                (cd "$PROJECT_ROOT" && mvn test -Dtest="*Arch*" -DfailIfNoTests=false) || FAILURES=$((FAILURES + 1))
             else
-                ./gradlew test --tests "*Arch*" || FAILURES=$((FAILURES + 1))
+                (cd "$PROJECT_ROOT" && ./gradlew test --tests "*Arch*") || FAILURES=$((FAILURES + 1))
             fi
         else
             echo "[arch-tests] No ArchUnit config found"
@@ -48,19 +51,19 @@ case "$STACK" in
 
     typescript)
         # See: skills/stacks/typescript.md
-        if [ -f ".dependency-cruiser.js" ] || [ -f ".dependency-cruiser.cjs" ]; then
+        if [ -f "$PROJECT_ROOT/.dependency-cruiser.js" ] || [ -f "$PROJECT_ROOT/.dependency-cruiser.cjs" ]; then
             echo "[arch-tests] Running Dependency Cruiser..."
-            npx depcruise src --config || FAILURES=$((FAILURES + 1))
+            (cd "$PROJECT_ROOT" && npx depcruise src --config) || FAILURES=$((FAILURES + 1))
         fi
         echo "[arch-tests] Checking circular dependencies..."
-        npx --yes madge --circular --extensions ts,tsx,js,jsx src/ 2>/dev/null || FAILURES=$((FAILURES + 1))
+        (cd "$PROJECT_ROOT" && npx --yes madge --circular --extensions ts,tsx,js,jsx src/) 2>/dev/null || FAILURES=$((FAILURES + 1))
         ;;
 
     python)
         # See: skills/stacks/python.md
-        if [ -f ".importlinter" ] || grep -q "importlinter" pyproject.toml setup.cfg 2>/dev/null; then
+        if [ -f "$PROJECT_ROOT/.importlinter" ] || grep -q "importlinter" "$PROJECT_ROOT/pyproject.toml" "$PROJECT_ROOT/setup.cfg" 2>/dev/null; then
             echo "[arch-tests] Running Import Linter..."
-            lint-imports 2>/dev/null || python -m importlinter || FAILURES=$((FAILURES + 1))
+            (cd "$PROJECT_ROOT" && lint-imports 2>/dev/null || python -m importlinter) || FAILURES=$((FAILURES + 1))
         else
             echo "[arch-tests] No import-linter config found"
         fi
@@ -68,43 +71,43 @@ case "$STACK" in
 
     go)
         # See: skills/stacks/go.md
-        if [ -f ".go-arch-lint.yaml" ] || [ -f ".go-arch-lint.yml" ]; then
+        if [ -f "$PROJECT_ROOT/.go-arch-lint.yaml" ] || [ -f "$PROJECT_ROOT/.go-arch-lint.yml" ]; then
             echo "[arch-tests] Running go-arch-lint..."
-            go-arch-lint check || FAILURES=$((FAILURES + 1))
+            (cd "$PROJECT_ROOT" && go-arch-lint check) || FAILURES=$((FAILURES + 1))
         fi
         echo "[arch-tests] Checking import cycles..."
-        go build ./... 2>&1 | grep -q "import cycle" && FAILURES=$((FAILURES + 1))
+        (cd "$PROJECT_ROOT" && go build ./...) 2>&1 | grep -q "import cycle" && FAILURES=$((FAILURES + 1))
         ;;
 
     rust)
         # See: skills/stacks/rust.md
         echo "[arch-tests] Running cargo check..."
-        cargo check 2>&1 | grep -qi "cycle" && FAILURES=$((FAILURES + 1))
+        (cd "$PROJECT_ROOT" && cargo check) 2>&1 | grep -qi "cycle" && FAILURES=$((FAILURES + 1))
         echo "[arch-tests] Running clippy..."
-        cargo clippy -- -D warnings || FAILURES=$((FAILURES + 1))
+        (cd "$PROJECT_ROOT" && cargo clippy -- -D warnings) || FAILURES=$((FAILURES + 1))
         ;;
 
     dotnet)
         # See: skills/stacks/dotnet.md
-        if grep -r "ArchUnitNET" . --include="*.csproj" 2>/dev/null; then
+        if grep -r "ArchUnitNET" "$PROJECT_ROOT" --include="*.csproj" 2>/dev/null; then
             echo "[arch-tests] Running ArchUnitNET..."
-            dotnet test --filter "Category=Architecture" || FAILURES=$((FAILURES + 1))
+            (cd "$PROJECT_ROOT" && dotnet test --filter "Category=Architecture") || FAILURES=$((FAILURES + 1))
         fi
         ;;
 
     ruby)
         # See: skills/stacks/ruby.md
-        if [ -f "packwerk.yml" ]; then
+        if [ -f "$PROJECT_ROOT/packwerk.yml" ]; then
             echo "[arch-tests] Running Packwerk..."
-            bin/packwerk check 2>/dev/null || bundle exec packwerk check || FAILURES=$((FAILURES + 1))
+            (cd "$PROJECT_ROOT" && bin/packwerk check 2>/dev/null || bundle exec packwerk check) || FAILURES=$((FAILURES + 1))
         fi
         ;;
 
     php)
         # See: skills/stacks/php.md
-        if [ -f "deptrac.yaml" ] || [ -f "deptrac.yml" ]; then
+        if [ -f "$PROJECT_ROOT/deptrac.yaml" ] || [ -f "$PROJECT_ROOT/deptrac.yml" ]; then
             echo "[arch-tests] Running Deptrac..."
-            ./vendor/bin/deptrac analyse 2>/dev/null || deptrac analyse || FAILURES=$((FAILURES + 1))
+            (cd "$PROJECT_ROOT" && ./vendor/bin/deptrac analyse 2>/dev/null || deptrac analyse) || FAILURES=$((FAILURES + 1))
         fi
         ;;
 

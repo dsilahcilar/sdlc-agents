@@ -40,11 +40,9 @@ If the feature includes pattern skills (e.g., `spec-driven`), load your role-spe
 
 ```bash
 # Load skill content for Architect Agent
-SKILL_FILES=$($SDLC_AGENTS/tools/skills/resolve-skills.sh --agent architect <skill-name>)
+SKILL_FILES=$(.sdlc-agents/tools/skills/resolve-skills.sh --agent architect <skill-name>)
 # → Returns _index.md (core concepts) + architect.md (your validation instructions)
 ```
-
-**Only read your portion.** Multi-file skills contain role-specific instructions. The `--agent architect` flag ensures you only load what's relevant to architecture review.
 
 ---
 

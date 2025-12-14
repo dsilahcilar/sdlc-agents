@@ -22,8 +22,8 @@ your-project/
 │       ├── retro-agent.md
 │       ├── curator-agent.md
 │       └── initializer-agent.md
-├── .agents/                          # Symlinked from sdlc-agents/agents
-└── .gitignore                        # Updated to exclude .agents/
+├── .sdlc-agents/                          # Symlinked from sdlc-agents/agents
+└── .gitignore                        # Updated to exclude .sdlc-agents/
 ```
 
 ## How It Works
@@ -34,7 +34,7 @@ Claude Code's subagent system allows you to create specialized AI agents with:
 - **Custom system prompts** defining agent behavior
 - **Automatic or explicit invocation**
 
-Each subagent in `.claude/agents/` references the full instructions in `.agents/<agent-name>.md`.
+Each subagent in `.claude/agents/` references the full instructions in `.sdlc-agents/<agent-name>.md`.
 
 ## Usage
 

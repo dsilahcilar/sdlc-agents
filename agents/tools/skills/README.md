@@ -121,7 +121,7 @@ patterns/spec-driven/
 ### Resolution Order
 
 1. Check custom index: `$PROJECT_ROOT/agent-context/extensions/skills/skill-index.yaml`
-2. Check core index: `$SDLC_AGENTS/skills/skill-index.yaml`
+2. Check core index: `.sdlc-agents/skills/skill-index.yaml`
 3. Match by canonical name or aliases (case-insensitive)
 
 ### Dependencies

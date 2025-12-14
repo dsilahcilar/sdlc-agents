@@ -75,13 +75,13 @@ else
 
 read:
   # Core agents
-  - .agents/planning-agent.md
-  - .agents/coding-agent.md
-  - .agents/architect-agent.md
-  - .agents/codereview-agent.md
-  - .agents/retro-agent.md
-  - .agents/curator-agent.md
-  - .agents/initializer-agent.md
+  - .sdlc-agents/planning-agent.md
+  - .sdlc-agents/coding-agent.md
+  - .sdlc-agents/architect-agent.md
+  - .sdlc-agents/codereview-agent.md
+  - .sdlc-agents/retro-agent.md
+  - .sdlc-agents/curator-agent.md
+  - .sdlc-agents/initializer-agent.md
 
 # Note: For large projects, you may want to comment out agents
 # you don't need to reduce context size. The planning and coding
@@ -90,10 +90,10 @@ EOF
     log_info "Created: $CONFIG_FILE"
 fi
 
-# Link or copy .agents directory (hidden)
-AGENTS_TARGET="$TARGET/.agents"
+# Link or copy .sdlc-agents directory (hidden)
+AGENTS_TARGET="$TARGET/.sdlc-agents"
 if [ -e "$AGENTS_TARGET" ]; then
-    log_warn ".agents directory exists, skipping: $AGENTS_TARGET"
+    log_warn ".sdlc-agents directory exists, skipping: $AGENTS_TARGET"
 else
     if [ "$COPY_MODE" = true ]; then
         cp -r "$SDLC_AGENTS/agents" "$AGENTS_TARGET"
@@ -104,31 +104,33 @@ else
     fi
 fi
 
-# Update .gitignore to exclude .agents directory
+# Update .gitignore to exclude .sdlc-agents directory
 GITIGNORE_FILE="$TARGET/.gitignore"
 if [ -f "$GITIGNORE_FILE" ]; then
-    if grep -q "^\.agents/?$" "$GITIGNORE_FILE" 2>/dev/null; then
-        log_info ".gitignore already contains .agents entry"
+    if grep -q "^\.sdlc-agents/?$" "$GITIGNORE_FILE" 2>/dev/null; then
+        log_info ".gitignore already contains .sdlc-agents entry"
     else
         echo "" >> "$GITIGNORE_FILE"
         echo "# SDLC Agents (symlinked directory)" >> "$GITIGNORE_FILE"
-        echo ".agents/" >> "$GITIGNORE_FILE"
-        log_info "Added .agents/ to .gitignore"
+        echo ".sdlc-agents/" >> "$GITIGNORE_FILE"
+        log_info "Added .sdlc-agents/ to .gitignore"
     fi
 else
     cat > "$GITIGNORE_FILE" <<'EOF'
 # SDLC Agents (symlinked directory)
-.agents/
+.sdlc-agents/
 EOF
-    log_info "Created .gitignore with .agents/ entry"
+    log_info "Created .gitignore with .sdlc-agents/ entry"
 fi
 
 echo ""
 log_info "Aider setup complete!"
 echo ""
-echo "✓ Created/updated .gitignore to exclude .agents/"
+echo "✓ Created/updated .gitignore to exclude .sdlc-agents/"
 echo ""
 echo "Next steps:"
 echo "  1. Run: aider"
-echo "  2. Ask: Follow the initializer agent instructions"
+echo "  2. Type: 'Follow the instructions in .sdlc-agents/initializer-agent.md'"
+echo "  3. Start planning features with:"
+echo "     'Follow .sdlc-agents/planning-agent.md to create a plan for [feature description]'"
 echo ""

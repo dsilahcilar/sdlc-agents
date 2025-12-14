@@ -85,7 +85,7 @@ name: ${agent_name}
 description: ${agent_desc}
 ---
 
-Read and follow the instructions in \`.agents/${agent_name}.md\`.
+Read and follow the instructions in \`.sdlc-agents/${agent_name}.md\`.
 
 This agent is part of the SDLC Agents system for structured, architecture-aware development.
 EOF
@@ -102,10 +102,10 @@ create_subagent "retro-agent" "Use after completing features to extract lessons 
 create_subagent "curator-agent" "Use to maintain knowledge quality and prevent playbook bloat"
 create_subagent "initializer-agent" "Use for first-time project setup to discover architecture"
 
-# Link or copy .agents directory (hidden)
-AGENTS_TARGET="$TARGET/.agents"
+# Link or copy .sdlc-agents directory (hidden)
+AGENTS_TARGET="$TARGET/.sdlc-agents"
 if [ -e "$AGENTS_TARGET" ]; then
-    log_warn ".agents directory exists, skipping: $AGENTS_TARGET"
+    log_warn ".sdlc-agents directory exists, skipping: $AGENTS_TARGET"
 else
     if [ "$COPY_MODE" = true ]; then
         cp -r "$SDLC_AGENTS/agents" "$AGENTS_TARGET"
@@ -116,33 +116,35 @@ else
     fi
 fi
 
-# Update .gitignore to exclude .agents directory
+# Update .gitignore to exclude .sdlc-agents directory
 GITIGNORE_FILE="$TARGET/.gitignore"
 if [ -f "$GITIGNORE_FILE" ]; then
-    if grep -q "^\.agents/?$" "$GITIGNORE_FILE" 2>/dev/null; then
-        log_info ".gitignore already contains .agents entry"
+    if grep -q "^\.sdlc-agents/?$" "$GITIGNORE_FILE" 2>/dev/null; then
+        log_info ".gitignore already contains .sdlc-agents entry"
     else
         echo "" >> "$GITIGNORE_FILE"
         echo "# SDLC Agents (symlinked directory)" >> "$GITIGNORE_FILE"
-        echo ".agents/" >> "$GITIGNORE_FILE"
-        log_info "Added .agents/ to .gitignore"
+        echo ".sdlc-agents/" >> "$GITIGNORE_FILE"
+        log_info "Added .sdlc-agents/ to .gitignore"
     fi
 else
     cat > "$GITIGNORE_FILE" <<'EOF'
 # SDLC Agents (symlinked directory)
-.agents/
+.sdlc-agents/
 EOF
-    log_info "Created .gitignore with .agents/ entry"
+    log_info "Created .gitignore with .sdlc-agents/ entry"
 fi
 
 echo ""
 log_info "Claude Code setup complete!"
 echo ""
 echo "✓ Created .claude/agents/ with 7 subagents"
-echo "✓ Created/updated .gitignore to exclude .agents/"
+echo "✓ Created/updated .gitignore to exclude .sdlc-agents/"
 echo ""
 echo "Next steps:"
 echo "  1. Run: /agents to see all available subagents"
-echo "  2. Use: 'Use the initializer-agent to set up project structure'"
-echo "  3. Use: 'Use the planning-agent to create a plan for [feature]'"
+echo "  2. Run the initializer agent by typing:"
+echo "     '@agent-initializer-agent follow the instructions in the .sdlc-agents/initializer-agent.md file'"
+echo "  3. Start planning features with:"
+echo "     '@agent-planning-agent create a plan for [feature description]'"
 echo ""
