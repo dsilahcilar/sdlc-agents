@@ -6,24 +6,47 @@ This document describes the complete end-to-end flow of skill directives from us
 
 ## Architecture Context
 
-The skill directive system follows a **Context Provider/Consumer** pattern:
+The skill directive system supports **two usage patterns**:
 
-- **Planning Agent**: The sole context provider - detects stack, parses directives, resolves skills, and embeds content
-- **Downstream Agents** (Architect, Coding, Code Review): Context consumers - receive pre-assembled skill content via feature.md and task files
+### Pattern 1: Planning-First Workflow (Recommended)
+
+- **Planning Agent**: Primary context provider - detects stack, parses directives, resolves skills, and embeds content
+- **Downstream Agents** (Architect, Coding, Code Review, Retro, Curator): Context consumers - receive pre-assembled skill content via feature.md and task files
 
 This separation ensures:
 - Single source of truth for skill resolution
 - Minimal context window usage downstream
 - No redundant skill processing
 
+### Pattern 2: Direct Agent Invocation
+
+**All agents** can parse skill directives when invoked directly by users:
+
+```bash
+# User invokes Coding Agent directly with skill directives
+"Implement authentication #TDD #Security"
+```
+
+This enables:
+- Quick ad-hoc tasks without full Planning workflow
+- Agent-specific skill loading with `--agent <role>` flag
+- Flexibility for experienced users
+
 ---
 
 ## Phase 1: User Input
 
-The user includes skill directives in their prompt to the Planning Agent:
+The user includes skill directives in their prompt to **any agent**:
 
 ```
+# To Planning Agent (full workflow)
 Implement payment retry logic with saga pattern #Saga,Payments !Legacy
+
+# To Coding Agent directly (quick task)
+Fix the authentication bug #Security
+
+# To Architect Agent directly (review request)
+Review this module #hexagonal
 ```
 
 ### Directive Syntax
@@ -197,36 +220,41 @@ Task files also receive relevant skill content:
 
 ## Phase 5: Consumption (Downstream Agents)
 
-Architect, Coding, and Code Review Agents consume the pre-assembled context.
+Downstream agents can consume skills in **two ways**:
 
-### Step 5.1: Read Feature File
+### Option A: From Feature/Task Files (Planning-First Workflow)
+
+When working on tasks created by Planning Agent:
 
 ```markdown
-Architect/Coding/Code Review Agent first reads:
-agent-context/features/<issue-id>.feature.md
+# Read feature.md for embedded skill content
+agent-context/features/<issue-id>/feature.md
+
+# Read task files for task-specific context
+agent-context/features/<issue-id>/tasks/<task-id>.md
 ```
 
 They see:
 - Technology Stack section with loaded skills
 - Embedded skill content they need to apply
-- No need to re-parse directives or re-resolve skills
 
-### Step 5.2: Read Task Files
+### Option B: Direct Skill Loading (Direct Invocation)
 
-```markdown
-agent-context/tasks/<task-id>.task.md
+When invoked directly by users with skill directives:
+
+```bash
+# Agent parses directives from user prompt
+DIRECTIVES=$(.sdlc-agents/tools/skills/parse-skill-directives.sh "$USER_PROMPT")
+
+# Agent resolves skills for their specific role
+SKILL_PATHS=$(.sdlc-agents/tools/skills/resolve-skills.sh --agent coding tdd security)
 ```
 
-Task-specific skill content is already embedded.
-
-### Step 5.3: Apply Without Re-Loading
-
-Downstream agents:
-- ✅ Read embedded skill content from feature.md and task files
-- ✅ Apply patterns, invariants, and constraints as documented
-- ❌ **Never** run `parse-skill-directives.sh` themselves
-- ❌ **Never** run `resolve-skills.sh` themselves
-- ❌ **Never** read skill files directly from `agents/skills/`
+Downstream agents with direct invocation:
+- ✅ Parse skill directives from user prompt
+- ✅ Resolve skills with `--agent <role>` for role-specific content
+- ✅ Read and apply skill patterns during their work
+- ✅ Use progressive disclosure (load only needed skills)
 
 ### Progressive Disclosure
 
@@ -362,9 +390,9 @@ User Prompt
 
 ## Key Principles
 
-1. **Single Point of Resolution**: Only Planning Agent parses and resolves skills
-2. **Context Provider/Consumer**: Planning Agent produces, downstream agents consume
-3. **Progressive Disclosure**: Load skills on-demand, embed only what's needed
+1. **Dual Workflow Support**: Planning-first for structured work, direct invocation for quick tasks
+2. **Role-Specific Loading**: Use `--agent <role>` flag for progressive disclosure
+3. **Any Agent Can Parse**: All agents understand `#SkillName` and `!SkillName` syntax
 4. **Fail Gracefully**: Unknown skills → warning, continue with known skills
 5. **Explicit Over Implicit**: User directives override auto-detection
 6. **Exclude Wins**: If skill both included and excluded, exclude it
@@ -415,8 +443,9 @@ User Prompt
 ## Summary
 
 This workflow ensures:
-- ✅ Clear separation between context provider (Planning) and consumers (Architect, Coding, Review)
-- ✅ Minimal redundant processing (skills resolved once)
-- ✅ Minimal context window usage (embedded content, not full skill files)
+- ✅ Flexible usage: Planning-first workflow OR direct agent invocation
+- ✅ All agents understand skill directives (`#SkillName`, `!SkillName`)
+- ✅ Role-specific content via `--agent <role>` progressive disclosure
+- ✅ Minimal context window usage (load only what's needed)
 - ✅ Graceful degradation (unknown skills → warnings, not failures)
 - ✅ User control (explicit directives override auto-detection)

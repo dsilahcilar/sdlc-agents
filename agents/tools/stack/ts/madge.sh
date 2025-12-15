@@ -5,7 +5,7 @@ set -eu
 # TypeScript Madge - Stack Tool
 # =============================================================================
 # Detects circular dependencies using Madge.
-# For detailed documentation: .github/tools/stack/ts/madge.md
+# For detailed documentation: .sdlc-agents/tools/stack/ts/madge.md
 # =============================================================================
 
 SCAN_PATH="${1:-src}"

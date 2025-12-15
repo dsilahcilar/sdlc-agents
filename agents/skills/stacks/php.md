@@ -1,42 +1,68 @@
-# PHP Architecture Skill
+# PHP Stack
 
 Stack: PHP, Laravel, Symfony
-Tool: **Deptrac**
+Package Manager: Composer
 
 ---
 
-## Architecture Enforcement Tool
+## Detection
 
-**Deptrac** - Static code analysis for PHP architecture.
+| File | Indicator |
+|------|-----------|
+| `composer.json` | PHP project |
+| `artisan` | Laravel project |
+| `bin/console` | Symfony project |
 
+---
+
+## Harness Commands
+
+### Quality Gates
+
+| Phase | Tool | Command | Config Check |
+|-------|------|---------|--------------|
+| test | PHPUnit | `./vendor/bin/phpunit` | `phpunit.xml` exists |
+| test | Pest | `./vendor/bin/pest` | `pest` in composer.json |
+| lint | PHP_CodeSniffer | `./vendor/bin/phpcs` | `phpcs.xml` exists |
+| lint | PHP-CS-Fixer | `./vendor/bin/php-cs-fixer fix --dry-run` | `.php-cs-fixer.php` exists |
+| lint | PHPStan | `./vendor/bin/phpstan analyse` | `phpstan.neon` exists |
+| lint | Psalm | `./vendor/bin/psalm` | `psalm.xml` exists |
+| coverage | PHPUnit | `./vendor/bin/phpunit --coverage-text` | Xdebug/PCOV installed |
+| security | Composer | `composer audit` | Always available (Composer 2.4+) |
+| security | Local PHP Security | `./vendor/bin/local-php-security-checker` | Tool installed |
+
+### Architecture Tests
+
+| Tool | Command | Config Check |
+|------|---------|--------------|
+| Deptrac | `./vendor/bin/deptrac analyse` | `deptrac.yaml` exists |
+
+**Fallback:** Skip with message suggesting Deptrac.
+
+### Feature Runner
+
+```sh
+./vendor/bin/phpunit
+```
+
+### Init Project
+
+```sh
+composer install
+```
+
+---
+
+## Architecture Enforcement: Deptrac
+
+**Setup:**
 ```bash
 composer require --dev qossmic/deptrac-shim
 ```
 
 ---
 
-## Discovery Commands
-
-```bash
-# List all namespaces
-grep -r "^namespace" src --include="*.php" | sort -u
-
-# Find use statements
-grep -r "^use " src --include="*.php" | sort | uniq -c | sort -rn | head -30
-
-# List classes
-grep -r "^class\|^interface\|^trait" src --include="*.php" | head -30
-
-# Find controller classes
-find . -path "*/Controller/*.php" -o -path "*/Controllers/*.php" | head -20
-
-# Find dependencies
-grep -r "new \|::" src --include="*.php" | head -30
-```
-
----
-
-## Generated Rules Template
+## Rule Template
 
 Create `deptrac.yaml`:
 
@@ -45,74 +71,33 @@ deptrac:
   paths:
     - ./src
 
-  exclude_files:
-    - '#.*test.*#i'
-
   layers:
     - name: Controller
       collectors:
-        - type: className
-          regex: .*Controller$
-        - type: directory
-          regex: src/Controller/.*
-
+        - type: classLike
+          value: App\\Controller\\.*
     - name: Service
       collectors:
-        - type: directory
-          regex: src/Service/.*
-        - type: directory
-          regex: src/Application/.*
-
+        - type: classLike
+          value: App\\Service\\.*
     - name: Domain
       collectors:
-        - type: directory
-          regex: src/Domain/.*
-        - type: directory
-          regex: src/Entity/.*
-
-    - name: Infrastructure
+        - type: classLike
+          value: App\\Domain\\.*
+    - name: Repository
       collectors:
-        - type: directory
-          regex: src/Infrastructure/.*
-        - type: directory
-          regex: src/Repository/.*
+        - type: classLike
+          value: App\\Repository\\.*
 
   ruleset:
     Controller:
       - Service
-      - Domain
-
     Service:
       - Domain
-      - Infrastructure
-
-    Domain: ~  # Cannot depend on anything
-
-    Infrastructure:
+      - Repository
+    Repository:
       - Domain
-
-  skip_violations:
-    # Temporarily skip known violations
-    # App\Domain\User:
-    #   - App\Infrastructure\Doctrine\UserRepository
-```
-
----
-
-## Run Commands
-
-```bash
-# Run analysis
-./vendor/bin/deptrac analyse
-
-# With specific config
-./vendor/bin/deptrac analyse --config-file=deptrac.yaml
-
-# Generate baseline (for legacy code)
-./vendor/bin/deptrac analyse --formatter=baseline > deptrac.baseline.yaml
-
-# Output as graph
-./vendor/bin/deptrac analyse --formatter=graphviz-image --output=deps.png
+    Domain: []  # No dependencies allowed
 ```
 
 ---
@@ -121,178 +106,16 @@ deptrac:
 
 | Violation | Fix |
 |-----------|-----|
-| Domain uses Doctrine | Define repository interfaces in domain |
-| Entity uses HttpFoundation | Move HTTP logic to controller |
-| Circular dependency | Use interfaces or events |
-| Controller has business logic | Extract to service class |
+| Domain uses Doctrine | Use repository interface |
+| Controller accesses repository | Add service layer |
+| Circular dependency | Extract interface |
+| Feature imports feature | Use events or shared service |
 
 ---
 
 ## Existing Tests Check
 
 ```bash
-# Check for Deptrac
-[ -f "deptrac.yaml" ] && echo "Deptrac config found"
-[ -f "deptrac.yml" ] && echo "Deptrac config found"
-grep -q "deptrac" composer.json && echo "Deptrac in composer.json"
-```
-
----
-
-## Framework-Specific Structures
-
-### Symfony
-```
-src/
-├── Controller/          # Presentation
-├── Service/             # Application
-├── Domain/              # Business logic
-│   ├── Entity/
-│   ├── ValueObject/
-│   └── Repository/      # Interfaces only
-├── Infrastructure/      # Implementations
-│   ├── Doctrine/
-│   └── ExternalApi/
-└── EventSubscriber/
-```
-
-### Laravel
-```
-app/
-├── Http/
-│   └── Controllers/     # Presentation
-├── Services/            # Application
-├── Domain/              # Business logic
-│   ├── Models/
-│   └── ValueObjects/
-├── Repositories/        # Data access
-│   ├── Contracts/       # Interfaces
-│   └── Eloquent/        # Implementations
-└── Providers/
-```
-
----
-
-## Deptrac for Laravel
-
-```yaml
-deptrac:
-  paths:
-    - ./app
-
-  layers:
-    - name: Controller
-      collectors:
-        - type: directory
-          regex: app/Http/Controllers/.*
-
-    - name: Service
-      collectors:
-        - type: directory
-          regex: app/Services/.*
-
-    - name: Domain
-      collectors:
-        - type: directory
-          regex: app/Domain/.*
-
-    - name: Repository
-      collectors:
-        - type: directory
-          regex: app/Repositories/.*
-
-    - name: Model
-      collectors:
-        - type: directory
-          regex: app/Models/.*
-
-  ruleset:
-    Controller:
-      - Service
-      - Model
-
-    Service:
-      - Domain
-      - Repository
-      - Model
-
-    Domain: ~
-
-    Repository:
-      - Model
-      - Domain
-
-    Model:
-      - Domain
-```
-
----
-
-## Additional Tools
-
-### PHPStan (static analysis)
-```bash
-composer require --dev phpstan/phpstan
-./vendor/bin/phpstan analyse src
-```
-
-### Psalm (type checking)
-```bash
-composer require --dev vimeo/psalm
-./vendor/bin/psalm
-```
-
-### PHP_CodeSniffer
-```bash
-composer require --dev squizlabs/php_codesniffer
-./vendor/bin/phpcs src
-```
-
----
-
-## PHP-Specific Patterns
-
-### Interface-based Abstraction
-```php
-// src/Domain/Repository/UserRepositoryInterface.php
-namespace App\Domain\Repository;
-
-interface UserRepositoryInterface
-{
-    public function find(int $id): ?User;
-    public function save(User $user): void;
-}
-
-// src/Infrastructure/Doctrine/UserRepository.php
-namespace App\Infrastructure\Doctrine;
-
-class UserRepository implements UserRepositoryInterface
-{
-    public function __construct(private EntityManagerInterface $em) {}
-
-    public function find(int $id): ?User
-    {
-        return $this->em->find(User::class, $id);
-    }
-}
-```
-
-### Service Layer
-```php
-// src/Service/UserService.php
-namespace App\Service;
-
-class UserService
-{
-    public function __construct(
-        private UserRepositoryInterface $userRepository
-    ) {}
-
-    public function createUser(array $data): User
-    {
-        $user = new User($data);
-        $this->userRepository->save($user);
-        return $user;
-    }
-}
+[ -f "deptrac.yaml" ] && echo "Found Deptrac"
+[ -f "deptrac.yml" ] && echo "Found Deptrac"
 ```

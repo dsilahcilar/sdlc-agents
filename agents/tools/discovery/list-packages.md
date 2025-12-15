@@ -17,7 +17,7 @@ Lists all packages, modules, or directories in the codebase to understand the pr
 ## Usage
 
 ```bash
-.github/tools/discovery/list-packages.sh [path]
+.sdlc-agents/tools/discovery/list-packages.sh [path]
 ```
 
 **Arguments:**
@@ -48,7 +48,7 @@ Lists all packages, modules, or directories in the codebase to understand the pr
 ## Example
 
 ```bash
-$ .github/tools/discovery/list-packages.sh src/main
+$ .sdlc-agents/tools/discovery/list-packages.sh src/main
 [packages] Found 12 packages/directories:
 src/main/kotlin/com/example/controller
 src/main/kotlin/com/example/service

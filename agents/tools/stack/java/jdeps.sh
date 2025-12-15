@@ -5,7 +5,7 @@ set -eu
 # Java JDeps - Stack Tool
 # =============================================================================
 # Analyzes JVM class dependencies using jdeps.
-# For detailed documentation: .github/tools/stack/java/jdeps.md
+# For detailed documentation: .sdlc-agents/tools/stack/java/jdeps.md
 # =============================================================================
 
 TARGET="${1:-target/classes}"

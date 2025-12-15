@@ -5,7 +5,7 @@ set -eu
 # Check Layers - Validation Tool
 # =============================================================================
 # Validates that layer dependencies follow architectural rules.
-# For detailed documentation: .github/tools/validation/check-layers.md
+# For detailed documentation: .sdlc-agents/tools/validation/check-layers.md
 # =============================================================================
 
 SCAN_PATH="${1:-src}"
@@ -76,7 +76,7 @@ else
     echo "[layers] FAILED: $VIOLATIONS layer violations found"
     echo ""
     echo "[layers] Tip: Use stack-specific tools for more detailed analysis:"
-    echo "  - Java: .github/tools/stack/java/archunit.sh"
-    echo "  - TypeScript: .github/tools/stack/ts/depcruise.sh"
+    echo "  - Java: .sdlc-agents/tools/stack/java/archunit.sh"
+    echo "  - TypeScript: .sdlc-agents/tools/stack/ts/depcruise.sh"
     exit 1
 fi

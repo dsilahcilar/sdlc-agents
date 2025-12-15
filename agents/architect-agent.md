@@ -44,6 +44,27 @@ SKILL_FILES=$(.sdlc-agents/tools/skills/resolve-skills.sh --agent architect <ski
 # → Returns _index.md (core concepts) + architect.md (your validation instructions)
 ```
 
+### Skill Directives
+
+If the user includes skill directives in their request (e.g., `#hexagonal`, `#spec-driven`), parse and load them:
+
+```bash
+# Parse directives from user prompt
+DIRECTIVES=$(.sdlc-agents/tools/skills/parse-skill-directives.sh "$USER_PROMPT")
+# Output: {"includes": ["hexagonal"], "excludes": [], "only_mode": false}
+
+# Resolve skill names to paths (for Architect Agent)
+SKILL_PATHS=$(.sdlc-agents/tools/skills/resolve-skills.sh --agent architect hexagonal spec-driven)
+```
+
+**Directive syntax:**
+- `#SkillName` — Force-load skill (e.g., `#hexagonal`, `#spec-driven`)
+- `#Skill1,Skill2` — Force-load multiple skills
+- `!SkillName` — Force-exclude skill
+- `#only:Skills` — Use only listed skills
+
+Read the resolved skill files and apply their architectural constraints during review.
+
 ---
 
 ## Objectives

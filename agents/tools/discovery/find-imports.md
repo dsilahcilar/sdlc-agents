@@ -17,7 +17,7 @@ Finds import/include statements between modules to understand dependency relatio
 ## Usage
 
 ```bash
-.github/tools/discovery/find-imports.sh [path] [pattern]
+.sdlc-agents/tools/discovery/find-imports.sh [path] [pattern]
 ```
 
 **Arguments:**
@@ -48,7 +48,7 @@ Finds import/include statements between modules to understand dependency relatio
 ## Example
 
 ```bash
-$ .github/tools/discovery/find-imports.sh src com.example.domain
+$ .sdlc-agents/tools/discovery/find-imports.sh src com.example.domain
 [imports] Found 23 imports matching 'com.example.domain':
 src/service/UserService.java: import com.example.domain.User;
 src/repository/UserRepo.java: import com.example.domain.User;

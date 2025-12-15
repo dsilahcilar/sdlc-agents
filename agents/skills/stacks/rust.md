@@ -1,144 +1,117 @@
-# Rust Architecture Skill
+# Rust Stack
 
 Stack: Rust
-Tools: **cargo-modules**, **clippy**
+Build Tool: Cargo
 
 ---
 
-## Architecture Enforcement Tools
+## Detection
 
-### cargo-modules (structure visualization)
-```bash
-cargo install cargo-modules
-```
-
-### clippy (linting)
-```bash
-# Built-in with rustup
-rustup component add clippy
-```
+| File | Indicator |
+|------|-----------|
+| `Cargo.toml` | Rust project |
+| `*.rs` files | Rust source code |
 
 ---
 
-## Discovery Commands
+## Harness Commands
 
-```bash
-# Show module structure
-cargo modules structure
+### Quality Gates
 
-# Show module dependencies
-cargo modules dependencies
+| Phase | Tool | Command | Config Check |
+|-------|------|---------|--------------|
+| test | cargo test | `cargo test` | Always available |
+| lint | clippy | `cargo clippy -- -D warnings` | Always available |
+| lint | rustfmt | `cargo fmt --check` | Always available |
+| coverage | tarpaulin | `cargo tarpaulin` | `cargo-tarpaulin` installed |
+| coverage | grcov | `grcov . -o coverage/` | `grcov` installed |
+| security | cargo-audit | `cargo audit` | `cargo-audit` installed |
+| security | cargo-deny | `cargo deny check` | `deny.toml` exists |
 
-# Check for cycles
-cargo modules dependencies --lib 2>&1 | grep -i "cycle"
+### Architecture Tests
 
-# Show dependency tree
-cargo tree
+| Tool | Command | Config Check |
+|------|---------|--------------|
+| cargo check | `cargo check 2>&1 \| grep -i "cycle"` | Always available |
+| clippy | `cargo clippy` | Always available |
 
-# Find all modules
-find src -name "*.rs" | head -30
+**Note:** Rust's module system inherently prevents many architectural violations. Clippy catches the rest.
 
-# List public items
-cargo doc --document-private-items 2>&1 | head -50
+### Feature Runner
+
+```sh
+cargo test
 ```
 
----
+### Init Project
 
-## Generated Rules Template
-
-Rust enforces architecture through module visibility. Use `Cargo.toml` workspace and module structure:
-
-### Workspace Layout (for larger projects)
-```toml
-# Cargo.toml (workspace root)
-[workspace]
-members = [
-    "crates/domain",
-    "crates/application",
-    "crates/infrastructure",
-    "crates/api",
-]
-
-# Dependency rules via workspace dependencies
-[workspace.dependencies]
-domain = { path = "crates/domain" }
-application = { path = "crates/application" }
-infrastructure = { path = "crates/infrastructure" }
-```
-
-### Domain Crate (pure, no external deps)
-```toml
-# crates/domain/Cargo.toml
-[package]
-name = "domain"
-
-[dependencies]
-# Only standard library, no external crates
-```
-
-### Application Crate
-```toml
-# crates/application/Cargo.toml
-[package]
-name = "application"
-
-[dependencies]
-domain = { workspace = true }
-# No infrastructure dependencies!
-```
-
-### Infrastructure Crate
-```toml
-# crates/infrastructure/Cargo.toml
-[package]
-name = "infrastructure"
-
-[dependencies]
-domain = { workspace = true }
-application = { workspace = true }
-sqlx = "0.7"  # External deps OK here
+```sh
+cargo build --quiet
 ```
 
 ---
 
-## Module Visibility Rules
+## Architecture Enforcement
+
+Rust's module system enforces visibility rules:
+- `pub` controls what's exported
+- `pub(crate)` for crate-internal visibility
+- `pub(super)` for parent module visibility
+
+---
+
+## Project Structure Template
+
+```
+src/
+├── lib.rs           # Library root
+├── main.rs          # Binary entry (optional)
+├── domain/
+│   ├── mod.rs       # pub(crate) exports
+│   └── entities.rs
+├── application/
+│   ├── mod.rs
+│   └── services.rs
+├── infrastructure/
+│   ├── mod.rs
+│   └── repositories.rs
+└── api/
+    ├── mod.rs
+    └── handlers.rs
+```
+
+---
+
+## Visibility Rules
 
 ```rust
-// src/lib.rs - Control what's exposed
+// In domain/mod.rs
+pub mod entities;  // Only export what other modules need
 
-// Public to other crates
-pub mod domain;
+// In domain/entities.rs
+pub struct User { /* fields */ }  // Public to crate
 
-// Private to this crate
-mod internal_utils;
-
-// Re-export specific items
-pub use domain::User;
-
-// Restrict visibility
-pub(crate) mod crate_internal;
-pub(super) mod parent_only;
+// Keep implementation details private
+struct UserValidator { /* fields */ }  // Private to module
 ```
 
 ---
 
-## Run Commands
+## Clippy Configuration
 
-```bash
-# Check compilation (catches most issues)
-cargo check
+Create `clippy.toml`:
 
-# Run clippy with strict settings
-cargo clippy -- -D warnings -D clippy::all
+```toml
+avoid-breaking-exported-api = false
+cognitive-complexity-threshold = 15
+```
 
-# Visualize modules
-cargo modules structure --lib
+Or in `Cargo.toml`:
 
-# Check dependencies
-cargo modules dependencies --lib
-
-# Full test suite
-cargo test
+```toml
+[lints.clippy]
+cognitive_complexity = "warn"
+too_many_arguments = "warn"
 ```
 
 ---
@@ -147,102 +120,16 @@ cargo test
 
 | Violation | Fix |
 |-----------|-----|
-| Domain uses external crate | Move to infrastructure or use traits |
-| Circular mod dependency | Extract to separate module |
-| Public internals | Use `pub(crate)` or `pub(super)` |
-| Leaky abstraction | Use trait objects or generics |
+| Cycle detected | Restructure modules, use traits |
+| Too public | Reduce visibility with `pub(crate)` |
+| Leaky abstraction | Hide implementation behind trait |
+| High complexity | Split into smaller functions |
 
 ---
 
 ## Existing Tests Check
 
 ```bash
-# Check for workspace structure
-grep -q "\[workspace\]" Cargo.toml && echo "Workspace found"
-
-# Check clippy configuration
-[ -f ".clippy.toml" ] && echo "Clippy config found"
-[ -f "clippy.toml" ] && echo "Clippy config found"
-
-# Check for deny.toml (cargo-deny)
-[ -f "deny.toml" ] && echo "cargo-deny config found"
-```
-
----
-
-## Recommended Project Structure
-
-```
-myapp/
-├── Cargo.toml              # Workspace definition
-├── crates/
-│   ├── domain/             # Pure business logic
-│   │   ├── Cargo.toml
-│   │   └── src/
-│   │       ├── lib.rs
-│   │       ├── entities/
-│   │       └── value_objects/
-│   ├── application/        # Use cases
-│   │   ├── Cargo.toml
-│   │   └── src/
-│   │       ├── lib.rs
-│   │       └── services/
-│   ├── infrastructure/     # External concerns
-│   │   ├── Cargo.toml
-│   │   └── src/
-│   │       ├── lib.rs
-│   │       ├── postgres/
-│   │       └── redis/
-│   └── api/                # HTTP handlers
-│       ├── Cargo.toml
-│       └── src/
-│           └── main.rs
-└── tests/                  # Integration tests
-```
-
----
-
-## Additional Tools
-
-### cargo-deny (dependency auditing)
-```bash
-cargo install cargo-deny
-cargo deny check
-```
-
-### cargo-audit (security)
-```bash
-cargo install cargo-audit
-cargo audit
-```
-
----
-
-## Rust-Specific Patterns
-
-### Trait-based Abstraction
-```rust
-// domain/src/lib.rs
-pub trait UserRepository: Send + Sync {
-    async fn find_by_id(&self, id: Uuid) -> Result<User, Error>;
-}
-
-// infrastructure/src/postgres.rs
-pub struct PostgresUserRepo { pool: PgPool }
-
-impl UserRepository for PostgresUserRepo {
-    async fn find_by_id(&self, id: Uuid) -> Result<User, Error> {
-        // Implementation
-    }
-}
-```
-
-### Error Handling Layers
-```rust
-// domain errors
-#[derive(Debug, thiserror::Error)]
-pub enum DomainError { ... }
-
-// infrastructure converts to domain errors
-impl From<sqlx::Error> for DomainError { ... }
+[ -f "clippy.toml" ] && echo "Found clippy config"
+grep -q "\[lints.clippy\]" Cargo.toml 2>/dev/null && echo "Found clippy in Cargo.toml"
 ```

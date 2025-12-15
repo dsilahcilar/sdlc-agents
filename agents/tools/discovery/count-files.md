@@ -17,7 +17,7 @@ Counts source files per package/directory to understand codebase size and distri
 ## Usage
 
 ```bash
-.github/tools/discovery/count-files.sh [path] [extension]
+.sdlc-agents/tools/discovery/count-files.sh [path] [extension]
 ```
 
 **Arguments:**
@@ -48,7 +48,7 @@ Total: <total> files
 ## Example
 
 ```bash
-$ .github/tools/discovery/count-files.sh src java
+$ .sdlc-agents/tools/discovery/count-files.sh src java
 [count] File distribution:
      45  src/main/java/com/example/service
      32  src/main/java/com/example/domain

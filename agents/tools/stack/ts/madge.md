@@ -17,7 +17,7 @@ Detects circular dependencies in TypeScript/JavaScript projects using Madge.
 ## Usage
 
 ```bash
-.github/tools/stack/ts/madge.sh [path]
+.sdlc-agents/tools/stack/ts/madge.sh [path]
 ```
 
 **Arguments:**
@@ -55,7 +55,7 @@ Madge is run via npx (auto-installed).
 ## Example
 
 ```bash
-$ .github/tools/stack/ts/madge.sh src
+$ .sdlc-agents/tools/stack/ts/madge.sh src
 [madge] Checking circular dependencies...
 [madge] Path: src
 [madge] Extensions: ts,tsx,js,jsx

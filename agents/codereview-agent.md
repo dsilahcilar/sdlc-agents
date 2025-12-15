@@ -43,7 +43,26 @@ SKILL_FILES=$(.sdlc-agents/tools/skills/resolve-skills.sh --agent review <skill-
 # → Returns _index.md (core concepts) + review.md (your verification instructions)
 ```
 
+### Skill Directives
 
+If the user includes skill directives in their request (e.g., `#TDD`, `#Security`), parse and load them:
+
+```bash
+# Parse directives from user prompt
+DIRECTIVES=$(.sdlc-agents/tools/skills/parse-skill-directives.sh "$USER_PROMPT")
+# Output: {"includes": ["tdd", "security"], "excludes": [], "only_mode": false}
+
+# Resolve skill names to paths (for Code Review Agent)
+SKILL_PATHS=$(.sdlc-agents/tools/skills/resolve-skills.sh --agent review tdd security)
+```
+
+**Directive syntax:**
+- `#SkillName` — Force-load skill (e.g., `#TDD`, `#Security`)
+- `#Skill1,Skill2` — Force-load multiple skills
+- `!SkillName` — Force-exclude skill
+- `#only:Skills` — Use only listed skills
+
+Read the resolved skill files and apply their verification criteria during review.
 
 ---
 

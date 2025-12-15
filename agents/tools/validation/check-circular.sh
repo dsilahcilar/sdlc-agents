@@ -5,7 +5,7 @@ set -eu
 # Check Circular - Validation Tool
 # =============================================================================
 # Detects circular dependencies between modules.
-# For detailed documentation: .github/tools/validation/check-circular.md
+# For detailed documentation: .sdlc-agents/tools/validation/check-circular.md
 # =============================================================================
 
 SCAN_PATH="${1:-src}"
@@ -45,7 +45,7 @@ case "$STACK" in
             echo "[circular] Warning: No compiled classes found. Run 'mvn compile' first."
             echo "[circular] Performing static import analysis..."
             # Simple cycle detection via imports
-            .github/tools/discovery/find-imports.sh "$SCAN_PATH" 2>/dev/null || true
+            .sdlc-agents/tools/discovery/find-imports.sh "$SCAN_PATH" 2>/dev/null || true
         fi
         ;;
     
@@ -58,7 +58,7 @@ case "$STACK" in
         echo "[circular] Performing Python import analysis..."
         echo "[circular] Warning: Full cycle detection requires 'import-linter'"
         # Basic analysis
-        .github/tools/discovery/find-imports.sh "$SCAN_PATH" 2>/dev/null || true
+        .sdlc-agents/tools/discovery/find-imports.sh "$SCAN_PATH" 2>/dev/null || true
         ;;
     
     rust)
@@ -68,7 +68,7 @@ case "$STACK" in
     
     *)
         echo "[circular] Unknown stack - performing basic import analysis"
-        .github/tools/discovery/find-imports.sh "$SCAN_PATH" 2>/dev/null || true
+        .sdlc-agents/tools/discovery/find-imports.sh "$SCAN_PATH" 2>/dev/null || true
         ;;
 esac
 

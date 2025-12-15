@@ -5,7 +5,7 @@ set -eu
 # Detect Layers - Discovery Tool
 # =============================================================================
 # Identifies architectural layers by analyzing naming conventions.
-# For detailed documentation: .github/tools/discovery/detect-layers.md
+# For detailed documentation: .sdlc-agents/tools/discovery/detect-layers.md
 # =============================================================================
 
 SCAN_PATH="${1:-src}"

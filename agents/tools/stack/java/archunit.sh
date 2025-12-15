@@ -5,7 +5,7 @@ set -eu
 # Java ArchUnit - Stack Tool
 # =============================================================================
 # Runs ArchUnit architecture tests for Java/Kotlin projects.
-# For detailed documentation: .github/tools/stack/java/archunit.md
+# For detailed documentation: .sdlc-agents/tools/stack/java/archunit.md
 # =============================================================================
 
 PATTERN="${1:-*Arch*,*Architecture*}"
