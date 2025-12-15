@@ -122,29 +122,8 @@ else
     fi
 fi
 
-# Update .gitignore to exclude .sdlc-agents directory
-GITIGNORE_FILE="$TARGET/.gitignore"
-if [ -f "$GITIGNORE_FILE" ]; then
-    if grep -q "^\.sdlc-agents/?$" "$GITIGNORE_FILE" 2>/dev/null; then
-        log_info ".gitignore already contains .sdlc-agents entry"
-    else
-        echo "" >> "$GITIGNORE_FILE"
-        echo "# SDLC Agents (symlinked directory)" >> "$GITIGNORE_FILE"
-        echo ".sdlc-agents/" >> "$GITIGNORE_FILE"
-        log_info "Added .sdlc-agents/ to .gitignore"
-    fi
-else
-    cat > "$GITIGNORE_FILE" <<'EOF'
-# SDLC Agents (symlinked directory)
-.sdlc-agents/
-EOF
-    log_info "Created .gitignore with .sdlc-agents/ entry"
-fi
-
 echo ""
 log_info "Cursor setup complete!"
-echo ""
-echo "✓ Created/updated .gitignore to exclude .sdlc-agents/"
 echo ""
 echo "Next steps:"
 echo "  1. Open your project in Cursor"
