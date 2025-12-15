@@ -17,7 +17,7 @@ Analyzes JVM class dependencies using the `jdeps` tool to understand module stru
 ## Usage
 
 ```bash
-.github/tools/stack/java/jdeps.sh [target] [options]
+.sdlc-agents/tools/stack/java/jdeps.sh [target] [options]
 ```
 
 **Arguments:**
@@ -53,7 +53,7 @@ package -> dependency
 ## Example
 
 ```bash
-$ .github/tools/stack/java/jdeps.sh target/classes
+$ .sdlc-agents/tools/stack/java/jdeps.sh target/classes
 [jdeps] Analyzing dependencies...
 [jdeps] Target: target/classes
 

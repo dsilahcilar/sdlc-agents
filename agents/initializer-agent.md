@@ -31,16 +31,28 @@ Verify both paths are set correctly before proceeding.
 $SDLC_AGENTS/setup.sh $PROJECT_ROOT
 ```
 
-### Step 3: Customize for Stack
+### Step 3: Generate Stack-Specific Scripts
 
-Based on detected stack, update these files:
+**Generate** harness scripts based on detected stack:
 
-| File | Customization |
-|------|---------------|
-| `$PROJECT_ROOT/agent-context/harness/init-project.sh` | Set build commands for stack |
-| `$PROJECT_ROOT/agent-context/harness/run-arch-tests.sh` | Set architecture test commands |
-| `$PROJECT_ROOT/agent-context/harness/run-quality-gates.sh` | Set lint/format/test commands |
-| `$PROJECT_ROOT/agent-context/harness/run-feature.sh` | Set test runner for stack |
+| File | Purpose |
+|------|---------|
+| `run-quality-gates.sh` | Run all quality checks (test, lint, arch, coverage, security) |
+| `run-arch-tests.sh` | Run architecture validation |
+| `run-feature.sh` | Run tests for a specific feature |
+| `init-project.sh` | Initialize project (install deps, compile) |
+| `collect-metrics.sh` | Collect code metrics |
+| `compare-metrics.sh` | Compare metrics against baseline |
+| `archive-metrics.sh` | Archive successful metrics |
+
+**Generation Workflow:**
+1. Read `$SDLC_AGENTS/skills/harness-spec.md` for output contract
+2. Read `$SDLC_AGENTS/skills/stacks/<detected-stack>.md` for harness commands
+3. Analyze project's config files for which tools are actually configured
+4. Generate scripts using commands from the stack file
+5. If a tool isn't configured, skip that phase or use fallbacks
+6. Write to `$PROJECT_ROOT/agent-context/harness/`
+7. Make all scripts executable: `chmod +x`
 
 ### Step 4: Create Initial Feature
 

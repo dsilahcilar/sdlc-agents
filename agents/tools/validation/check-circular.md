@@ -17,7 +17,7 @@ Detects circular dependencies between modules that can cause maintenance issues 
 ## Usage
 
 ```bash
-.github/tools/validation/check-circular.sh [path]
+.sdlc-agents/tools/validation/check-circular.sh [path]
 ```
 
 **Arguments:**
@@ -63,7 +63,7 @@ OR
 ## Example
 
 ```bash
-$ .github/tools/validation/check-circular.sh src
+$ .sdlc-agents/tools/validation/check-circular.sh src
 [circular] Checking for circular dependencies...
 [circular] Stack detected: typescript
 

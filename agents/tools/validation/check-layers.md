@@ -17,7 +17,7 @@ Validates that dependencies between architectural layers follow expected rules (
 ## Usage
 
 ```bash
-.github/tools/validation/check-layers.sh [path]
+.sdlc-agents/tools/validation/check-layers.sh [path]
 ```
 
 **Arguments:**
@@ -61,7 +61,7 @@ Checking: domain -> infrastructure
 ## Example
 
 ```bash
-$ .github/tools/validation/check-layers.sh src
+$ .sdlc-agents/tools/validation/check-layers.sh src
 [layers] Validating layer dependencies...
 [layers] Stack detected: java
 

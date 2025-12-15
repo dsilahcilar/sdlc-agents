@@ -5,7 +5,7 @@ set -eu
 # TypeScript Dependency Cruiser - Stack Tool
 # =============================================================================
 # Runs Dependency Cruiser for TypeScript/JavaScript projects.
-# For detailed documentation: .github/tools/stack/ts/depcruise.md
+# For detailed documentation: .sdlc-agents/tools/stack/ts/depcruise.md
 # =============================================================================
 
 SCAN_PATH="${1:-src}"

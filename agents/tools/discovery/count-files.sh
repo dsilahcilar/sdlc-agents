@@ -5,7 +5,7 @@ set -eu
 # Count Files - Discovery Tool
 # =============================================================================
 # Counts source files per directory to understand codebase distribution.
-# For detailed documentation: .github/tools/discovery/count-files.md
+# For detailed documentation: .sdlc-agents/tools/discovery/count-files.md
 # =============================================================================
 
 SCAN_PATH="${1:-src}"

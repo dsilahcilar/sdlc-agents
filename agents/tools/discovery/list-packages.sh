@@ -5,7 +5,7 @@ set -eu
 # List Packages - Discovery Tool
 # =============================================================================
 # Lists all packages/directories in the codebase.
-# For detailed documentation: .github/tools/discovery/list-packages.md
+# For detailed documentation: .sdlc-agents/tools/discovery/list-packages.md
 # =============================================================================
 
 SCAN_PATH="${1:-src}"

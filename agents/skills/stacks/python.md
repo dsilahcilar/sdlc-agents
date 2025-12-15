@@ -1,13 +1,71 @@
-# Python Architecture Skill
+# Python Stack
 
 Stack: Python, Django, Flask, FastAPI
-Tool: **Import Linter**
+Package Managers: pip, poetry, pipenv
 
 ---
 
-## Architecture Enforcement Tool
+## Detection
 
-**Import Linter** - Enforces architectural constraints on Python imports.
+| File | Indicator |
+|------|-----------|
+| `pyproject.toml` | Modern Python project |
+| `setup.py` | Legacy setuptools project |
+| `requirements.txt` | pip dependencies |
+| `Pipfile` | pipenv project |
+
+---
+
+## Harness Commands
+
+### Quality Gates
+
+| Phase | Tool | Command | Config Check |
+|-------|------|---------|--------------|
+| test | pytest | `pytest` | `pytest.ini` or pyproject.toml `[tool.pytest]` |
+| test | unittest | `python -m unittest discover` | No pytest installed |
+| lint | ruff | `ruff check .` | `ruff.toml` or pyproject.toml `[tool.ruff]` |
+| lint | flake8 | `flake8` | `.flake8` or setup.cfg `[flake8]` |
+| lint | pylint | `pylint src/` | `.pylintrc` or pyproject.toml |
+| lint | mypy | `mypy src/` | `mypy.ini` or pyproject.toml `[tool.mypy]` |
+| coverage | pytest-cov | `pytest --cov=src` | `pytest-cov` in dependencies |
+| security | bandit | `bandit -r src/` | `bandit` in dependencies |
+| security | safety | `safety check` | `safety` in dependencies |
+
+### Architecture Tests
+
+| Tool | Command | Config Check |
+|------|---------|--------------|
+| import-linter | `lint-imports` | `.importlinter` or pyproject.toml `[tool.importlinter]` |
+
+**Fallback:** Skip with message suggesting import-linter installation.
+
+### Feature Runner
+
+```sh
+# With module specified
+pytest "src/$FEATURE_MODULE" -v
+
+# Without module
+pytest
+```
+
+### Init Project
+
+```sh
+# Poetry
+poetry install
+
+# pip with requirements.txt
+pip install -r requirements.txt
+
+# pip with pyproject.toml
+pip install -e .
+```
+
+---
+
+## Architecture Enforcement: Import Linter
 
 **Setup:**
 ```bash
@@ -16,67 +74,9 @@ pip install import-linter
 
 ---
 
-## Discovery Commands
+## Rule Template
 
-```bash
-# List all modules
-find . -name "*.py" -not -path "./venv/*" -not -path "./.venv/*" | head -50
-
-# Find all packages (directories with __init__.py)
-find . -name "__init__.py" -not -path "./venv/*" | sed 's|/__init__.py||' | sort
-
-# Find imports
-grep -r "^import\|^from" . --include="*.py" | grep -v venv | head -50
-
-# Check for circular imports (basic)
-python -c "import myapp" 2>&1 | grep -i "circular\|cycle"
-
-# Visualize dependencies (requires pydeps)
-pip install pydeps
-pydeps myapp --cluster --max-bacon=2
-```
-
----
-
-## Generated Rules Template
-
-Create `.importlinter` in project root:
-
-```ini
-[importlinter]
-root_package = myapp
-include_external_packages = False
-
-[importlinter:contract:layers]
-name = Layered architecture
-type = layers
-layers =
-    myapp.presentation
-    myapp.application
-    myapp.domain
-    myapp.infrastructure
-containers =
-    myapp
-
-[importlinter:contract:domain-independence]
-name = Domain should not import infrastructure
-type = forbidden
-source_modules =
-    myapp.domain
-forbidden_modules =
-    myapp.infrastructure
-    myapp.presentation
-
-[importlinter:contract:no-cross-feature]
-name = Features should not import each other
-type = independence
-modules =
-    myapp.features.users
-    myapp.features.orders
-    myapp.features.payments
-```
-
-Or in `pyproject.toml`:
+Add to `pyproject.toml`:
 
 ```toml
 [tool.importlinter]
@@ -99,19 +99,20 @@ source_modules = ["myapp.domain"]
 forbidden_modules = ["myapp.infrastructure", "myapp.presentation"]
 ```
 
----
+Or `.importlinter`:
 
-## Run Commands
+```ini
+[importlinter]
+root_package = myapp
 
-```bash
-# Run import linter
-lint-imports
-
-# Or via Python
-python -m importlinter
-
-# Check specific contract
-lint-imports --contract "Layered architecture"
+[importlinter:contract:layers]
+name = Layered architecture
+type = layers
+layers =
+    myapp.presentation
+    myapp.application
+    myapp.domain
+    myapp.infrastructure
 ```
 
 ---
@@ -130,60 +131,6 @@ lint-imports --contract "Layered architecture"
 ## Existing Tests Check
 
 ```bash
-# Check for import-linter config
 [ -f ".importlinter" ] && echo "Found .importlinter"
 grep -q "importlinter" pyproject.toml 2>/dev/null && echo "Found in pyproject.toml"
-grep -q "importlinter" setup.cfg 2>/dev/null && echo "Found in setup.cfg"
-```
-
----
-
-## Framework-Specific Notes
-
-### Django
-```
-myproject/
-├── apps/
-│   ├── users/           # Feature module
-│   │   ├── models.py    # Domain
-│   │   ├── views.py     # Presentation
-│   │   └── services.py  # Application
-│   └── orders/
-├── core/                # Shared domain
-└── infrastructure/      # DB, external services
-```
-
-### FastAPI
-```
-myapp/
-├── api/                 # Presentation (routers)
-├── services/            # Application
-├── domain/              # Entities, value objects
-├── repositories/        # Infrastructure
-└── core/                # Shared config, deps
-```
-
-### Flask
-```
-myapp/
-├── blueprints/          # Presentation
-├── services/            # Application
-├── models/              # Domain
-└── adapters/            # Infrastructure
-```
-
----
-
-## Additional Tools
-
-### pydeps (visualization)
-```bash
-pip install pydeps
-pydeps myapp --cluster -o deps.svg
-```
-
-### pylint (import order)
-```bash
-pip install pylint
-pylint --disable=all --enable=wrong-import-order myapp/
 ```

@@ -5,7 +5,7 @@ set -eu
 # Find Imports - Discovery Tool
 # =============================================================================
 # Finds import statements to understand module dependencies.
-# For detailed documentation: .github/tools/discovery/find-imports.md
+# For detailed documentation: .sdlc-agents/tools/discovery/find-imports.md
 # =============================================================================
 
 SCAN_PATH="${1:-src}"

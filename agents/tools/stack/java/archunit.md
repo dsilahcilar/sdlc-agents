@@ -17,7 +17,7 @@ Runs ArchUnit architecture tests to validate JVM codebase structure and dependen
 ## Usage
 
 ```bash
-.github/tools/stack/java/archunit.sh [test-pattern]
+.sdlc-agents/tools/stack/java/archunit.sh [test-pattern]
 ```
 
 **Arguments:**
@@ -67,7 +67,7 @@ testImplementation("com.tngtech.archunit:archunit-junit5:1.2.1")
 ## Example
 
 ```bash
-$ .github/tools/stack/java/archunit.sh
+$ .sdlc-agents/tools/stack/java/archunit.sh
 [archunit] Running ArchUnit tests...
 [archunit] Build tool: Maven
 [archunit] Pattern: *Arch*,*Architecture*

@@ -1,82 +1,96 @@
-# Java/Kotlin Architecture Skill
+# Java Stack
 
-Stack: Java, Kotlin, Scala (JVM)
-Tool: **ArchUnit**
-
----
-
-## Architecture Enforcement Tool
-
-**ArchUnit** - Unit tests for architecture rules over JVM bytecode.
-
-**Setup:**
-1. Add `com.tngtech.archunit:archunit-junit5` as a test dependency
-2. Find the latest version:
-   ```bash
-   mvn versions:display-dependency-updates -Dincludes=com.tngtech.archunit:archunit-junit5
-   ```
-3. For Gradle projects: use `testImplementation` dependency configuration
+Stack: Java, JVM
+Build Tools: Maven, Gradle
 
 ---
 
-## Available Tools
+## Detection
 
-> **Progressive Disclosure:** Use these tools instead of embedding scripts.
-> See each tool's `.md` file for detailed usage before executing.
-
-### Discovery Tools
-
-| Tool | Purpose | When to Use |
-|------|---------|-------------|
-| `.github/tools/discovery/list-packages.sh` | List all packages | Initial codebase analysis |
-| `.github/tools/discovery/find-imports.sh` | Find import relationships | Mapping dependencies |
-| `.github/tools/discovery/detect-layers.sh` | Identify architecture layers | Before rule generation |
-| `.github/tools/discovery/count-files.sh` | Count files per package | Understanding scale |
-
-### Validation Tools
-
-| Tool | Purpose | When to Use |
-|------|---------|-------------|
-| `.github/tools/stack/java/archunit.sh` | Run ArchUnit tests | After code changes |
-| `.github/tools/stack/java/jdeps.sh` | Analyze JVM dependencies | Understanding structure |
-| `.github/tools/validation/check-layers.sh` | Quick layer validation | Before running full tests |
-| `.github/tools/validation/check-circular.sh` | Find circular deps | Debugging coupling issues |
+| File | Build Tool |
+|------|------------|
+| `pom.xml` | Maven |
+| `build.gradle` | Gradle (Groovy) |
+| `build.gradle.kts` | Gradle (Kotlin DSL) |
 
 ---
 
-## Quick Commands
+## Harness Commands
 
-For immediate execution without reading tool docs:
+### Quality Gates
 
-```bash
-# Run architecture tests
-.github/tools/stack/java/archunit.sh
+| Phase | Tool | Command | Config Check |
+|-------|------|---------|--------------|
+| test | Maven | `mvn test` | pom.xml exists |
+| test | Gradle | `./gradlew test` | build.gradle exists |
+| lint | Checkstyle | `mvn checkstyle:check` | `checkstyle` in pom.xml |
+| lint | SpotBugs | `mvn spotbugs:check` | `spotbugs` in pom.xml |
+| lint | Gradle | `./gradlew check` | checkstyle/spotbugs in build.gradle |
+| coverage | JaCoCo | `mvn jacoco:report` | `jacoco-maven-plugin` in pom.xml |
+| coverage | Gradle | `./gradlew jacocoTestReport` | `jacoco` in build.gradle |
+| security | OWASP | `mvn dependency-check:check` | `dependency-check-maven` in pom.xml |
 
-# Analyze dependencies
-.github/tools/stack/java/jdeps.sh target/classes
+### Architecture Tests
+
+| Tool | Command | Config Check |
+|------|---------|--------------|
+| ArchUnit (Maven) | `mvn test -Dtest="*Arch*" -DfailIfNoTests=false` | `archunit` in pom.xml dependencies |
+| ArchUnit (Gradle) | `./gradlew test --tests "*Arch*"` | `archunit` in build.gradle |
+
+**Fallback:** Skip with message suggesting ArchUnit installation.
+
+### Feature Runner
+
+```sh
+# With module specified (from feature.md)
+mvn test -pl "$FEATURE_MODULE" -am
+./gradlew ":$FEATURE_MODULE:test"
+
+# Without module (full suite)
+mvn test
+./gradlew test
+```
+
+### Init Project
+
+```sh
+# Maven
+mvn -q -DskipTests compile
+
+# Gradle
+./gradlew assemble --quiet
 ```
 
 ---
 
-## Generated Rules Template
+## Architecture Enforcement: ArchUnit
+
+**Setup:**
+```xml
+<!-- Maven pom.xml -->
+<dependency>
+    <groupId>com.tngtech.archunit</groupId>
+    <artifactId>archunit-junit5</artifactId>
+    <version>1.2.1</version>
+    <scope>test</scope>
+</dependency>
+```
+
+```kotlin
+// Gradle build.gradle.kts
+testImplementation("com.tngtech.archunit:archunit-junit5:1.2.1")
+```
+
+---
+
+## Rule Template
 
 Create `src/test/java/<package>/ArchitectureTest.java`:
 
 ```java
-package com.example.architecture;
-
-import com.tngtech.archunit.core.importer.ImportOption;
-import com.tngtech.archunit.junit.AnalyzeClasses;
-import com.tngtech.archunit.junit.ArchTest;
-import com.tngtech.archunit.lang.ArchRule;
-
-import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.*;
-import static com.tngtech.archunit.library.Architectures.layeredArchitecture;
-
 @AnalyzeClasses(packages = "com.example", importOptions = ImportOption.DoNotIncludeTests.class)
 public class ArchitectureTest {
 
-    // Layer rules
     @ArchTest
     static final ArchRule layered_architecture =
         layeredArchitecture()
@@ -89,7 +103,6 @@ public class ArchitectureTest {
             .whereLayer("Service").mayOnlyBeAccessedByLayers("Controller")
             .whereLayer("Domain").mayOnlyBeAccessedByLayers("Service", "Repository");
 
-    // Domain purity
     @ArchTest
     static final ArchRule domain_should_not_depend_on_spring =
         noClasses()
@@ -97,18 +110,10 @@ public class ArchitectureTest {
             .should().dependOnClassesThat()
             .resideInAPackage("org.springframework..");
 
-    // No cycles
     @ArchTest
     static final ArchRule no_package_cycles =
         slices().matching("com.example.(*)..")
             .should().beFreeOfCycles();
-
-    // Naming conventions
-    @ArchTest
-    static final ArchRule controllers_should_be_suffixed =
-        classes()
-            .that().resideInAPackage("..controller..")
-            .should().haveSimpleNameEndingWith("Controller");
 }
 ```
 
@@ -128,9 +133,6 @@ public class ArchitectureTest {
 ## Existing Tests Check
 
 ```bash
-# Use the discovery tools
-.github/tools/discovery/find-imports.sh src archunit
-
-# Or check directly
 find . -name "*Arch*Test*.java" -o -name "*Architecture*Test*.java"
+grep -r "archunit" pom.xml build.gradle* 2>/dev/null
 ```

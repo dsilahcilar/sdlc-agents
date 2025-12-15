@@ -17,7 +17,7 @@ Identifies architectural layers in the codebase by analyzing package/directory n
 ## Usage
 
 ```bash
-.github/tools/discovery/detect-layers.sh [path]
+.sdlc-agents/tools/discovery/detect-layers.sh [path]
 ```
 
 **Arguments:**
@@ -48,7 +48,7 @@ Layer: <layer-name>
 ## Example
 
 ```bash
-$ .github/tools/discovery/detect-layers.sh src/main
+$ .sdlc-agents/tools/discovery/detect-layers.sh src/main
 [layers] Detected architecture layers:
 Layer: Controller (Presentation)
   Packages: 3

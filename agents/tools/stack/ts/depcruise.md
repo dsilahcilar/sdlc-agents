@@ -17,7 +17,7 @@ Runs Dependency Cruiser to validate import rules and architectural constraints i
 ## Usage
 
 ```bash
-.github/tools/stack/ts/depcruise.sh [path]
+.sdlc-agents/tools/stack/ts/depcruise.sh [path]
 ```
 
 **Arguments:**
@@ -65,7 +65,7 @@ Create `.dependency-cruiser.js` (see TypeScript skill file for template).
 ## Example
 
 ```bash
-$ .github/tools/stack/ts/depcruise.sh src
+$ .sdlc-agents/tools/stack/ts/depcruise.sh src
 [depcruise] Running Dependency Cruiser...
 [depcruise] Config: .dependency-cruiser.js
 [depcruise] Path: src
