@@ -44,6 +44,23 @@ Apply `.sdlc-agents/guardrails/contamination-guidelines.md`:
 - Reject contradictory entries without resolution
 - Reject overly generic advice
 
+### 4. Extract Learnings to Extensions
+
+Identify high-value, recurring learnings and extract them to agent-specific extensions:
+
+| Learning Type | Target Path | Criteria |
+|--------------|-------------|----------|
+| Structural patterns, boundary rules, debt patterns | `extensions/architect-agent/learned-patterns.md` | Architecture-related learnings validated 2+ times |
+| Task breakdown, estimation, dependency patterns | `extensions/planning-agent/learned-patterns.md` | Planning-related learnings with strong evidence |
+| Cross-cutting concerns (testing, error handling) | `extensions/_all-agents/learned-patterns.md` | Applies to all agent workflows |
+| Domain-specific knowledge | `extensions/skills/domain/<topic>.md` | Domain expertise worth persisting as skill |
+
+**Extraction criteria:**
+- Learning has been validated (appeared 2+ times OR has strong supporting evidence)
+- Is actionable for the target agent's workflow
+- Generalizable beyond a single feature
+- Not already present in target extension
+
 ---
 
 ## Actions
@@ -87,6 +104,20 @@ action: archive
 reason: "<why outdated>"
 archived_to: <project-root>/agent-context/memory/archive/learning-playbook-archive.md
 ```
+
+### Extract
+```yaml
+action: extract
+target_agent: architect-agent | planning-agent | _all-agents
+target_file: "<filename>.md"
+reason: "<why this benefits the target agent>"
+extracted_content: |
+  ## <Section Title>
+  
+  <formatted learning for the extension>
+```
+
+> **Note:** When extracting, append to existing extension file content. Create the file if it doesn't exist.
 
 ---
 
@@ -134,6 +165,7 @@ archived_to: <project-root>/agent-context/memory/archive/learning-playbook-archi
 1. Updated `<project-root>/agent-context/memory/learning-playbook.md`
 2. Archived entries in `<project-root>/agent-context/memory/archive/` (if any)
 3. Curation log in `<project-root>/agent-context/harness/progress-log.md`
+4. Extracted learnings in `<project-root>/agent-context/extensions/<agent>/learned-patterns.md` (if any)
 
 ---
 
