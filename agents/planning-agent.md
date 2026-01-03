@@ -18,8 +18,9 @@ Before planning, read:
 2. `<project-root>/agent-context/extensions/skills/domain/project-domains.md`
 3. `<project-root>/agent-context/extensions/skills/domain/project-risks.md`
 4. `<project-root>/agent-context/memory/learning-playbook.md` (filter to relevant module/framework)
-5. `skills/stack-detection.md`
-6. Architecture tests (see Objective 2.5)
+5. `skills/README.md` (skill discovery - lists all available stacks, patterns, and frameworks)
+6. `skills/stack-detection.md` (for auto-detection)
+7. Architecture tests (see Objective 2.5)
 
 ---
 
@@ -31,6 +32,22 @@ Using `skills/stack-detection.md`:
 - Detect stack at project root (per-directory for monorepos)
 - Identify skill file: `skills/stacks/<detected>.md`
 - Record in feature.md and task files
+
+### 1.3 Discover Relevant Skills
+
+**IMPORTANT**: Beyond stack detection, discover additional skills:
+
+1. **Read `skills/README.md`** to see all available skill categories
+2. **Read `skills/skill-index.yaml`** for complete skill listing with aliases and detection hints
+3. **Match skills** based on:
+   - Keywords in user request (match against aliases in skill-index.yaml)
+   - Existing project patterns (detect from imports, annotations, config)
+   - Domain requirements mentioned in the request
+
+```bash
+# Resolve discovered skills for Planning Agent
+SKILL_PATHS=$(.sdlc-agents/tools/skills/resolve-skills.sh --agent planning <skill-name>)
+```
 
 ### 1.5 Parse Skill Directives
 
@@ -44,32 +61,29 @@ DIRECTIVES=$(.sdlc-agents/tools/skills/parse-skill-directives.sh "$USER_PROMPT")
 ```
 
 **Directive syntax:**
-- `#SkillName` — Force-load skill (e.g., `#TDD`, `#Security`)
+- `#SkillName` — Force-load skill
 - `#Skill1,Skill2` — Force-load multiple skills
-- `!SkillName` — Force-exclude skill (e.g., `!Kafka`)
+- `!SkillName` — Force-exclude skill
 - `#only:Skills` — Disable auto-detection, use only listed skills
 
 **Resolution order** (explicit includes always win):
 1. If `only_mode` is true → skip auto-detection, use only listed skills
-2. Else → start with auto-detected stack + add includes − excludes
+2. Else → start with auto-detected stack + discovered skills + includes − excludes
 
 **Resolve skill names to paths:**
 ```bash
 # Load skill content for Planning Agent
-SKILL_PATHS=$(.sdlc-agents/tools/skills/resolve-skills.sh --agent planning java spec-driven)
-# → .sdlc-agents/skills/stacks/java.md (single-file skill)
-# → .sdlc-agents/skills/patterns/spec-driven/_index.md (core concepts)
-# → .sdlc-agents/skills/patterns/spec-driven/planning.md (your instructions)
+SKILL_PATHS=$(.sdlc-agents/tools/skills/resolve-skills.sh --agent planning <stack> <skill1> <skill2>)
 ```
 
 The `--agent planning` flag ensures you only load your relevant portion for multi-file skills.
 
 **Document in feature file** (Section 1.1):
 ```markdown
-## Technology Stack
-- Primary Stack: Java (auto-detected)
-- Explicit Skills: TDD, Saga (from #TDD,Saga)
-- Skills Loaded: stacks/java.md
+## Technology Stack & Skills
+- Primary Stack: <detected> (auto-detected)
+- Additional Skills: <skill1>, <skill2> (discovered/explicit)
+- Skills Loaded: <list of loaded skill files>
 ```
 
 ### 2. Clarify Requirements

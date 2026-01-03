@@ -1,6 +1,13 @@
 # Skill Index
 # Canonical skill name → file path mapping
 # Case-insensitive lookup, supports aliases
+#
+# Fields:
+#   path: relative path to skill file or directory
+#   aliases: alternative names for this skill (case-insensitive)
+#   auto_detect: if true, detected via stack-detection.md
+#   detect_hints: keywords that suggest this skill is relevant
+#                 (agents match these against user request/code)
 
 skills:
   # ============================================
@@ -47,28 +54,43 @@ skills:
     auto_detect: true
 
   # ============================================
-  # Pattern skills (on-demand, user must request)
+  # Pattern skills (on-demand)
   # ============================================
   layered:
     path: patterns/layered.md
     auto_detect: false
+    detect_hints: [layer, layers, layered architecture, presentation layer, business layer, data layer]
   
   hexagonal:
     path: patterns/hexagonal.md
     aliases: [ports-and-adapters, clean-architecture, clean]
     auto_detect: false
+    detect_hints: [hexagonal, ports, adapters, domain layer, clean architecture, inbound, outbound, driving, driven]
   
   modular-monolith:
     path: patterns/modular-monolith.md
     aliases: [modular]
     auto_detect: false
+    detect_hints: [modular monolith, bounded context, module boundary, internal api]
   
   microservices:
     path: patterns/microservices.md
     aliases: [micro]
     auto_detect: false
+    detect_hints: [microservice, distributed, service mesh, api gateway, event-driven]
   
   spec-driven:
     path: patterns/spec-driven
     aliases: [spec, specification-first, sdd]
     auto_detect: false
+    detect_hints: [openapi, spec-first, contract-first, api contract, swagger, specification driven]
+
+  # ============================================
+  # Framework skills (on-demand)
+  # ============================================
+  embabel:
+    path: frameworks/embabel
+    aliases: [embabel-agent, embabel-framework]
+    auto_detect: false
+    detect_hints: ["@Agent", "@Action", "@EmbabelComponent", "GOAP", agentic, ai agent, intelligent agent, llm orchestration, action chain, cognitive agent, embabel]
+

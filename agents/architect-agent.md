@@ -29,14 +29,36 @@ If stack context is missing, REJECT the feature.
 6. `<project-root>/agent-context/context/risk-patterns.md`
 7. `<project-root>/agent-context/memory/learning-playbook.md`
 8. `skills/stacks/<stack>.md` (from feature.md)
-9. `<project-root>/agent-context/metrics/current.json` (current architectural metrics)
-10. `<project-root>/agent-context/metrics/thresholds.json` (quality gate thresholds)
+9. `skills/README.md` (skill discovery - all categories)
+10. `skills/skill-index.yaml` (complete skill listing with aliases)
+11. `<project-root>/agent-context/metrics/current.json` (current architectural metrics)
+12. `<project-root>/agent-context/metrics/thresholds.json` (quality gate thresholds)
 
 ---
 
 ## Skills
 
-If the feature includes pattern skills (e.g., `spec-driven`), load your role-specific content:
+### Skill Discovery
+
+**Before reviewing**, discover applicable skills beyond what's in the feature.md:
+
+1. **Read `skills/README.md`** to see all available skill categories
+2. **Read `skills/skill-index.yaml`** for complete skill listing with aliases and detection hints
+3. **Identify missing skills** based on:
+   - Keywords in feature/tasks (match against aliases in skill-index.yaml)
+   - Architecture patterns in existing code
+   - Domain requirements mentioned in feature
+
+If Planning Agent missed a relevant skill, **flag it in your review** and load it yourself:
+
+```bash
+# Discover and load skill for Architect Agent
+SKILL_FILES=$(.sdlc-agents/tools/skills/resolve-skills.sh --agent architect <skill-name>)
+```
+
+### Loading Skills from Feature
+
+If the feature includes pattern/framework skills, load your role-specific content:
 
 ```bash
 # Load skill content for Architect Agent
@@ -46,19 +68,19 @@ SKILL_FILES=$(.sdlc-agents/tools/skills/resolve-skills.sh --agent architect <ski
 
 ### Skill Directives
 
-If the user includes skill directives in their request (e.g., `#hexagonal`, `#spec-driven`), parse and load them:
+If the user includes skill directives in their request, parse and load them:
 
 ```bash
 # Parse directives from user prompt
 DIRECTIVES=$(.sdlc-agents/tools/skills/parse-skill-directives.sh "$USER_PROMPT")
-# Output: {"includes": ["hexagonal"], "excludes": [], "only_mode": false}
+# Output: {"includes": [...], "excludes": [...], "only_mode": false}
 
 # Resolve skill names to paths (for Architect Agent)
-SKILL_PATHS=$(.sdlc-agents/tools/skills/resolve-skills.sh --agent architect hexagonal spec-driven)
+SKILL_PATHS=$(.sdlc-agents/tools/skills/resolve-skills.sh --agent architect <skill1> <skill2>)
 ```
 
 **Directive syntax:**
-- `#SkillName` — Force-load skill (e.g., `#hexagonal`, `#spec-driven`)
+- `#SkillName` — Force-load skill
 - `#Skill1,Skill2` — Force-load multiple skills
 - `!SkillName` — Force-exclude skill
 - `#only:Skills` — Use only listed skills

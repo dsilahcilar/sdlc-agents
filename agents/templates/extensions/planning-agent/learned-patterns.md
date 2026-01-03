@@ -9,6 +9,24 @@ Patterns extracted from retrospectives and validated learnings.
 
 ## Task Decomposition Heuristics
 
+### Heuristic: Neo4j Repository Query Implementation Pattern
+
+When breaking down tasks for Neo4j repository queries that return projections, always plan for custom repository fragments instead of simple `@Query` annotations.
+
+- **Trigger**: Tasks involving Neo4j queries that return projection classes (not entity classes)
+- **Rationale**: Spring Data Neo4j's automatic projection mapping with `@Query` is unreliable and often causes `MappingException` at runtime
+- **Task Breakdown**:
+  1. Create projection data class (if not exists)
+  2. Create custom repository fragment interface
+  3. Create fragment implementation with `Neo4jClient` and manual `.mappedBy()` mapping
+  4. Extend main repository interface with the fragment
+  5. Write integration tests
+- **Evidence**: 
+  - Financial metrics endpoint required refactoring from `@Query` to custom fragment (2026-01-01)
+  - Executives, investors, products repositories already use this pattern successfully
+  - Pattern prevents runtime failures that are hard to debug
+- **Time Estimate**: Add 30% buffer for custom fragment implementation vs simple `@Query`
+
 <!-- Curator Agent: Add validated task breakdown patterns here -->
 <!-- Example:
 ### Heuristic: Foundation-First Ordering
