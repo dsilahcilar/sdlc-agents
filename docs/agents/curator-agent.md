@@ -45,7 +45,7 @@ Without curation, the learning playbook degrades over time:
 | New entries from Retro Agent | Incoming lessons |
 | `.sdlc-agents/guardrails/contamination-guidelines.md` | Quality criteria |
 | `<project-root>/agent-context/guardrails/*` | Current guardrails |
-| `<project-root>/agent-context/harness/progress-log.md` | Historical context |
+| `<project-root>/agent-context/features/<feature-id>/progress-log.md` | Historical context (feature-specific) |
 
 ---
 
@@ -55,7 +55,7 @@ Without curation, the learning playbook degrades over time:
 |------|--------|
 | `<project-root>/agent-context/memory/learning-playbook.md` | Updated |
 | `<project-root>/agent-context/memory/archive/` | Archived entries |
-| `<project-root>/agent-context/harness/progress-log.md` | Curation log |
+| `<project-root>/agent-context/harness/progress-log.md` | Curation log (cross-feature) |
 
 ---
 

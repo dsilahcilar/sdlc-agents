@@ -54,7 +54,7 @@ LLMs are notoriously weak at architectural decisions. This agent provides a dedi
 | File | Action |
 |------|--------|
 | `<project-root>/agent-context/features/<feature-id>/feature.md` | Append Architecture Review section |
-| `<project-root>/agent-context/harness/progress-log.md` | Updated with review summary |
+| `<project-root>/agent-context/features/<feature-id>/progress-log.md` | Updated with review summary |
 
 ---
 

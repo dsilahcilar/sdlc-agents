@@ -12,7 +12,7 @@ Run `pwd` to confirm your working directory before any operation.
 
 ## Inputs
 
-1. `<project-root>/agent-context/harness/progress-log.md`
+1. `<project-root>/agent-context/features/<feature-id>/progress-log.md` (feature-specific logs)
 2. Code review findings
 3. Test results (unit, integration, architecture)
 4. Architecture test violations
@@ -145,7 +145,7 @@ A good entry:
 
 1. Update `<project-root>/agent-context/memory/learning-playbook.md`
 2. Propose guardrail updates if warranted
-3. Update `<project-root>/agent-context/harness/progress-log.md` with retro summary
+3. Update `<project-root>/agent-context/harness/progress-log.md` with retro summary (retro uses harness log as it's cross-feature)
 4. Flag uncertain entries for **Curator Agent** review
 
 ---

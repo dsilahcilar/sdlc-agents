@@ -42,7 +42,7 @@ Functional correctness is table stakes. The hard part is catching structural and
 | Changed files (diff) | Code to review |
 | `<project-root>/agent-context/features/<feature-id>/feature.md` | Feature context |
 | `<project-root>/agent-context/features/<feature-id>/tasks/*.md` | Task specifications |
-| `<project-root>/agent-context/harness/progress-log.md` | Implementation logs |
+| `<project-root>/agent-context/features/<feature-id>/progress-log.md` | Implementation logs |
 | `<project-root>/agent-context/guardrails/*` | All guardrail files |
 | Validation output | Test/Architecture results |
 
@@ -53,7 +53,7 @@ Functional correctness is table stakes. The hard part is catching structural and
 | File | Purpose |
 |------|---------|
 | Code Review document | Review findings |
-| `<project-root>/agent-context/harness/progress-log.md` | Review summary |
+| `<project-root>/agent-context/features/<feature-id>/progress-log.md` | Review summary |
 
 ---
 

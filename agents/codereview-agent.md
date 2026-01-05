@@ -24,7 +24,7 @@ If stack context is missing, STOP and escalate.
 1. Diff or changed files
 2. `<project-root>/agent-context/features/<feature-id>/feature.md`
 3. `<project-root>/agent-context/features/<feature-id>/tasks/*.md`
-4. `<project-root>/agent-context/harness/progress-log.md`
+4. `<project-root>/agent-context/features/<feature-id>/progress-log.md`
 5. Test/Architecture output from:
    - `<project-root>/agent-context/harness/run-feature.sh <feature-id>`
    - `<project-root>/agent-context/harness/run-arch-tests.sh`
@@ -205,7 +205,7 @@ Read the resolved skill files and apply their verification criteria during revie
 
 ## Handoff
 
-1. Update `<project-root>/agent-context/harness/progress-log.md`
+1. Update `<project-root>/agent-context/features/<feature-id>/progress-log.md`
 2. If approved: Ready for merge
 3. If changes requested: Return to Coding Agent
 4. Pass findings to **Retro Agent**

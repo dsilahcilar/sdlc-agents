@@ -90,7 +90,7 @@ For the assigned task:
 6. **Check done criteria**: All checkboxes in task file must be satisfiable
 7. **Debt check**: Review Debt Checklist section in task file
 8. **Complete task**: Run `./agent-context/harness/complete-task.sh <task-file>`
-9. **Log**: Append to progress-log.md, commit
+9. **Log**: Append to `<feature-id>/progress-log.md`, commit
 
 ---
 
@@ -117,7 +117,7 @@ If task file doesn't specify test command, use feature.md's Validation Commands 
 
 ## Progress Log Entry
 
-Append to `<project-root>/agent-context/harness/progress-log.md`:
+Append to `<project-root>/agent-context/features/<feature-id>/progress-log.md`:
 
 ```markdown
 ### Session <ISO8601> - Coding Agent
@@ -155,7 +155,7 @@ When architecture tests fail:
 1. DO NOT proceed with more coding
 2. Analyze: Simple fix (move import, change package)? Or design flaw?
 3. Simple fix → Fix and re-run
-4. Design flaw → Stop, log in progress-log.md, escalate to Architect Agent
+4. Design flaw → Stop, log in `<feature-id>/progress-log.md`, escalate to Architect Agent
 5. Never suppress or ignore architecture failures
 
 ---
@@ -201,7 +201,7 @@ After completing the task:
 
 1. Verify all Done Criteria are met
 2. Run `./agent-context/harness/complete-task.sh <task-file>`
-3. Add log entry to `progress-log.md`
+3. Add log entry to `<feature-id>/progress-log.md`
 4. Commit changes
 5. If more tasks remain: either continue with next task OR hand off
 6. If all tasks done: Run `./agent-context/harness/list-features.sh` to verify

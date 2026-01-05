@@ -142,7 +142,7 @@ All must complete without error.
 
 ### Step 8: Log and Commit
 
-1. Update `$PROJECT_ROOT/agent-context/harness/progress-log.md` with initialization details
+1. Update `$PROJECT_ROOT/agent-context/harness/progress-log.md` with initialization details (initializer uses harness log as it's project-level)
 2. Commit: `git commit -m "chore: initialize SDLC agent harness"`
 
 ---

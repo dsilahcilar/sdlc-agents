@@ -113,6 +113,7 @@ Create the feature directory and files:
 ```
 <project-root>/agent-context/features/<feature-id>/
 ├── feature.md       # Feature context and metadata
+├── progress-log.md  # Feature-specific progress log
 └── tasks/
     ├── T01-<name>.md
     ├── T02-<name>.md
@@ -223,8 +224,8 @@ Before writing each file, verify:
 
 ## Handoff
 
-1. Create feature directory and all files
-2. Append entry to `<project-root>/agent-context/harness/progress-log.md`
+1. Create feature directory and all files (including progress-log.md)
+2. Append entry to `<project-root>/agent-context/features/<feature-id>/progress-log.md`
 3. Request **Architect Agent** review of feature.md
 4. Run `./agent-context/harness/list-features.sh` to confirm structure
 

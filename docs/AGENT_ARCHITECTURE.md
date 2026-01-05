@@ -245,6 +245,8 @@ your-project/agent-context/
 │   └── FEAT-001/
 │       ├── feature.md             │  → Feature context and metadata
 │       │                          │  → Reviewed by Architect Agent
+│       ├── progress-log.md        │  → Feature-specific progress log
+│       │                          │  → Updated by feature-related agents
 │       └── tasks/
 │           ├── T01-xxx.md         │  → Self-contained task for Coding Agent
 │           └── T02-xxx.md
@@ -258,7 +260,7 @@ your-project/agent-context/
 │   ├── start-task.sh              # Mark task as in_progress
 │   ├── complete-task.sh           # Mark task as done
 │   ├── list-features.sh           # Show feature status
-│   └── progress-log.md            # Updated by ALL agents
+│   └── progress-log.md            # Cross-feature activities (retro, curator, init)
 │
 ├── memory/                        # Created by Initializer Agent
 │   ├── learning-playbook.md       │  → Read by Planning Agent (filtered)

@@ -42,7 +42,7 @@
 |------|---------|
 | `<project-root>/agent-context/features/<feature-id>/tasks/T<NN>-<name>.md` | **Primary input** - self-contained task |
 | `<project-root>/agent-context/features/<feature-id>/feature.md` | Optional broader context |
-| `<project-root>/agent-context/harness/progress-log.md` | Previous progress |
+| `<project-root>/agent-context/features/<feature-id>/progress-log.md` | Previous progress |
 
 **Key insight:** The task file contains ALL context needed:
 - What to do (numbered steps)
@@ -62,7 +62,7 @@
 | Source code files | Created/Modified |
 | Test files | Created/Modified |
 | Task file (frontmatter) | Status updated to `done` |
-| `<project-root>/agent-context/harness/progress-log.md` | Session entry appended |
+| `<project-root>/agent-context/features/<feature-id>/progress-log.md` | Session entry appended |
 
 ---
 
@@ -144,7 +144,7 @@ When `harness/run-arch-tests.sh` fails:
 3. **If simple fix**: Fix and re-run
 4. **If design flaw**:
    - Stop coding
-   - Log violation in `progress-log.md`
+   - Log violation in `<feature-id>/progress-log.md`
    - Escalate to Architect Agent or human
 5. **Never suppress or ignore architecture test failures**
 

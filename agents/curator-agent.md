@@ -16,7 +16,7 @@ Run `pwd` to confirm your working directory before any operation.
 2. New entries from Retro Agent
 3. `.sdlc-agents/guardrails/contamination-guidelines.md`
 4. `<project-root>/agent-context/guardrails/*`
-5. `<project-root>/agent-context/harness/progress-log.md`
+5. `<project-root>/agent-context/features/<feature-id>/progress-log.md` (feature-specific logs)
 
 ---
 
@@ -164,7 +164,7 @@ extracted_content: |
 
 1. Updated `<project-root>/agent-context/memory/learning-playbook.md`
 2. Archived entries in `<project-root>/agent-context/memory/archive/` (if any)
-3. Curation log in `<project-root>/agent-context/harness/progress-log.md`
+3. Curation log in `<project-root>/agent-context/harness/progress-log.md` (curator uses harness log as it's cross-feature)
 4. Extracted learnings in `<project-root>/agent-context/extensions/<agent>/learned-patterns.md` (if any)
 
 ---

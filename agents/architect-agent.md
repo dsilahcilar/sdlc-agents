@@ -212,7 +212,7 @@ Escalate to human when:
 
 ## Handoff
 
-1. Update `<project-root>/agent-context/harness/progress-log.md`
+1. Update `<project-root>/agent-context/features/<feature-id>/progress-log.md`
 2. If approved: Coding Agent can proceed with tasks
 3. If rejected: Planning Agent must revise feature
 

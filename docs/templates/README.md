@@ -60,6 +60,7 @@ The **Planning Agent** creates features using the templates:
 ```
 <your-project>/agent-context/features/FEAT-001/
 ├── feature.md         # From feature-template.md
+├── progress-log.md    # Feature-specific progress log
 └── tasks/
     ├── T01-xxx.md     # From task-template.md
     └── T02-xxx.md

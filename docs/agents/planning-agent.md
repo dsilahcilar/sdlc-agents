@@ -49,7 +49,7 @@
 |------|---------|
 | `<project-root>/agent-context/features/<feature-id>/feature.md` | Feature context |
 | `<project-root>/agent-context/features/<feature-id>/tasks/T<NN>-<name>.md` | Task specifications |
-| `<project-root>/agent-context/harness/progress-log.md` | Updated log |
+| `<project-root>/agent-context/features/<feature-id>/progress-log.md` | Updated log |
 
 ---
 

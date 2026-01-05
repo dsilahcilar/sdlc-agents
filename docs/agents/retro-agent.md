@@ -37,7 +37,7 @@ The Retro Agent closes the learning loop. Without it, agents make the same mista
 
 | File | Purpose |
 |------|---------|
-| `<project-root>/agent-context/harness/progress-log.md` | Implementation history |
+| `<project-root>/agent-context/features/<feature-id>/progress-log.md` | Implementation history (feature-specific) |
 | Code Review findings | Review observations |
 | Test results | Unit, integration, architecture |
 | Post-merge outcomes | Bug reports, incidents |
@@ -53,7 +53,7 @@ The Retro Agent closes the learning loop. Without it, agents make the same mista
 |------|--------|
 | `<project-root>/agent-context/memory/learning-playbook.md` | New entries appended |
 | Guardrail update proposals | Recommended changes |
-| `<project-root>/agent-context/harness/progress-log.md` | Retro summary |
+| `<project-root>/agent-context/harness/progress-log.md` | Retro summary (cross-feature) |
 
 ---
 
