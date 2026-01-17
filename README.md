@@ -8,6 +8,7 @@
 [![Cursor](https://img.shields.io/badge/Cursor-✓-purple)](./tools/cursor/README.md)
 [![Windsurf](https://img.shields.io/badge/Windsurf-✓-teal)](./tools/windsurf/README.md)
 [![Aider](https://img.shields.io/badge/Aider-✓-yellow)](./tools/aider/README.md)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ---
 
@@ -177,3 +178,9 @@ See [`extensions/README.md`](./agents/templates/extensions/README.md) for detail
 <p align="center">
   <i>Works with GitHub Copilot, Claude, Cursor, Windsurf, and Aider</i>
 </p>
+
+---
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
