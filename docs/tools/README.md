@@ -1,197 +1,71 @@
-# Tools Registry - Progressive Disclosure System
+# Tools Registry
 
-> Documentation for `agents/tools/`
-
-> "Like a well-organized manual that starts with a table of contents, then specific chapters, and finally detailed appendix."
-
-This documents the **executable tools** that agents can discover and use **only when needed**.
+Documentation for executable tools under `agents/tools/`.
 
 ---
 
-## How It Works
+## How to Use
 
-Instead of embedding shell scripts in prompts, agents:
-
-```
-1. READ this registry (table of contents)
-2. FIND relevant tool by category/description
-3. READ tool details ONLY when needed (from tool's .md file)
-4. EXECUTE the tool (the .sh file)
-```
+1. Read this registry to find a tool.
+2. Read the tool's `.md` file for usage details.
+3. Execute the matching `.sh` script.
 
 ---
 
-## Tool Categories
+## Available Categories
 
-| Category | Description | Use When |
-|----------|-------------|----------|
-| `discovery/` | Analyze codebase structure | First time setup, architecture analysis |
-| `validation/` | Check architecture rules | After code changes, before commit |
-| `stack/` | Stack-specific commands | When working with specific technology |
-| `quality/` | Code quality checks | End of feature, before review |
-
----
-
-## Quick Reference
-
-### Discovery Tools
-| Tool | Description | Stack |
-|------|-------------|-------|
-| `list-packages` | List all packages/directories in codebase | Any |
-| `find-imports` | Find import statements between modules | Any |
-| `detect-layers` | Identify architectural layers | Any |
-| `build-dep-graph` | Generate dependency graph | Any |
-| `count-files` | Count files per package/directory | Any |
-
-### Validation Tools
-| Tool | Description | Stack |
-|------|-------------|-------|
-| `check-circular` | Detect circular dependencies | Any |
-| `check-layers` | Validate layer dependencies | Any |
-| `run-arch-tests` | Run architecture tests | Auto-detect |
-
-### Stack-Specific Tools
-| Tool | Description | Stack |
-|------|-------------|-------|
-| `java/archunit` | Run ArchUnit tests | Java/Kotlin |
-| `java/jdeps` | Visualize JVM dependencies | Java/Kotlin |
-| `ts/depcruise` | Run Dependency Cruiser | TypeScript |
-| `ts/madge` | Detect circular deps | TypeScript |
-| `python/import-linter` | Run Import Linter | Python |
-| `go/arch-lint` | Run go-arch-lint | Go |
-| `rust/clippy` | Run Clippy checks | Rust |
-| `dotnet/archunit` | Run ArchUnitNET | C#/.NET |
-| `ruby/packwerk` | Run Packwerk | Ruby |
-| `php/deptrac` | Run Deptrac | PHP |
+| Category | Purpose |
+|----------|---------|
+| `discovery/` | Analyze structure/imports and layer hints |
+| `validation/` | Validate dependency constraints |
+| `skills/` | Parse and resolve skill directives |
+| `stack/java/` | Java/JVM architecture tooling helpers |
+| `stack/ts/` | TypeScript dependency tooling helpers |
 
 ---
 
-## Using Tools
+## Discovery Tools
 
-### From Agent Prompts
+| Tool | Files | Purpose |
+|------|-------|---------|
+| `list-packages` | `discovery/list-packages.md/.sh` | List package/module paths |
+| `find-imports` | `discovery/find-imports.md/.sh` | Find import relationships |
+| `detect-layers` | `discovery/detect-layers.md/.sh` | Infer layer boundaries |
+| `count-files` | `discovery/count-files.md/.sh` | Count files per directory/package |
 
-```markdown
-When you need to analyze package structure:
-1. See tools registry: agents/tools/README.md → "Discovery Tools"
-2. Read tool details: agents/tools/discovery/list-packages.md
-3. Execute: agents/tools/discovery/list-packages.sh
-```
+## Validation Tools
 
-### From Shell
+| Tool | Files | Purpose |
+|------|-------|---------|
+| `check-circular` | `validation/check-circular.md/.sh` | Detect circular dependencies |
+| `check-layers` | `validation/check-layers.md/.sh` | Verify layer dependency direction |
 
-```bash
-# Run any tool directly
-./agents/tools/discovery/list-packages.sh
+## Skill Tools
 
-# With arguments (if supported)
-./agents/tools/stack/java/archunit.sh --verbose
-```
+| Tool | Files | Purpose |
+|------|-------|---------|
+| `parse-skill-directives` | `skills/parse-skill-directives.sh` | Parse `#...`, `!...`, `#only:...` directives |
+| `resolve-skills` | `skills/resolve-skills.sh` | Resolve skill names/aliases to files |
 
----
+## Stack-Specific Tools
 
-## Tool File Structure
+### Java/JVM
 
-Each tool consists of two files:
+| Tool | Files | Purpose |
+|------|-------|---------|
+| `archunit` | `stack/java/archunit.md/.sh` | Run or assist ArchUnit checks |
+| `jdeps` | `stack/java/jdeps.md/.sh` | Analyze JVM package/module dependencies |
 
-```
-tools/
-├── <category>/
-│   ├── <tool-name>.md    # Human-readable description + usage
-│   └── <tool-name>.sh    # Executable script
-```
+### TypeScript
 
-### The `.md` File (Description)
-
-Contains:
-- What the tool does
-- When to use it
-- Expected output
-- Examples
-- Related tools
-
-### The `.sh` File (Implementation)
-
-Contains:
-- Executable POSIX shell script
-- Minimal dependencies
-- Clear output format
-- Exit codes for success/failure
+| Tool | Files | Purpose |
+|------|-------|---------|
+| `depcruise` | `stack/ts/depcruise.md/.sh` | Run dependency-cruiser checks |
+| `madge` | `stack/ts/madge.md/.sh` | Detect circular dependencies with madge |
 
 ---
 
-## Adding New Tools
+## Notes
 
-1. Create `tools/<category>/<name>.md` with description
-2. Create `tools/<category>/<name>.sh` with implementation
-3. Add entry to this README in the Quick Reference section
-4. Make script executable: `chmod +x tools/<category>/<name>.sh`
-
-### Tool Description Template
-
-```markdown
-# <Tool Name>
-
-**Category:** <discovery|validation|stack|quality>
-**Stack:** <Any|Java|TypeScript|etc.>
-
-## Purpose
-
-<1-2 sentences about what this tool does>
-
-## When to Use
-
-- <use case 1>
-- <use case 2>
-
-## Usage
-
-\`\`\`bash
-agents/tools/<category>/<name>.sh [options]
-\`\`\`
-
-## Output Format
-
-<describe what the tool outputs>
-
-## Exit Codes
-
-| Code | Meaning |
-|------|---------|
-| 0 | Success |
-| 1 | Failure / Violations found |
-
-## Related Tools
-
-- `<other-tool>` - <brief relation>
-
-## Example
-
-\`\`\`bash
-$ agents/tools/<category>/<name>.sh
-<example output>
-\`\`\`
-```
-
----
-
-## Progressive Disclosure Benefits
-
-1. **Minimal context** - Agents read only tool descriptions, not implementations
-2. **Discoverable** - Registry acts as table of contents
-3. **Executable** - Scripts run independently
-4. **Maintainable** - Update script without changing prompts
-5. **Extensible** - Add tools without modifying agent definitions
-
----
-
-## Anti-Patterns
-
-❌ **Don't** embed full scripts in agent prompts
-❌ **Don't** load all tool details at once
-❌ **Don't** duplicate logic between tools
-❌ **Don't** make tools that require complex setup
-
-✓ **Do** scan registry first, load details on demand
-✓ **Do** keep tools single-purpose
-✓ **Do** document expected inputs/outputs
-✓ **Do** use consistent naming conventions
+- This registry intentionally lists only tools currently present in `agents/tools/`.
+- If you add new tools, update this file in the same change.

@@ -111,7 +111,8 @@ Skill names are case-insensitive and support aliases. See `skills/skill-index.ya
 
 | Canonical Name | Aliases |
 |---------------|---------|
-| `java` | `kotlin`, `jvm`, `maven`, `gradle` |
+| `java` | `jvm`, `maven`, `gradle` |
+| `kotlin` | `kt`, `kotlin-jvm` |
 | `typescript` | `ts`, `javascript`, `js`, `node` |
 | `hexagonal` | `ports-and-adapters`, `clean-architecture` |
 
@@ -138,7 +139,8 @@ skills/
 ├── stack-detection.md     # How to detect technology stack (Level 2)
 │
 ├── stacks/                # Stack-specific skills (Level 3)
-│   ├── java.md            # Java/Kotlin with ArchUnit
+│   ├── java.md            # Java with ArchUnit
+│   ├── kotlin.md          # Kotlin with ArchUnit/Konsist
 │   ├── typescript.md      # TypeScript/JavaScript
 │   ├── python.md          # Python with Import Linter
 │   ├── go.md              # Go with go-arch-lint
@@ -212,15 +214,15 @@ The **Planning Agent** is responsible for stack detection:
 1. Read `skills/stack-detection.md`
 2. Detect the technology stack
 3. Document in Solution Plan (Section 1.1 Technology Stack)
-4. Document in Context file (Technology Stack section)
+4. Embed stack/skill context into `feature.md` and task files
 
 ### For Downstream Agents (Coding, Code Review, Architect)
 
 Downstream agents **receive stack context** from the Planning Agent:
 
-1. Read the pre-assembled context: `<project-root>/agent-context/context/<issue-id>.context.md`
+1. Read pre-assembled context from `feature.md` and task files
 2. Use the documented skill reference: `skills/stacks/<stack>.md`
-3. Execute validation commands from the context file
+3. Execute validation commands from task/feature files
 
 **DO NOT detect the stack yourself.** If stack context is missing, escalate to Planning Agent.
 
@@ -335,8 +337,8 @@ Agents should:
 ### Context Consumers (All Other Agents)
 1. **First**: Read the feature.md and/or task files with embedded context
 2. **Then**: Read tool descriptions only when ready to execute
-3. **Never**: Load skills directly (only Planning Agent does this)
-4. **Never**: Read `stack-detection.md` (that's Planning Agent's job)
+3. **Default**: Do not perform stack detection; use stack context from Planning Agent
+4. **Exception**: In direct invocation mode, downstream agents may parse directives and load explicit skills
 5. **Never**: Read all stack skills at once
 
 This keeps context usage minimal and focused, with clear responsibility separation.
@@ -400,4 +402,3 @@ See the [Troubleshooting](../../agents/templates/extensions/skills/README.md#tro
 - Agent ignoring invariants
 - Tool script failures
 - Skills too large
-

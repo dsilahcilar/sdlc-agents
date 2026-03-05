@@ -69,11 +69,11 @@ Total: ~800 tokens vs. ~4000+ if loading everything
 |------|--------|--------------|---------------------|
 | **Bootstrap** | Initializer | Creates project structure and detects stack | ❌ No — doesn't consume context |
 | **Context Producer** | Planning | Consumes skills/domains/risks, embeds into feature/task files | ✅ Yes — reads custom skills and instructions |
-| **Context Consumer** | Architect, Coding, Code Review, Retro, Curator | Reads feature/task files (pre-assembled context) | ✅ Yes — reads custom instructions only (not skills) |
+| **Context Consumer** | Architect, Coding, Code Review, Retro, Curator | Reads feature/task files (pre-assembled context); may load explicit skills in direct invocation mode | ✅ Yes — reads custom instructions and targeted skills when needed |
 
 **Key distinction:**
 - **Planning Agent**: Reads raw skills/domains/risks and *embeds them* into feature.md and task files
-- **Other Agents**: Read the *embedded* context from feature.md and task files (they don't load skills directly)
+- **Other Agents**: Default to embedded context from feature.md and task files; in direct invocation mode, they may load explicit directive-selected skills
 - **Initializer Agent**: Neither produces context for agents nor consumes it — just scaffolds the directory structure
 
 ### 4. Architecture-as-Guardrail

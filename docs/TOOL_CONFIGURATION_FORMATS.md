@@ -1,119 +1,82 @@
 # Tool Configuration Formats
 
-This document describes the configuration formats for each AI coding assistant supported by SDLC Agents.
+This document describes the actual configuration files created by SDLC Agents installers.
+
+---
+
+## Common Runtime Path
+
+All installers link or copy runtime prompts to:
+
+- `.sdlc-agents/`
+
+This directory contains the executable agent prompt files:
+
+- `.sdlc-agents/planning-agent.md`
+- `.sdlc-agents/coding-agent.md`
+- `.sdlc-agents/architect-agent.md`
+- `.sdlc-agents/codereview-agent.md`
+- `.sdlc-agents/retro-agent.md`
+- `.sdlc-agents/curator-agent.md`
+- `.sdlc-agents/initializer-agent.md`
 
 ---
 
 ## GitHub Copilot
 
-**Config Location:** `.github/copilot-instructions.md`
+**Config Location:** `.github/agents/*.agent.md`
 
-**Format:** Markdown with optional YAML frontmatter
+**Format:** Markdown with YAML frontmatter
 
-**Example:**
-```markdown
----
-description: Project coding conventions
----
-# Project Guidelines
+**Generated files:**
+- `.github/agents/planning-agent.agent.md`
+- `.github/agents/coding-agent.agent.md`
+- `.github/agents/architect-agent.agent.md`
+- `.github/agents/codereview-agent.agent.md`
+- `.github/agents/retro-agent.agent.md`
+- `.github/agents/curator-agent.agent.md`
+- `.github/agents/initializer-agent.agent.md`
 
-- Follow TypeScript best practices
-- Use functional components
-- Prefer named exports
-```
-
-**Agents Location:** `.github/copilot-agents/*.md` (each agent is a separate file)
-
-**References:**
-- [GitHub Docs: Custom Instructions](https://docs.github.com/en/copilot/customizing-copilot)
+These files reference `.sdlc-agents/<agent>.md` as the source instructions.
 
 ---
 
 ## Claude Code
 
-**Config Location:**
-- `CLAUDE.md` (project root) — instructions
-- `.claude/settings.local.json` — permissions and settings
+**Config Location:** `.claude/agents/*.md`
 
-**Format:** Plain Markdown for instructions, JSON for settings
+**Format:** Markdown with YAML frontmatter
 
-**Example CLAUDE.md:**
-```markdown
-# Project Context
+**Generated files:**
+- `.claude/agents/planning-agent.md`
+- `.claude/agents/coding-agent.md`
+- `.claude/agents/architect-agent.md`
+- `.claude/agents/codereview-agent.md`
+- `.claude/agents/retro-agent.md`
+- `.claude/agents/curator-agent.md`
+- `.claude/agents/initializer-agent.md`
 
-This project uses the SDLC Agents framework for structured development.
-
-## Agents
-See the `agents/` directory for specialized agent instructions:
-- `agents/planning-agent.md` — Creates structured plans
-- `agents/coding-agent.md` — Implements code changes
-```
-
-**Example settings.local.json:**
-```json
-{
-  "permissions": {
-    "allow": ["Bash(tree:*)"],
-    "deny": []
-  }
-}
-```
-
-**References:**
-- [Claude Code Configuration](https://docs.anthropic.com/claude/docs/claude-code)
+These subagent files reference `.sdlc-agents/<agent>.md`.
 
 ---
 
 ## Cursor
 
-**Config Location:** `.cursor/rules/*.mdc`
+**Config Location:** `.cursor/rules/sdlc-agents.mdc`
 
-**Format:** MDC (Markdown with YAML frontmatter containing globs and metadata)
+**Format:** MDC (Markdown + YAML frontmatter)
 
-**Example:**
-```markdown
----
-description: SDLC Agents integration
-globs: ["**/*"]
-alwaysApply: true
----
-# SDLC Agents
-
-Use the agents in the `agents/` directory:
-- @planning-agent.md for creating structured plans
-- @coding-agent.md for implementing code
-```
-
-**Key Fields:**
-- `description` — Rule purpose
-- `globs` — File patterns to apply to
-- `alwaysApply` — Whether to auto-include in context
-
-**References:**
-- [Cursor Rules Documentation](https://cursor.com/docs/rules)
+The rule file references `.sdlc-agents/*.md` prompts.
 
 ---
 
 ## Windsurf
 
-**Config Location:** `.windsurf/rules/*.md`
+**Config Location:** `.windsurf/rules/sdlc-agents.md`
 
-**Format:** Plain Markdown
+**Format:** Markdown
 
-**Example:**
-```markdown
-# SDLC Agents
-
-This project uses structured SDLC agents for development workflow.
-
-## Available Agents
-- Planning Agent: `agents/planning-agent.md`
-- Coding Agent: `agents/coding-agent.md`
-- Architect Agent: `agents/architect-agent.md`
-```
-
-**References:**
-- [Windsurf Configuration](https://docs.codeium.com/windsurf)
+The rule file references `.sdlc-agents/*.md` prompts.
 
 ---
 
@@ -123,30 +86,23 @@ This project uses structured SDLC agents for development workflow.
 
 **Format:** YAML
 
-**Example:**
-```yaml
-# SDLC Agents context files
-read:
-  - agents/planning-agent.md
-  - agents/coding-agent.md
-  - agents/architect-agent.md
-  - agents/codereview-agent.md
-```
-
-**Key Fields:**
-- `read` — List of files to include as context
-
-**References:**
-- [Aider Configuration](https://aider.chat/docs/config.html)
+**Generated `read:` entries:**
+- `.sdlc-agents/planning-agent.md`
+- `.sdlc-agents/coding-agent.md`
+- `.sdlc-agents/architect-agent.md`
+- `.sdlc-agents/codereview-agent.md`
+- `.sdlc-agents/retro-agent.md`
+- `.sdlc-agents/curator-agent.md`
+- `.sdlc-agents/initializer-agent.md`
 
 ---
 
-## Configuration Comparison
+## Comparison
 
-| Feature | Copilot | Claude | Cursor | Windsurf | Aider |
-|---------|---------|--------|--------|----------|-------|
-| Format | Markdown | Markdown | MDC | Markdown | YAML |
-| Frontmatter | Optional | No | Required | No | N/A |
-| File Patterns | No | No | Yes | No | No |
-| Include Files | No | No | Yes (@file) | No | Yes (read:) |
-| JSON Config | No | Yes | No | No | No |
+| Tool | Tool-Specific Config | Runtime Prompt Source |
+|------|----------------------|-----------------------|
+| GitHub Copilot | `.github/agents/*.agent.md` | `.sdlc-agents/*.md` |
+| Claude Code | `.claude/agents/*.md` | `.sdlc-agents/*.md` |
+| Cursor | `.cursor/rules/sdlc-agents.mdc` | `.sdlc-agents/*.md` |
+| Windsurf | `.windsurf/rules/sdlc-agents.md` | `.sdlc-agents/*.md` |
+| Aider | `.aider.conf.yml` | `.sdlc-agents/*.md` |

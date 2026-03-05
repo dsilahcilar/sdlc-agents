@@ -168,6 +168,7 @@ See [`extensions/README.md`](./agents/templates/extensions/README.md) for detail
 |------------|-------------|
 | [Multi-Assistant Support](./docs/MULTI_ASSISTANT_SUPPORT.md) | Setup for Copilot, Claude, Cursor, Windsurf, Aider |
 | [Skills System](./docs/skills/README.md) | Progressive disclosure, skill directives, custom skills |
+| [SKILL Package Catalog](./skills/README.md) | `SKILL.md` role-skill packages for modern skill runtimes |
 | [Agent Architecture](./docs/AGENT_ARCHITECTURE.md) | System design, file lifecycle, data flow |
 | [Agent Responsibilities](./docs/AGENT_RESPONSIBILITY_ALLOCATION.md) | Context providers vs. consumers |
 | [Individual Agents](./docs/agents/README.md) | Detailed specs for each agent |

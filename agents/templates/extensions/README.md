@@ -50,7 +50,7 @@ The `skills/` subfolder contains project-specific skills that are loaded using P
 
 **Important distinction:**
 - **Planning Agent** — Directly loads skills from `skills/` and embeds them into `feature.md` and task files
-- **Other Agents** (Coding, Architect, Code Review, etc.) — Read the *embedded* context from feature.md and task files; they don't load skills directly
+- **Other Agents** (Coding, Architect, Code Review, etc.) — Default to embedded context from feature.md/task files; in direct invocation mode they may load explicit directive-selected skills
 
 Skills are **capabilities and knowledge**, while extensions are **behavioral rules**. Both supplement core agent behavior.
 

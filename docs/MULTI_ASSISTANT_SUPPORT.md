@@ -49,7 +49,7 @@ sdlc-agents/
 ```
 
 The install script:
-1. Symlinks (or copies) the `agents/` directory to your project
+1. Symlinks (or copies) the `agents/` directory into your project as `.sdlc-agents/`
 2. Creates tool-specific configuration referencing the agents
 
 ## Tool-Specific Setup
@@ -96,11 +96,11 @@ See [tools/claude/README.md](../tools/claude/README.md)
 
 **Creates:**
 - `.cursor/rules/sdlc-agents.mdc`
-- `agents/` → symlink to sdlc-agents/agents
+- `.sdlc-agents/` → symlink to sdlc-agents/agents
 
 **Usage:**
 ```
-@agents/planning-agent.md Create a feature for user authentication
+@.sdlc-agents/planning-agent.md Create a feature for user authentication
 ```
 
 See [tools/cursor/README.md](../tools/cursor/README.md)
@@ -111,11 +111,11 @@ See [tools/cursor/README.md](../tools/cursor/README.md)
 
 **Creates:**
 - `.windsurf/rules/sdlc-agents.md`
-- `agents/` → symlink to sdlc-agents/agents
+- `.sdlc-agents/` → symlink to sdlc-agents/agents
 
 **Usage:**
 ```
-Use agents/planning-agent.md to create a feature plan
+Use .sdlc-agents/planning-agent.md to create a feature plan
 ```
 
 See [tools/windsurf/README.md](../tools/windsurf/README.md)
@@ -126,7 +126,7 @@ See [tools/windsurf/README.md](../tools/windsurf/README.md)
 
 **Creates:**
 - `.aider.conf.yml`
-- `agents/` → symlink to sdlc-agents/agents
+- `.sdlc-agents/` → symlink to sdlc-agents/agents
 
 **Usage:**
 ```
@@ -194,7 +194,7 @@ You can install SDLC Agents for multiple tools on the same project:
 
 ### How Multi-Tool Works
 
-- **Shared `agents/` directory**: All tools use the same agent instructions
+- **Shared `.sdlc-agents/` directory**: All tools use the same runtime prompt instructions
 - **Separate configs**: Each tool gets its own configuration file
 - **No conflicts**: Tool configs are independent (`.github/`, `.claude/`, `.cursor`, etc.)
 
@@ -220,9 +220,9 @@ Use copy mode instead:
 
 ### Agent files not found
 
-Ensure the `agents/` symlink is valid:
+Ensure the `.sdlc-agents/` symlink is valid:
 ```bash
-ls -la ./your-project/agents/
+ls -la ./your-project/.sdlc-agents/
 ```
 
 ### Multiple tools conflict

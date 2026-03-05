@@ -198,24 +198,32 @@ AGENT_CONTEXT="$PROJECT_ROOT/agent-context"
 mkdir -p "$AGENT_CONTEXT"
 
 # Step 1: Copy harness templates
-log_info "Step 1/5: Copying harness templates..."
+log_info "Step 1/6: Copying harness templates..."
 copy_directory "$TEMPLATES_PATH/harness" "$AGENT_CONTEXT/harness" "$FORCE"
 make_executable "$AGENT_CONTEXT/harness"
 
-# Step 2/4: Copy memory templates
-log_info "Step 2/4: Copying memory templates..."
+# Step 2: Copy memory templates
+log_info "Step 2/6: Copying memory templates..."
 copy_directory "$TEMPLATES_PATH/memory" "$AGENT_CONTEXT/memory" "$FORCE"
 
-# Step 3/4: Copy features templates
-log_info "Step 3/4: Copying features templates..."
+# Step 3: Copy feature templates
+log_info "Step 3/6: Copying feature templates..."
 mkdir -p "$AGENT_CONTEXT/features"
 copy_file "$TEMPLATES_PATH/features/README.md" "$AGENT_CONTEXT/features/README.md" "$FORCE"
 copy_file "$TEMPLATES_PATH/features/feature-template.md" "$AGENT_CONTEXT/features/feature-template.md" "$FORCE"
 mkdir -p "$AGENT_CONTEXT/features/tasks"
 copy_file "$TEMPLATES_PATH/features/tasks/task-template.md" "$AGENT_CONTEXT/features/tasks/task-template.md" "$FORCE"
 
-# Step 4/4: Copy extensions templates (for custom instructions and skills)
-log_info "Step 4/4: Copying extensions templates..."
+# Step 4: Copy context templates
+log_info "Step 4/6: Copying context templates..."
+copy_directory "$TEMPLATES_PATH/context" "$AGENT_CONTEXT/context" "$FORCE"
+
+# Step 5: Copy metrics templates
+log_info "Step 5/6: Copying metrics templates..."
+copy_directory "$TEMPLATES_PATH/metrics" "$AGENT_CONTEXT/metrics" "$FORCE"
+
+# Step 6: Copy extensions templates (for custom instructions and skills)
+log_info "Step 6/6: Copying extensions templates..."
 copy_directory "$TEMPLATES_PATH/extensions" "$AGENT_CONTEXT/extensions" "$FORCE"
 
 # Summary
@@ -232,6 +240,8 @@ echo "  ├── features/          (feature specs + tasks)"
 echo "  │   ├── feature-template.md"
 echo "  │   └── tasks/"
 echo "  │       └── task-template.md"
+echo "  ├── context/           (domain heuristics + risk patterns)"
+echo "  ├── metrics/           (thresholds + historical snapshots)"
 echo "  └── extensions/        (custom instructions + skills)"
 echo "      ├── _all-agents/   (global rules)"
 echo "      ├── <agent-name>/  (agent-specific)"

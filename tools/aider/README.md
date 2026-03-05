@@ -14,19 +14,19 @@ Install SDLC Agents for Aider.
 ```
 your-project/
 ├── .aider.conf.yml               # Context files configuration
-└── agents/                        # Symlinked from sdlc-agents
+└── .sdlc-agents/                 # Symlinked/copied runtime prompts
 ```
 
 ## Manual Setup
 
-1. Copy or symlink the `agents/` directory to your project
+1. Copy or symlink the repository `agents/` directory to `.sdlc-agents/` in your project
 2. Create `.aider.conf.yml`:
 
 ```yaml
 read:
-  - agents/planning-agent.md
-  - agents/coding-agent.md
-  - agents/architect-agent.md
+  - .sdlc-agents/planning-agent.md
+  - .sdlc-agents/coding-agent.md
+  - .sdlc-agents/architect-agent.md
 ```
 
 ## Usage
@@ -44,7 +44,7 @@ Follow the planning agent instructions to create a feature plan
 
 ```bash
 # Start aider with agent context
-aider --read agents/planning-agent.md
+aider --read .sdlc-agents/planning-agent.md
 
 # In aider:
 > Create a plan for adding API rate limiting
@@ -56,7 +56,7 @@ aider --read agents/planning-agent.md
 
 Aider's git integration makes incremental commits easy:
 ```bash
-aider --read agents/coding-agent.md src/auth/*.ts
+aider --read .sdlc-agents/coding-agent.md src/auth/*.ts
 > Implement the login validation following the coding agent guidelines
 # Aider auto-commits with meaningful messages
 ```
@@ -65,7 +65,7 @@ aider --read agents/coding-agent.md src/auth/*.ts
 
 ```bash
 # In CI/CD script
-aider --read agents/codereview-agent.md \
+aider --read .sdlc-agents/codereview-agent.md \
       --message "Review the changes in this PR" \
       --no-auto-commits \
       $(git diff --name-only origin/main)
@@ -75,7 +75,7 @@ aider --read agents/codereview-agent.md \
 
 ```bash
 # Process multiple files
-aider --read agents/coding-agent.md \
+aider --read .sdlc-agents/coding-agent.md \
       --message "Add error handling to all service methods" \
       src/services/*.ts
 ```

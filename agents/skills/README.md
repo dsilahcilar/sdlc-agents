@@ -20,7 +20,8 @@ For skill discovery, read **`skill-index.yaml`** to see:
 
 | Stack | File | Aliases |
 |-------|------|---------|
-| Java/Kotlin | `stacks/java.md` | kotlin, jvm, maven, gradle |
+| Java | `stacks/java.md` | jvm, maven, gradle |
+| Kotlin | `stacks/kotlin.md` | kt, kotlin-jvm |
 | TypeScript/JS | `stacks/typescript.md` | ts, javascript, js, node |
 | Python | `stacks/python.md` | py |
 | Go | `stacks/go.md` | golang |

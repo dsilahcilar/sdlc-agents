@@ -34,7 +34,7 @@ This agent **reads** skills, domains, risks, and other knowledge sources and **e
 
 ### Context Consumers (Receive Embedded Context)
 
-These agents run **after** planning and receive pre-assembled context. They should **NOT** load skills or detect the stack themselves:
+These agents run **after** planning and receive pre-assembled context. In the planning-first workflow they should **NOT** detect the stack or re-run broad skill discovery:
 
 | Agent | What It Receives | Source |
 |-------|------------------|--------|
@@ -102,8 +102,9 @@ The Coding Agent reads **one task file** as its primary input.
 2. ❌ **Code Review Agent loading stack-detection.md** - Already in feature.md
 3. ❌ **Architect Agent discovering stack** - Already provided by Planning Agent
 4. ❌ **Missing stack context in features** - Planning Agent must include it
-5. ❌ **Downstream agents loading skills directly** - Only Planning Agent loads skills; others receive embedded context
-6. ❌ **Initializer Agent with Custom Instructions section** - It's a bootstrap utility, not a context producer/consumer
+5. ❌ **Downstream agents re-detecting stack** - Use stack context from Planning Agent
+6. ❌ **Downstream agents loading all skills directly** - In direct invocation mode, load only explicit skills from directives
+7. ❌ **Initializer Agent with Custom Instructions section** - It's a bootstrap utility, not a context producer/consumer
 
 ---
 

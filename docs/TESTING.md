@@ -1,165 +1,117 @@
 # Testing and Validation
 
-This document provides checklists for validating SDLC Agents installation and functionality.
+This document provides a quick checklist for validating SDLC Agents installation.
 
 ---
 
-## Install Script Validation
+## Quick Validation
 
-### Quick Validation
-
-After running `./install.sh`, verify these items:
+After running `./install.sh`, verify:
 
 ```bash
-# 1. Check agents/ exists and is accessible
-ls -la your-project/agents/
+# Runtime prompt directory exists
+ls -la your-project/.sdlc-agents/
 
-# 2. Verify agent files are present
-ls your-project/agents/*.md
+# Core prompt files exist
+ls your-project/.sdlc-agents/*-agent.md
 
-# 3. Check tool-specific config was created (example: GitHub Copilot)
-cat your-project/.github/copilot-instructions.md
+# Tool-specific config exists (example: GitHub Copilot)
+ls your-project/.github/agents/*.agent.md
 ```
 
-### Tool-Specific Checks
+---
 
-| Tool | Config File | Validation Command |
-|------|-------------|-------------------|
-| GitHub Copilot | `.github/copilot-instructions.md` | `cat .github/copilot-instructions.md` |
-| Claude | `CLAUDE.md`, `.claude/settings.local.json` | `cat CLAUDE.md` |
+## Tool-Specific Checks
+
+| Tool | Expected Config | Validation Command |
+|------|-----------------|-------------------|
+| GitHub Copilot | `.github/agents/*.agent.md` | `ls .github/agents/*.agent.md` |
+| Claude Code | `.claude/agents/*.md` | `ls .claude/agents/*.md` |
 | Cursor | `.cursor/rules/sdlc-agents.mdc` | `cat .cursor/rules/sdlc-agents.mdc` |
 | Windsurf | `.windsurf/rules/sdlc-agents.md` | `cat .windsurf/rules/sdlc-agents.md` |
 | Aider | `.aider.conf.yml` | `cat .aider.conf.yml` |
 
 ---
 
-## Symlink vs Copy Mode Validation
+## Symlink vs Copy Mode
 
 ### Symlink Mode (Default)
 
 ```bash
-# Should show symlink pointing to sdlc-agents/agents
-ls -la your-project/agents
-# Output should include: agents -> /path/to/sdlc-agents/agents
+ls -la your-project/.sdlc-agents
+# Should show .sdlc-agents -> /path/to/sdlc-agents/agents
 ```
 
 ### Copy Mode (`--copy`)
 
 ```bash
-# Should show directory, not symlink
-ls -la your-project/agents
-# Output should show: drwxr-xr-x ... agents
+ls -la your-project/.sdlc-agents
+# Should show a normal directory (not a symlink)
 
-# Verify files are actual copies
-file your-project/agents/planning-agent.md
-# Output: ASCII text
+file your-project/.sdlc-agents/planning-agent.md
+# Should show text file output
 ```
 
 ---
 
-## Agent Functionality Checklist
+## Runtime Prompt Checklist
 
-### Planning Agent
-
-- [ ] Can read `agents/planning-agent.md`
-- [ ] Creates feature files in `agent-context/features/`
-- [ ] Generates task breakdown in `tasks/` subdirectory
-- [ ] Includes technology stack section
-
-### Architect Agent
-
-- [ ] Can read `agents/architect-agent.md`
-- [ ] Reviews feature.md files
-- [ ] References architecture tests if present
-- [ ] Provides approval/rejection with rationale
-
-### Coding Agent
-
-- [ ] Can read `agents/coding-agent.md`
-- [ ] Follows task files for implementation
-- [ ] Updates progress log
-- [ ] Runs architecture tests after changes
-
-### Code Review Agent
-
-- [ ] Can read `agents/codereview-agent.md`
-- [ ] Identifies debt patterns
-- [ ] Checks against guardrails
-- [ ] Provides structured feedback
-
-### Retro Agent
-
-- [ ] Can read `agents/retro-agent.md`
-- [ ] Extracts lessons from completed work
-- [ ] Updates learning playbook
+- [ ] `.sdlc-agents/planning-agent.md` is readable
+- [ ] `.sdlc-agents/architect-agent.md` is readable
+- [ ] `.sdlc-agents/coding-agent.md` is readable
+- [ ] `.sdlc-agents/codereview-agent.md` is readable
+- [ ] `.sdlc-agents/retro-agent.md` is readable
+- [ ] `.sdlc-agents/curator-agent.md` is readable
+- [ ] `.sdlc-agents/initializer-agent.md` is readable
 
 ---
 
 ## Common Issues
 
-### Symlink Not Working
+### `.sdlc-agents/` missing or broken
 
-**Symptom**: `agents/` shows as broken link or doesn't exist
-
-**Fix**:
 ```bash
-# Re-run with copy mode
 ./install.sh --ghcp --target ./your-project --copy
 ```
 
-### Permission Denied
+### Tool config not created
 
-**Symptom**: Can't read agent files
-
-**Fix**:
 ```bash
-chmod -R 644 your-project/agents/*.md
-```
-
-### Config File Not Created
-
-**Symptom**: Tool doesn't recognize SDLC Agents
-
-**Fix**:
-```bash
-# Re-run installer for that tool
+# Re-run installer for the target tool
 ./install.sh --ghcp --target ./your-project
 ```
 
 ---
 
-## Full Validation Script
+## Minimal Validation Script
 
 ```bash
-#!/bin/bash
-# validate-install.sh
+#!/usr/bin/env bash
+set -euo pipefail
 
 TARGET=${1:-.}
 ERRORS=0
 
 echo "Validating SDLC Agents installation in $TARGET..."
 
-# Check agents directory
-if [ -d "$TARGET/agents" ] || [ -L "$TARGET/agents" ]; then
-    echo "✅ agents/ directory exists"
+if [ -d "$TARGET/.sdlc-agents" ] || [ -L "$TARGET/.sdlc-agents" ]; then
+  echo "✅ .sdlc-agents exists"
 else
-    echo "❌ agents/ directory missing"
-    ((ERRORS++))
+  echo "❌ .sdlc-agents missing"
+  ERRORS=$((ERRORS + 1))
 fi
 
-# Check for at least one agent file
-if ls "$TARGET/agents/"*.md 1> /dev/null 2>&1; then
-    echo "✅ Agent files present"
+if ls "$TARGET/.sdlc-agents/"*-agent.md >/dev/null 2>&1; then
+  echo "✅ Runtime prompt files present"
 else
-    echo "❌ No agent .md files found"
-    ((ERRORS++))
+  echo "❌ No runtime prompt files found"
+  ERRORS=$((ERRORS + 1))
 fi
 
-# Summary
 if [ $ERRORS -eq 0 ]; then
-    echo "✅ All checks passed"
+  echo "✅ All checks passed"
 else
-    echo "❌ $ERRORS check(s) failed"
+  echo "❌ $ERRORS check(s) failed"
 fi
 
 exit $ERRORS

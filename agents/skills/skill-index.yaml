@@ -15,7 +15,12 @@ skills:
   # ============================================
   java:
     path: stacks/java.md
-    aliases: [kotlin, jvm, maven, gradle]
+    aliases: [jvm, maven, gradle]
+    auto_detect: true
+
+  kotlin:
+    path: stacks/kotlin.md
+    aliases: [kt, kotlin-jvm]
     auto_detect: true
   
   typescript:
@@ -93,4 +98,3 @@ skills:
     aliases: [embabel-agent, embabel-framework]
     auto_detect: false
     detect_hints: ["@Agent", "@Action", "@EmbabelComponent", "GOAP", agentic, ai agent, intelligent agent, llm orchestration, action chain, cognitive agent, embabel]
-
