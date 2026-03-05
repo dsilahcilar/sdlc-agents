@@ -216,7 +216,11 @@ copy_file "$TEMPLATES_PATH/features/tasks/task-template.md" "$AGENT_CONTEXT/feat
 
 # Step 4: Copy context templates
 log_info "Step 4/6: Copying context templates..."
-copy_directory "$TEMPLATES_PATH/context" "$AGENT_CONTEXT/context" "$FORCE"
+if [ -d "$TEMPLATES_PATH/context" ]; then
+    copy_directory "$TEMPLATES_PATH/context" "$AGENT_CONTEXT/context" "$FORCE"
+else
+    log_warn "Context templates not found, skipping: $TEMPLATES_PATH/context"
+fi
 
 # Step 5: Copy metrics templates
 log_info "Step 5/6: Copying metrics templates..."
