@@ -81,6 +81,48 @@ copy_directory() {
 }
 
 #######################################
+# Copy directory files with optional overwrite
+# This mode backfills missing files into existing directories.
+# Arguments:
+#   $1 - source directory
+#   $2 - destination directory
+#   $3 - force flag (true/false)
+#######################################
+copy_directory_files() {
+    dir_src="$1"
+    dir_dest="$2"
+    overwrite="$3"
+
+    if [ ! -d "$dir_src" ]; then
+        log_error "Source directory not found: $dir_src"
+        return 1
+    fi
+
+    mkdir -p "$dir_dest"
+
+    (
+        cd "$dir_src" || exit 1
+        find . -type f | while IFS= read -r rel_path; do
+            rel_path="${rel_path#./}"
+            src_file="$dir_src/$rel_path"
+            dest_file="$dir_dest/$rel_path"
+
+            if [ -f "$dest_file" ] && [ "$overwrite" != "true" ]; then
+                log_warn "File exists, skipping: $dest_file"
+                continue
+            fi
+
+            dest_dir=$(dirname "$dest_file")
+            mkdir -p "$dest_dir"
+            cp "$src_file" "$dest_file"
+            log_info "Copied: $src_file -> $dest_file"
+        done
+    )
+
+    log_info "Backfilled templates: $dir_src -> $dir_dest"
+}
+
+#######################################
 # Copy file with optional overwrite
 # Arguments:
 #   $1 - source file
@@ -217,14 +259,14 @@ copy_file "$TEMPLATES_PATH/features/tasks/task-template.md" "$AGENT_CONTEXT/feat
 # Step 4: Copy context templates
 log_info "Step 4/6: Copying context templates..."
 if [ -d "$TEMPLATES_PATH/context" ]; then
-    copy_directory "$TEMPLATES_PATH/context" "$AGENT_CONTEXT/context" "$FORCE"
+    copy_directory_files "$TEMPLATES_PATH/context" "$AGENT_CONTEXT/context" "$FORCE"
 else
     log_warn "Context templates not found, skipping: $TEMPLATES_PATH/context"
 fi
 
 # Step 5: Copy metrics templates
 log_info "Step 5/6: Copying metrics templates..."
-copy_directory "$TEMPLATES_PATH/metrics" "$AGENT_CONTEXT/metrics" "$FORCE"
+copy_directory_files "$TEMPLATES_PATH/metrics" "$AGENT_CONTEXT/metrics" "$FORCE"
 
 # Step 6: Copy extensions templates (for custom instructions and skills)
 log_info "Step 6/6: Copying extensions templates..."
