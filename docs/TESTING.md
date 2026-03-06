@@ -21,6 +21,20 @@ ls your-project/.github/agents/*.agent.md
 
 ---
 
+## Prompt Regression Validation
+
+Before merging prompt or harness changes in this repository:
+
+```bash
+./evals/run-deterministic-evals.sh
+./evals/run-model-evals.sh
+```
+
+- Deterministic evals are required and should fail on regressions.
+- Model evals are scaffolded/non-blocking in v1 and produce report artifacts.
+
+---
+
 ## Tool-Specific Checks
 
 | Tool | Expected Config | Validation Command |

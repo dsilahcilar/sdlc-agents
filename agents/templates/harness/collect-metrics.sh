@@ -239,8 +239,19 @@ collect_typescript_metrics() {
 
 collect_python_metrics() {
     echo "[metrics] Collecting Python metrics..."
-    # Placeholder for Python-specific metrics
-    echo "[metrics]   (Python metrics collection not yet implemented)"
+    
+    CIRCULAR_DEPS=0
+    ARCH_VIOLATIONS=0
+
+    if command -v lint-imports >/dev/null 2>&1 && { [ -f ".importlinter" ] || grep -Eq 'importlinter' pyproject.toml 2>/dev/null; }; then
+        IMPORT_OUTPUT=$(lint-imports 2>&1 || true)
+        if echo "$IMPORT_OUTPUT" | grep -Eiq 'broken contracts|failed'; then
+            ARCH_VIOLATIONS=$(echo "$IMPORT_OUTPUT" | grep -Eic 'broken contracts|failed' | tr -d ' ')
+        fi
+    fi
+
+    echo "[metrics]   Circular dependencies: $CIRCULAR_DEPS"
+    echo "[metrics]   Architecture violations: $ARCH_VIOLATIONS"
 }
 
 collect_generic_metrics() {
@@ -273,10 +284,10 @@ collect_test_metrics() {
     COVERAGE=0
     # JaCoCo (Java)
     if [ -f "target/site/jacoco/index.html" ]; then
-        COVERAGE=$(grep -oP 'Total.*?(\d+)%' target/site/jacoco/index.html | grep -oP '\d+' | head -1 || echo "0")
+        COVERAGE=$(sed -n -E 's/.*Total[^0-9]*([0-9]+)%.*/\1/p' target/site/jacoco/index.html | head -1 || echo "0")
     # Istanbul/NYC (JS/TS)
     elif [ -f "coverage/coverage-summary.json" ]; then
-        COVERAGE=$(grep -oP '"total".*?"pct":\s*(\d+)' coverage/coverage-summary.json | grep -oP '\d+' | head -1 || echo "0")
+        COVERAGE=$(awk '/"total"/ {in_total=1} in_total && /"pct"/ {line=$0; gsub(/[^0-9.]/, "", line); if (line != "") {print line; exit}}' coverage/coverage-summary.json || echo "0")
     fi
     
     echo "[metrics]   Test files: $TEST_FILES"

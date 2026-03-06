@@ -49,3 +49,6 @@ yarn-error.log*
 # Logs
 logs/
 *.log
+
+# Eval artifacts
+evals/reports/

@@ -10,7 +10,7 @@
 #   STACK=$(detect_stack)              # Scans current directory
 #   STACK=$(detect_stack "/path/to/project")  # Scans specified directory
 #
-# Returns: java, typescript, javascript, python, go, rust, dotnet, ruby, php, or unknown
+# Returns: java, typescript, python, go, rust, dotnet, ruby, php, or unknown
 # =============================================================================
 
 detect_stack() {
@@ -21,7 +21,8 @@ detect_stack() {
     elif [ -f "$base_dir/tsconfig.json" ]; then
         echo "typescript"
     elif [ -f "$base_dir/package.json" ]; then
-        echo "javascript"
+        # Treat JavaScript/TypeScript projects as the shared TypeScript skill family.
+        echo "typescript"
     elif [ -f "$base_dir/pyproject.toml" ] || [ -f "$base_dir/setup.py" ] || [ -f "$base_dir/requirements.txt" ]; then
         echo "python"
     elif [ -f "$base_dir/go.mod" ]; then

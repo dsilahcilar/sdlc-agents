@@ -41,11 +41,11 @@ fi
 WARNINGS=0
 FAILURES=0
 
-# Helper to extract JSON values (simple grep-based, works without jq)
+# Helper to extract JSON values (portable grep/sed, works without jq)
 get_json_value() {
     local file="$1"
     local path="$2"
-    grep -oP "\"$path\":\s*\K[0-9.]+" "$file" 2>/dev/null | head -1 || echo "0"
+    grep -E "\"$path\"[[:space:]]*:[[:space:]]*[0-9.]+" "$file" 2>/dev/null | head -1 | sed -E 's/.*:[[:space:]]*([0-9.]+).*/\1/' || echo "0"
 }
 
 # Extract current metrics

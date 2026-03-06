@@ -21,6 +21,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **Deterministic harness tooling**:
+  - Added `agents/tools/harness/generate-harness.sh` for stack-aware deterministic script generation
+  - Added `agents/tools/harness/validate-generated-harness.sh` for generated script validation
+  - Initializer now references deterministic generation + validation workflow
+
+- **Prompt self-evals (deterministic v1)**:
+  - Added `evals/run-deterministic-evals.sh` with fixture-based regression checks
+  - Added `evals/run-model-evals.sh` scaffold (warn-only/non-blocking)
+  - Added fixture projects for Java, TypeScript, and Python harness generation checks
+  - Added GitHub Actions workflow `.github/workflows/evals.yml` for automated eval gating
+
 - **Kotlin support**: Added `agents/skills/stacks/kotlin.md` with full Gradle/Maven support
   - Detection for `build.gradle.kts` with `*.kt` files
   - Support for Ktlint, Detekt, Kover, ArchUnit, Konsist
@@ -36,6 +47,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Migration guide**: Added `docs/MIGRATION_GUIDE.md` for projects migrating from old templates
 
 ### Improved
+
+- **Harness template safety**:
+  - Replaced hard placeholder-only behavior for core harness scripts with safe fallback execution
+  - Fallback scripts now attempt deterministic regeneration when generator is available
+
+- **Portability and parsing robustness**:
+  - Fixed stack detection alignment (`package.json` now resolves to `typescript`)
+  - Improved `parse-skill-directives.sh` handling for malformed and spaced `#only` directives
+  - Removed GNU `grep -P` dependency from metrics parsing paths
 
 - **Stack detection**: Enhanced Kotlin vs Java detection logic with priority ordering
 - **Code reduction**: Removed ~1,100 lines of redundant documentation from stack files

@@ -65,6 +65,12 @@ The agent will:
 3. Generate stack-appropriate harness scripts
 4. Make them executable
 
+**CLI alternative (deterministic):**
+```bash
+.sdlc-agents/tools/harness/generate-harness.sh --project-root .
+.sdlc-agents/tools/harness/validate-generated-harness.sh --project-root .
+```
+
 ### Step 4: Verify Generated Scripts
 
 After the initializer runs:

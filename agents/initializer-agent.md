@@ -33,7 +33,7 @@ $SDLC_AGENTS/setup.sh $PROJECT_ROOT
 
 ### Step 3: Generate Stack-Specific Scripts
 
-**Generate** harness scripts based on detected stack:
+Use the deterministic harness generator to produce stack-specific scripts:
 
 | File | Purpose |
 |------|---------|
@@ -45,14 +45,21 @@ $SDLC_AGENTS/setup.sh $PROJECT_ROOT
 | `compare-metrics.sh` | Compare metrics against baseline |
 | `archive-metrics.sh` | Archive successful metrics |
 
+```sh
+$SDLC_AGENTS/tools/harness/generate-harness.sh \
+  --project-root "$PROJECT_ROOT" \
+  --sdlc-agents-root "$PROJECT_ROOT/$SDLC_AGENTS"
+
+$SDLC_AGENTS/tools/harness/validate-generated-harness.sh \
+  --project-root "$PROJECT_ROOT"
+```
+
 **Generation Workflow:**
 1. Read `$SDLC_AGENTS/skills/harness-spec.md` for output contract
-2. Read `$SDLC_AGENTS/skills/stacks/<detected-stack>.md` for harness commands
-3. Analyze project's config files for which tools are actually configured
-4. Generate scripts using commands from the stack file
-5. If a tool isn't configured, skip that phase or use fallbacks
-6. Write to `$PROJECT_ROOT/agent-context/harness/`
-7. Make all scripts executable: `chmod +x`
+2. Read `$SDLC_AGENTS/skills/stacks/<detected-stack>.md` for stack commands
+3. Run deterministic generator (source of truth)
+4. Validate generated scripts (presence, syntax, phase wiring)
+5. If validation fails, STOP and fix generation inputs (do not proceed)
 
 ### Step 4: Create Initial Feature
 
@@ -132,6 +139,8 @@ Analyze project and populate these templates:
 ### Step 7: Verify Health
 
 ```sh
+cd $PROJECT_ROOT
+$SDLC_AGENTS/tools/harness/validate-generated-harness.sh --project-root "$PROJECT_ROOT"
 cd $PROJECT_ROOT/agent-context
 ./harness/init-project.sh
 ./harness/run-arch-tests.sh
@@ -150,7 +159,8 @@ All must complete without error.
 ## Constraints
 
 - No business logic implementation
-- POSIX shell scripts (avoid bash-isms)
+- Generated harness scripts must be POSIX shell compatible
+- Repository utility tooling may use Bash when required
 - Idempotent operations
 - Clear TODOs for placeholders
 - Minimal dependencies

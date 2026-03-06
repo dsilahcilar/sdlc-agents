@@ -1,0 +1,22 @@
+[project]
+name = "fixture-python"
+version = "0.1.0"
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+
+[tool.ruff]
+line-length = 100
+
+[tool.importlinter]
+root_package = "fixture_python"
+
+[[tool.importlinter.contracts]]
+name = "Layered architecture"
+type = "layers"
+layers = [
+  "fixture_python.presentation",
+  "fixture_python.application",
+  "fixture_python.domain",
+  "fixture_python.infrastructure"
+]

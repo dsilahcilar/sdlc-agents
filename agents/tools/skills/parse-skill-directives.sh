@@ -2,30 +2,21 @@
 # Parse skill directives from a user prompt
 # Usage: parse-skill-directives.sh "<prompt>"
 # Output: JSON with includes, excludes, only_mode
-#
-# Examples:
-#   parse-skill-directives.sh "Implement auth #TDD,Security !Kafka"
-#   → {"includes": ["tdd", "security"], "excludes": ["kafka"], "only_mode": false}
-#
-#   parse-skill-directives.sh "Write tests #only:TDD"
-#   → {"includes": ["tdd"], "excludes": [], "only_mode": true}
 
 set -euo pipefail
 
 PROMPT="${1:-}"
 
 if [[ -z "$PROMPT" ]]; then
-  echo '{"error": "No prompt provided", "includes": [], "excludes": [], "only_mode": false}'
+  echo '{"error": "No prompt provided", "includes": [], "excludes": [], "only_mode": false}' >&2
   exit 1
 fi
 
-# Check for jq dependency
-if ! command -v jq &> /dev/null; then
+if ! command -v jq >/dev/null 2>&1; then
   echo '{"error": "jq is required but not installed"}' >&2
   exit 1
 fi
 
-# Validate skill name syntax
 validate_skill_name() {
   local name="$1"
   if [[ ! "$name" =~ ^[a-zA-Z][a-zA-Z0-9_-]*$ ]]; then
@@ -34,65 +25,99 @@ validate_skill_name() {
   fi
 }
 
-# Extract #only: directive (disables auto-detection)
-ONLY_MODE=false
-ONLY_SKILLS=""
-if [[ "$PROMPT" =~ \#only:([a-zA-Z0-9_,-]+) ]]; then
-  ONLY_MODE=true
-  ONLY_SKILLS="${BASH_REMATCH[1]}"
-fi
-
-# Extract regular includes (#Skill or #Skill1,Skill2)
-# Exclude #only: matches
-INCLUDES=""
-TEMP_PROMPT="$PROMPT"
-while [[ "$TEMP_PROMPT" =~ \#([a-zA-Z][a-zA-Z0-9_,-]*) ]]; do
-  MATCH="${BASH_REMATCH[1]}"
-  # Skip if it's an #only: directive
-  if [[ ! "$MATCH" =~ ^only: ]]; then
-    if [[ -n "$INCLUDES" ]]; then
-      INCLUDES="$INCLUDES,$MATCH"
-    else
-      INCLUDES="$MATCH"
-    fi
-  fi
-  # Remove matched portion to find next
-  TEMP_PROMPT="${TEMP_PROMPT//#$MATCH/}"
-done
-
-# Extract excludes (!Skill or !Skill1,Skill2)
-EXCLUDES=""
-TEMP_PROMPT="$PROMPT"
-while [[ "$TEMP_PROMPT" =~ \!([a-zA-Z][a-zA-Z0-9_,-]*) ]]; do
-  MATCH="${BASH_REMATCH[1]}"
-  if [[ -n "$EXCLUDES" ]]; then
-    EXCLUDES="$EXCLUDES,$MATCH"
+append_csv() {
+  local current="$1"
+  local value="$2"
+  if [[ -z "$current" ]]; then
+    printf '%s' "$value"
   else
-    EXCLUDES="$MATCH"
+    printf '%s,%s' "$current" "$value"
   fi
-  TEMP_PROMPT="${TEMP_PROMPT//!$MATCH/}"
-done
+}
 
-# Convert comma-separated to JSON arrays (lowercase, deduplicated)
 to_json_array() {
   local input="$1"
   if [[ -z "$input" ]]; then
     echo "[]"
-  else
-    # Split on commas and validate each skill name
-    local skills
-    IFS=',' read -ra skills <<< "$input"
-    for skill in "${skills[@]}"; do
-      # Trim whitespace
-      skill=$(echo "$skill" | xargs)
-      validate_skill_name "$skill" || exit 1
-    done
-    # Convert to JSON array (lowercase, deduplicated)
-    echo "$input" | tr ',' '\n' | tr '[:upper:]' '[:lower:]' | sort -u | jq -R . | jq -s .
+    return 0
   fi
+
+  local normalized=()
+  local raw=()
+  local skill=""
+  IFS=',' read -r -a raw <<< "$input"
+
+  for skill in "${raw[@]}"; do
+    skill=$(echo "$skill" | xargs)
+    if [[ -z "$skill" ]]; then
+      continue
+    fi
+
+    validate_skill_name "$skill" || exit 1
+    normalized+=("$(echo "$skill" | tr '[:upper:]' '[:lower:]')")
+  done
+
+  if [[ ${#normalized[@]} -eq 0 ]]; then
+    echo "[]"
+    return 0
+  fi
+
+  printf '%s\n' "${normalized[@]}" | sort -u | jq -R . | jq -s .
 }
 
-# Build output JSON
+ONLY_MODE=false
+ONLY_FULL=""
+ONLY_SKILLS=""
+
+if [[ "$PROMPT" =~ \#only: ]]; then
+  if [[ "$PROMPT" =~ \#only:([a-zA-Z][a-zA-Z0-9_-]*(,[[:space:]]*[a-zA-Z][a-zA-Z0-9_-]*)*) ]]; then
+    ONLY_MODE=true
+    ONLY_FULL="${BASH_REMATCH[0]}"
+    ONLY_SKILLS="${BASH_REMATCH[1]}"
+  else
+    echo '{"error": "Malformed #only directive. Use #only:Skill1,Skill2"}' >&2
+    exit 1
+  fi
+fi
+
+INCLUDES=""
+WORK_PROMPT="$PROMPT"
+if [[ -n "$ONLY_FULL" ]]; then
+  WORK_PROMPT="${WORK_PROMPT/"$ONLY_FULL"/ }"
+fi
+
+include_guard=0
+while [[ "$WORK_PROMPT" =~ \#([a-zA-Z][a-zA-Z0-9_-]*(,[[:space:]]*[a-zA-Z][a-zA-Z0-9_-]*)*) ]]; do
+  MATCH="${BASH_REMATCH[1]}"
+  FULL_MATCH="${BASH_REMATCH[0]}"
+  INCLUDES=$(append_csv "$INCLUDES" "$MATCH")
+  WORK_PROMPT="${WORK_PROMPT/"$FULL_MATCH"/ }"
+  include_guard=$((include_guard + 1))
+  if [[ "$include_guard" -gt 100 ]]; then
+    echo '{"error": "Failed to parse includes safely (loop guard triggered)"}' >&2
+    exit 1
+  fi
+done
+
+EXCLUDES=""
+EXCLUDE_PROMPT="$PROMPT"
+if [[ -n "$ONLY_FULL" ]]; then
+  EXCLUDE_PROMPT="${EXCLUDE_PROMPT/"$ONLY_FULL"/ }"
+fi
+
+exclude_guard=0
+while [[ "$EXCLUDE_PROMPT" =~ \!([a-zA-Z][a-zA-Z0-9_-]*(,[[:space:]]*[a-zA-Z][a-zA-Z0-9_-]*)*) ]]; do
+  MATCH="${BASH_REMATCH[1]}"
+  FULL_MATCH="${BASH_REMATCH[0]}"
+  EXCLUDES=$(append_csv "$EXCLUDES" "$MATCH")
+  EXCLUDE_PROMPT="${EXCLUDE_PROMPT/"$FULL_MATCH"/ }"
+  exclude_guard=$((exclude_guard + 1))
+  if [[ "$exclude_guard" -gt 100 ]]; then
+    echo '{"error": "Failed to parse excludes safely (loop guard triggered)"}' >&2
+    exit 1
+  fi
+done
+
 if [[ "$ONLY_MODE" == "true" ]]; then
   INCLUDES_JSON=$(to_json_array "$ONLY_SKILLS")
 else

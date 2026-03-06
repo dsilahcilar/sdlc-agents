@@ -4,6 +4,8 @@
 
 These are **template scripts** that the Initializer Agent copies to your project's `<project-root>/agent-context/harness/` directory.
 
+Core runtime scripts (`init-project.sh`, `run-feature.sh`, `run-arch-tests.sh`, `run-quality-gates.sh`) are fallback-capable templates: they attempt deterministic regeneration via `.sdlc-agents/tools/harness/generate-harness.sh` and then execute generated scripts when available.
+
 ---
 
 ## Scripts

@@ -1,0 +1,39 @@
+name: Prompt And Harness Evals
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - feature/**
+      - refactor/**
+
+jobs:
+  deterministic-evals:
+    name: Deterministic Evals
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run deterministic eval suite
+        run: ./evals/run-deterministic-evals.sh
+
+  model-evals:
+    name: Model Eval Scaffold
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run model eval scaffold
+        run: ./evals/run-model-evals.sh
+
+      - name: Upload model eval report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: model-eval-report
+          path: evals/reports/model-evals.json
+          if-no-files-found: ignore

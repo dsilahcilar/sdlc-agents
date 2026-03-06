@@ -19,6 +19,7 @@ Documentation for executable tools under `agents/tools/`.
 | `discovery/` | Analyze structure/imports and layer hints |
 | `validation/` | Validate dependency constraints |
 | `skills/` | Parse and resolve skill directives |
+| `harness/` | Deterministic harness generation and validation |
 | `stack/java/` | Java/JVM architecture tooling helpers |
 | `stack/ts/` | TypeScript dependency tooling helpers |
 
@@ -46,6 +47,13 @@ Documentation for executable tools under `agents/tools/`.
 |------|-------|---------|
 | `parse-skill-directives` | `skills/parse-skill-directives.sh` | Parse `#...`, `!...`, `#only:...` directives |
 | `resolve-skills` | `skills/resolve-skills.sh` | Resolve skill names/aliases to files |
+
+## Harness Tools
+
+| Tool | Files | Purpose |
+|------|-------|---------|
+| `generate-harness` | `harness/generate-harness.sh` | Deterministically generate stack-aware harness scripts |
+| `validate-generated-harness` | `harness/validate-generated-harness.sh` | Validate generated harness scripts before execution |
 
 ## Stack-Specific Tools
 

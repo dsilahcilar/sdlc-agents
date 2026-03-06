@@ -120,7 +120,28 @@ git clone https://github.com/dsilahcilar/sdlc-agents.git
 
 **4.** Start with the **Planning Agent** for your first task.
 
+**5.** Run prompt/harness regressions before merging SDLC prompt changes:
+```bash
+./evals/run-deterministic-evals.sh
+./evals/run-model-evals.sh    # non-blocking scaffold in v1
+```
+
 See [Multi-Assistant Support](./docs/MULTI_ASSISTANT_SUPPORT.md) for detailed setup guides.
+
+---
+
+## Prompt Quality Evals
+
+SDLC Agents now includes a built-in self-eval harness for prompt and generation regression detection.
+
+- **Deterministic evals (required):** `./evals/run-deterministic-evals.sh`
+- **Model eval scaffold (warn-only):** `./evals/run-model-evals.sh`
+
+Deterministic evals verify:
+- Harness generation determinism across stack fixtures
+- Generated script validity + quality gate phase wiring
+- Skill directive parser edge cases
+- Stack detection alignment
 
 ---
 
