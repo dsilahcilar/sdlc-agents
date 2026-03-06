@@ -123,7 +123,7 @@ git clone https://github.com/dsilahcilar/sdlc-agents.git
 **5.** Run prompt/harness regressions before merging SDLC prompt changes:
 ```bash
 ./evals/run-deterministic-evals.sh
-./evals/run-model-evals.sh    # non-blocking scaffold in v1
+./evals/run-model-evals.sh    # API-backed, warn-only in CI
 ```
 
 See [Multi-Assistant Support](./docs/MULTI_ASSISTANT_SUPPORT.md) for detailed setup guides.
@@ -135,7 +135,7 @@ See [Multi-Assistant Support](./docs/MULTI_ASSISTANT_SUPPORT.md) for detailed se
 SDLC Agents now includes a built-in self-eval harness for prompt and generation regression detection.
 
 - **Deterministic evals (required):** `./evals/run-deterministic-evals.sh`
-- **Model eval scaffold (warn-only):** `./evals/run-model-evals.sh`
+- **Model evals (API-backed, warn-only):** `./evals/run-model-evals.sh`
 
 Deterministic evals verify:
 - Harness generation determinism across stack fixtures

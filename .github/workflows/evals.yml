@@ -20,14 +20,14 @@ jobs:
         run: ./evals/run-deterministic-evals.sh
 
   model-evals:
-    name: Model Eval Scaffold
+    name: Model Evals (Warn Only)
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Run model eval scaffold
+      - name: Run model evals
         run: ./evals/run-model-evals.sh
 
       - name: Upload model eval report

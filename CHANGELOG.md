@@ -28,7 +28,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - **Prompt self-evals (deterministic v1)**:
   - Added `evals/run-deterministic-evals.sh` with fixture-based regression checks
-  - Added `evals/run-model-evals.sh` scaffold (warn-only/non-blocking)
+  - Added `evals/run-model-evals.sh` API-backed runner (warn-only/non-blocking in CI)
   - Added fixture projects for Java, TypeScript, and Python harness generation checks
   - Added GitHub Actions workflow `.github/workflows/evals.yml` for automated eval gating
 

@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0",
+  "description": "Model-eval cases for SDLC prompt and harness quality",
+  "cases": [
+    {
+      "id": "java-quality-gates",
+      "fixture": "java",
+      "target_script": "run-quality-gates.sh",
+      "min_score": 80,
+      "baseline_score": 88,
+      "max_drop": 8
+    },
+    {
+      "id": "typescript-arch-tests",
+      "fixture": "typescript",
+      "target_script": "run-arch-tests.sh",
+      "min_score": 78,
+      "baseline_score": 86,
+      "max_drop": 8
+    },
+    {
+      "id": "python-feature-runner",
+      "fixture": "python",
+      "target_script": "run-feature.sh",
+      "min_score": 75,
+      "baseline_score": 84,
+      "max_drop": 8
+    }
+  ]
+}

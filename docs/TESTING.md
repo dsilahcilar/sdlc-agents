@@ -31,7 +31,7 @@ Before merging prompt or harness changes in this repository:
 ```
 
 - Deterministic evals are required and should fail on regressions.
-- Model evals are scaffolded/non-blocking in v1 and produce report artifacts.
+- Model evals are API-backed and non-blocking in v1 (warn-only) and produce report artifacts.
 
 ---
 
