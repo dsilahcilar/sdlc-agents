@@ -287,7 +287,14 @@ collect_test_metrics() {
         COVERAGE=$(sed -n -E 's/.*Total[^0-9]*([0-9]+)%.*/\1/p' target/site/jacoco/index.html | head -1 || echo "0")
     # Istanbul/NYC (JS/TS)
     elif [ -f "coverage/coverage-summary.json" ]; then
-        COVERAGE=$(awk '/"total"/ {in_total=1} in_total && /"pct"/ {line=$0; gsub(/[^0-9.]/, "", line); if (line != "") {print line; exit}}' coverage/coverage-summary.json || echo "0")
+        COVERAGE_JSON=$(tr -d '\n\r\t ' < coverage/coverage-summary.json 2>/dev/null || true)
+        COVERAGE=$(printf '%s' "$COVERAGE_JSON" | sed -n -E 's/.*"total":\{.*"lines":\{[^}]*"pct":([0-9]+([.][0-9]+)?).*/\1/p' | head -1)
+        if [ -z "$COVERAGE" ]; then
+            COVERAGE=$(printf '%s' "$COVERAGE_JSON" | sed -n -E 's/.*"pct":([0-9]+([.][0-9]+)?).*/\1/p' | head -1)
+        fi
+        if [ -z "$COVERAGE" ]; then
+            COVERAGE=0
+        fi
     fi
     
     echo "[metrics]   Test files: $TEST_FILES"

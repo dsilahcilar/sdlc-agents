@@ -238,7 +238,7 @@ elif [ "$STACK" = "typescript" ]; then
 
   if is_configured "$PROJECT_ROOT/package.json" '"test"[[:space:]]*:'; then
     TEST_CMD=$(pm_test_cmd "$PM")
-    FEATURE_TEST_TEMPLATE="$(pm_test_cmd "$PM") -- --testPathPattern __FEATURE_ID__"
+    FEATURE_TEST_TEMPLATE=$(pm_test_cmd "$PM")
   elif find_first_existing 'vitest.config.ts' 'vitest.config.js' 'vitest.config.mjs' 'vitest.config.cjs' >/dev/null 2>&1; then
     TEST_CMD='npx vitest run'
     FEATURE_TEST_TEMPLATE='npx vitest run __FEATURE_ID__'
