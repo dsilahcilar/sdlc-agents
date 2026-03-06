@@ -45,6 +45,11 @@ if [ "$STACK" = "javascript" ]; then
   STACK="typescript"
 fi
 
+run_in_project_root() {
+  cmd="$1"
+  (cd "$PROJECT_ROOT" && sh -c "$cmd")
+}
+
 echo "[init-project] ============================================"
 echo "[init-project] Fallback initialization (stack=$STACK)"
 echo "[init-project] ============================================"
@@ -52,29 +57,29 @@ echo "[init-project] ============================================"
 case "$STACK" in
   java)
     if [ -f "$PROJECT_ROOT/pom.xml" ]; then
-      sh -c 'mvn -q -DskipTests compile'
+      run_in_project_root 'mvn -q -DskipTests compile'
     elif [ -f "$PROJECT_ROOT/gradlew" ]; then
-      sh -c './gradlew assemble --quiet'
+      run_in_project_root './gradlew assemble --quiet'
     else
       echo "[init-project] No Java build tool wrapper detected"
     fi
     ;;
   typescript)
     if [ -f "$PROJECT_ROOT/pnpm-lock.yaml" ]; then
-      sh -c 'pnpm install'
+      run_in_project_root 'pnpm install'
     elif [ -f "$PROJECT_ROOT/yarn.lock" ]; then
-      sh -c 'yarn install'
+      run_in_project_root 'yarn install'
     elif [ -f "$PROJECT_ROOT/package.json" ]; then
-      sh -c 'npm install'
+      run_in_project_root 'npm install'
     else
       echo "[init-project] package.json not found"
     fi
     ;;
   python)
     if [ -f "$PROJECT_ROOT/requirements.txt" ]; then
-      sh -c 'pip install -r requirements.txt'
+      run_in_project_root 'pip install -r requirements.txt'
     elif [ -f "$PROJECT_ROOT/pyproject.toml" ]; then
-      sh -c 'pip install -e .'
+      run_in_project_root 'pip install -e .'
     else
       echo "[init-project] No Python dependency manifest found"
     fi

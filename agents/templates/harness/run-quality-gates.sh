@@ -23,6 +23,11 @@ fi
 WARNINGS=0
 FAILURES=0
 
+run_in_project_root() {
+  cmd="$1"
+  (cd "$PROJECT_ROOT" && sh -c "$cmd")
+}
+
 run_soft() {
   label="$1"
   cmd="$2"
@@ -32,7 +37,7 @@ run_soft() {
   fi
 
   echo "[quality-gates] [$label] Running: $cmd"
-  if sh -c "$cmd"; then
+  if run_in_project_root "$cmd"; then
     echo "[quality-gates] [$label] PASS"
   else
     WARNINGS=$((WARNINGS + 1))

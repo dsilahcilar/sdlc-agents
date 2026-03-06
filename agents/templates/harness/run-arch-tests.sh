@@ -44,6 +44,11 @@ if [ "$STACK" = "javascript" ]; then
   STACK="typescript"
 fi
 
+run_in_project_root() {
+  cmd="$1"
+  (cd "$PROJECT_ROOT" && sh -c "$cmd")
+}
+
 echo "[arch-tests] ============================================"
 echo "[arch-tests] Fallback architecture checks (stack=$STACK)"
 echo "[arch-tests] ============================================"
@@ -51,9 +56,9 @@ echo "[arch-tests] ============================================"
 case "$STACK" in
   java)
     if [ -f "$PROJECT_ROOT/pom.xml" ]; then
-      sh -c 'mvn test -Dtest="*Arch*" -DfailIfNoTests=false'
+      run_in_project_root 'mvn test -Dtest="*Arch*" -DfailIfNoTests=false'
     elif [ -f "$PROJECT_ROOT/gradlew" ]; then
-      sh -c './gradlew test --tests "*Arch*"'
+      run_in_project_root './gradlew test --tests "*Arch*"'
     else
       echo "[arch-tests] No Java architecture test runner detected"
     fi
@@ -64,17 +69,17 @@ case "$STACK" in
       if [ -f "$PROJECT_ROOT/.dependency-cruiser.cjs" ]; then CONFIG=".dependency-cruiser.cjs"; fi
       if [ -f "$PROJECT_ROOT/.dependency-cruiser.mjs" ]; then CONFIG=".dependency-cruiser.mjs"; fi
       if [ -f "$PROJECT_ROOT/.dependency-cruiser.json" ]; then CONFIG=".dependency-cruiser.json"; fi
-      sh -c "npx depcruise src --config $CONFIG"
+      run_in_project_root "npx depcruise src --config $CONFIG"
     else
       echo "[arch-tests] dependency-cruiser config not found; using madge circular check"
-      sh -c 'npx madge --circular --extensions ts,tsx,js,jsx src/' || true
+      run_in_project_root 'npx madge --circular --extensions ts,tsx,js,jsx src/' || true
     fi
     ;;
   python)
     if [ -f "$PROJECT_ROOT/.importlinter" ]; then
-      sh -c 'lint-imports'
+      run_in_project_root 'lint-imports'
     elif grep -Eq 'importlinter' "$PROJECT_ROOT/pyproject.toml" 2>/dev/null; then
-      sh -c 'lint-imports'
+      run_in_project_root 'lint-imports'
     else
       echo "[arch-tests] import-linter not configured; skipping"
     fi

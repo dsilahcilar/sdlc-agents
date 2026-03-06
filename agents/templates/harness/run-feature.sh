@@ -45,6 +45,11 @@ if [ "$STACK" = "javascript" ]; then
   STACK="typescript"
 fi
 
+run_in_project_root() {
+  cmd="$1"
+  (cd "$PROJECT_ROOT" && sh -c "$cmd")
+}
+
 echo "[run-feature] ============================================"
 echo "[run-feature] Fallback feature test runner (stack=$STACK)"
 echo "[run-feature] ============================================"
@@ -52,9 +57,9 @@ echo "[run-feature] ============================================"
 case "$STACK" in
   java)
     if [ -f "$PROJECT_ROOT/pom.xml" ]; then
-      sh -c 'mvn test'
+      run_in_project_root 'mvn test'
     elif [ -f "$PROJECT_ROOT/gradlew" ]; then
-      sh -c './gradlew test'
+      run_in_project_root './gradlew test'
     else
       echo "[run-feature] No Java test runner detected"
       exit 1
@@ -63,21 +68,21 @@ case "$STACK" in
   typescript)
     if [ -f "$PROJECT_ROOT/pnpm-lock.yaml" ]; then
       if [ -n "$FEATURE_ID" ]; then
-        sh -c "pnpm test -- --testPathPattern $FEATURE_ID"
+        run_in_project_root "pnpm test -- --testPathPattern $FEATURE_ID"
       else
-        sh -c 'pnpm test'
+        run_in_project_root 'pnpm test'
       fi
     elif [ -f "$PROJECT_ROOT/yarn.lock" ]; then
       if [ -n "$FEATURE_ID" ]; then
-        sh -c "yarn test --testPathPattern $FEATURE_ID"
+        run_in_project_root "yarn test --testPathPattern $FEATURE_ID"
       else
-        sh -c 'yarn test'
+        run_in_project_root 'yarn test'
       fi
     elif [ -f "$PROJECT_ROOT/package.json" ]; then
       if [ -n "$FEATURE_ID" ]; then
-        sh -c "npm test -- --testPathPattern $FEATURE_ID"
+        run_in_project_root "npm test -- --testPathPattern $FEATURE_ID"
       else
-        sh -c 'npm test'
+        run_in_project_root 'npm test'
       fi
     else
       echo "[run-feature] package.json not found"
@@ -87,12 +92,12 @@ case "$STACK" in
   python)
     if command -v pytest >/dev/null 2>&1; then
       if [ -n "$FEATURE_ID" ]; then
-        sh -c "pytest -k $FEATURE_ID"
+        run_in_project_root "pytest -k $FEATURE_ID"
       else
-        sh -c 'pytest'
+        run_in_project_root 'pytest'
       fi
     else
-      sh -c 'python -m unittest discover'
+      run_in_project_root 'python -m unittest discover'
     fi
     ;;
   *)

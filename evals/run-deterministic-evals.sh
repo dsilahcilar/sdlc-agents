@@ -48,6 +48,8 @@ run_fixture_eval() {
   for script in init-project.sh run-feature.sh run-arch-tests.sh run-quality-gates.sh; do
     sh -n "$temp_project/agent-context/harness/$script"
     assert_not_contains "$temp_project/agent-context/harness/$script" "FALLBACK_TEMPLATE"
+    assert_contains "$temp_project/agent-context/harness/$script" 'PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"'
+    assert_not_contains "$temp_project/agent-context/harness/$script" "PROJECT_ROOT='/"
   done
 
   cksum "$temp_project/agent-context/harness/init-project.sh" \
@@ -82,6 +84,17 @@ run_fixture_eval() {
       assert_contains "$temp_project/agent-context/harness/run-arch-tests.sh" "lint-imports"
       ;;
   esac
+}
+
+run_fallback_template_eval() {
+  echo "[evals] Running fallback template execution-context checks"
+
+  for script in init-project.sh run-feature.sh run-arch-tests.sh run-quality-gates.sh; do
+    template="$REPO_ROOT/agents/templates/harness/$script"
+    sh -n "$template"
+    assert_contains "$template" 'run_in_project_root()'
+    assert_contains "$template" '(cd "$PROJECT_ROOT" && sh -c "$cmd")'
+  done
 }
 
 run_parser_eval() {
@@ -124,6 +137,7 @@ echo "[evals] ============================================"
 run_fixture_eval java
 run_fixture_eval typescript
 run_fixture_eval python
+run_fallback_template_eval
 run_parser_eval
 run_stack_alignment_eval
 
