@@ -229,20 +229,29 @@ jq -c '.cases[]' "$CONFIG_FILE" | while IFS= read -r case_json; do
   fi
 
   verdict=$(printf '%s' "$grade_json" | jq -r '.verdict // "warn"')
-  score=$(printf '%s' "$grade_json" | jq -r '.score // 0')
+  score=$(printf '%s' "$grade_json" | jq -r '
+    .score as $raw
+    | if ($raw | type) == "number" then $raw
+      elif ($raw | type) == "string" then ($raw | tonumber? // 0)
+      else 0
+      end
+    | if . < 0 then 0 elif . > 100 then 100 else . end
+  ')
   summary=$(printf '%s' "$grade_json" | jq -r '.summary // ""')
   findings=$(printf '%s' "$grade_json" | jq '.findings // []')
   recommendations=$(printf '%s' "$grade_json" | jq '.recommendations // []')
 
-  drift=$((baseline_score - score))
+  drift=$(jq -n --argjson baseline "$baseline_score" --argjson score "$score" '$baseline - $score')
+  score_below_min=$(jq -n --argjson score "$score" --argjson min "$min_score" '$score < $min')
+  drift_exceeds_max=$(jq -n --argjson drift "$drift" --argjson max "$max_drop" '$drift > $max')
   drift_flag="none"
   final_verdict="$verdict"
 
-  if [ "$score" -lt "$min_score" ] && [ "$final_verdict" = "pass" ]; then
+  if [ "$score_below_min" = "true" ] && [ "$final_verdict" = "pass" ]; then
     final_verdict="warn"
   fi
 
-  if [ "$drift" -gt "$max_drop" ]; then
+  if [ "$drift_exceeds_max" = "true" ]; then
     drift_flag="exceeds_max_drop"
     if [ "$final_verdict" = "pass" ]; then
       final_verdict="warn"
