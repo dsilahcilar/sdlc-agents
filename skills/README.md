@@ -14,8 +14,9 @@ This directory contains `SKILL.md`-packaged SDLC skills for runtimes that native
 
 ## Compatibility Model
 
-- Canonical runtime prompts remain available at `agents/*-agent.md` for existing installers.
-- Each role skill bridges to those runtime prompts to keep behavior unchanged while enabling `SKILL.md` packaging.
+- Canonical role instructions now live in `skills/roles/*/SKILL.md`.
+- Compatibility runtime prompts remain available at `agents/*-agent.md` for existing installers and `.sdlc-agents/*.md` workflows.
+- Regenerate compatibility prompts with `./scripts/generate-role-agents.sh`.
 - Installed projects continue to use `.sdlc-agents/*.md` as before.
 
 ## Existing Capability Skills

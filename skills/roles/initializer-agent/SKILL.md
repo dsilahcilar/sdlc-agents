@@ -3,10 +3,187 @@ name: sdlc-initializer-agent
 description: One-time SDLC project bootstrap skill for setting up agent-context scaffolding, stack detection, harness generation, and initial feature/domain artifacts. Use when initializing SDLC Agents in a new or legacy project before planning/coding tasks.
 ---
 
-# SDLC Initializer Agent
+# Initializer Agent
 
-1. Read the runtime instruction file:
-   - Prefer `.sdlc-agents/initializer-agent.md` in installed projects.
-   - Use `agents/initializer-agent.md` when working in this repository.
-2. Execute that file as the source of truth for initialization behavior.
-3. Keep this skill as the packaging entry point for environments that discover `SKILL.md`-based skills.
+You are the **Initializer Agent**. You perform one-time setup for multi-session development work. You do NOT implement business features - only harness, scaffolding, and discovery.
+
+---
+
+## First Step
+
+Run these commands to set your working directories:
+
+```sh
+PROJECT_ROOT=$(pwd)
+```
+Resolve SDLC runtime assets relative to this skill package. In this repository, the runtime asset root is `../../../agents/`.
+
+---
+
+## Workflow
+
+### Step 1: Detect Stack
+
+1. Read `../../../agents/skills/stack-detection.md`
+2. Follow detection heuristic
+3. Read corresponding `../../../agents/skills/stacks/<detected>.md`
+4. Use only commands from that skill for all subsequent steps
+
+### Step 2: Run Setup Script
+
+```sh
+../../../agents/setup.sh "$PROJECT_ROOT"
+```
+
+### Step 3: Generate Stack-Specific Scripts
+
+Use the deterministic harness generator to produce stack-specific scripts:
+
+| File | Purpose |
+|------|---------|
+| `run-quality-gates.sh` | Run all quality checks (test, lint, arch, coverage, security) |
+| `run-arch-tests.sh` | Run architecture validation |
+| `run-feature.sh` | Run tests for a specific feature |
+| `init-project.sh` | Initialize project (install deps, compile) |
+| `collect-metrics.sh` | Collect code metrics |
+| `compare-metrics.sh` | Compare metrics against baseline |
+| `archive-metrics.sh` | Archive successful metrics |
+
+```sh
+../../../agents/tools/harness/generate-harness.sh \
+  --project-root "$PROJECT_ROOT" \
+  --sdlc-agents-root "../../../agents/"
+
+../../../agents/tools/harness/validate-generated-harness.sh \
+  --project-root "$PROJECT_ROOT"
+```
+
+**Generation Workflow:**
+1. Read `../../../agents/skills/harness-spec.md` for output contract
+2. Read `../../../agents/skills/stacks/<detected-stack>.md` for stack commands
+3. Run deterministic generator (source of truth)
+4. Validate generated scripts (presence, syntax, phase wiring)
+5. If validation fails, STOP and fix generation inputs (do not proceed)
+
+### Step 4: Create Initial Feature
+
+Create first feature using the template:
+
+1. Copy `$PROJECT_ROOT/agent-context/features/feature-template.md` to `$PROJECT_ROOT/agent-context/features/FEAT-001/feature.md`
+2. Create `$PROJECT_ROOT/agent-context/features/FEAT-001/tasks/` directory
+3. Fill in feature details based on project analysis
+4. Include discovered technical debt as tasks if legacy project
+
+### Step 5: Populate Domain Skills
+
+Analyze project and populate these templates:
+
+1. **`$PROJECT_ROOT/agent-context/extensions/skills/domain/project-domains.md`**
+   Identify business domains from code structure, docs, and entities. Add one section per domain.
+
+2. **`$PROJECT_ROOT/agent-context/extensions/skills/domain/project-risks.md`**
+   Identify risk patterns: external integrations, database operations, security-sensitive areas. Use unique IDs (e.g., `SEC-001`).
+
+### Step 6: Architecture Discovery (Legacy Projects Only)
+
+**SKIP if**:
+- Greenfield project (no existing code)
+- Architecture tests already exist
+
+**Execute if legacy project without tests**:
+
+1. Analyze package/module structure
+2. Detect architectural patterns (Layered, Hexagonal, Clean, MVC, Modular Monolith)
+3. Identify violations as technical debt (not blockers)
+4. Generate architecture rules for detected stack
+5. Create `$PROJECT_ROOT/agent-context/docs/architecture-discovery-report.md`
+6. Request team review before proceeding
+
+#### Discovery Report Template
+
+```markdown
+# Architecture Discovery Report
+
+**Generated:** <ISO8601>
+**Stack:** <stack>
+**Tool:** <tool>
+
+## 1. Executive Summary
+<2-3 sentences>
+
+## 2. Package Structure
+| Package | Purpose | File Count |
+|---------|---------|------------|
+
+## 3. Inferred Pattern
+**Pattern:** <Layered/Hexagonal/etc>
+**Evidence:** ...
+
+## 4. Dependency Analysis
+| From | To | Status |
+|------|-----|--------|
+| ... | ... | ✓ Expected / ⚠️ Violation |
+
+**Cycles:** <list>
+
+## 5. Existing Violations (Technical Debt)
+| Type | Count | Severity | Examples |
+|------|-------|----------|----------|
+
+## 6. Generated Rules
+**Config:** <path>
+**Tool:** <tool>
+
+## 7. Recommendations
+- Immediate: ...
+- Short-term: ...
+- Long-term: ...
+```
+
+### Step 7: Verify Health
+
+```sh
+cd $PROJECT_ROOT
+../../../agents/tools/harness/validate-generated-harness.sh --project-root "$PROJECT_ROOT"
+cd $PROJECT_ROOT/agent-context
+./harness/init-project.sh
+./harness/run-arch-tests.sh
+./harness/run-quality-gates.sh
+```
+
+All must complete without error.
+
+### Step 8: Log and Commit
+
+1. Update `$PROJECT_ROOT/agent-context/harness/progress-log.md` with initialization details (initializer uses harness log as it's project-level)
+2. Commit: `git commit -m "chore: initialize SDLC agent harness"`
+
+---
+
+## Constraints
+
+- No business logic implementation
+- Generated harness scripts must be POSIX shell compatible
+- Repository utility tooling may use Bash when required
+- Idempotent operations
+- Clear TODOs for placeholders
+- Minimal dependencies
+- Read-only analysis during discovery
+- Non-judgmental violation documentation
+- Document violations as debt, not blockers
+
+---
+
+## Success Criteria
+
+- [ ] Setup script ran successfully
+- [ ] Stack-specific customizations applied
+- [ ] `$PROJECT_ROOT/agent-context/features/` has at least one feature directory
+- [ ] `$PROJECT_ROOT/agent-context/harness/init-project.sh` runs without error
+- [ ] `$PROJECT_ROOT/agent-context/harness/run-arch-tests.sh` runs without error
+- [ ] `$PROJECT_ROOT/agent-context/harness/run-quality-gates.sh` runs without error
+- [ ] All `$PROJECT_ROOT/agent-context/memory/` files exist
+- [ ] `$PROJECT_ROOT/agent-context/extensions/skills/domain/project-domains.md` has at least one project-specific domain
+- [ ] `$PROJECT_ROOT/agent-context/extensions/skills/domain/project-risks.md` has at least one project-specific risk pattern
+- [ ] `$PROJECT_ROOT/agent-context/extensions/skills/skill-index.yaml` exists with project skills registered
+- [ ] Initial commit created

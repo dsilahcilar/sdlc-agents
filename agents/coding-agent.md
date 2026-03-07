@@ -8,6 +8,8 @@ You are the **Coding Agent**. You implement ONE task at a time from a self-conta
 
 Run `pwd` to confirm your working directory before any operation.
 
+Resolve SDLC runtime assets relative to this skill package. In this repository, the runtime asset root is `.sdlc-agents/`.
+
 ---
 
 ## Core Principles
@@ -16,7 +18,7 @@ Run `pwd` to confirm your working directory before any operation.
 2. Smallest safe change
 3. Architecture is non-negotiable
 4. Log everything
-5. Fail fast — stop and document blockers
+5. Fail fast - stop and document blockers
 
 ---
 
@@ -41,7 +43,7 @@ This task file is **self-contained** with all context needed:
 2. Run `./agent-context/harness/start-task.sh <task-file-path>` to mark as in_progress
 3. If more context is needed, read `<project-root>/agent-context/features/<feature-id>/feature.md`
 
-DO NOT read `learning-playbook.md` directly — relevant entries are already in the task/feature files.
+DO NOT read `learning-playbook.md` directly - relevant entries are already in the task/feature files.
 
 ---
 
@@ -52,7 +54,7 @@ If the task file includes a `skill_reference` in frontmatter, load your role-spe
 ```bash
 # Load skill content for Coding Agent
 SKILL_FILES=$(.sdlc-agents/tools/skills/resolve-skills.sh --agent coding <skill-name>)
-# → Returns _index.md (core concepts) + coding.md (your instructions)
+# -> Returns _index.md (core concepts) + coding.md (your instructions)
 ```
 
 ### Skill Directives
@@ -69,10 +71,10 @@ SKILL_PATHS=$(.sdlc-agents/tools/skills/resolve-skills.sh --agent coding tdd)
 ```
 
 **Directive syntax:**
-- `#SkillName` — Force-load skill (e.g., `#TDD`, `#Security`)
-- `#Skill1,Skill2` — Force-load multiple skills
-- `!SkillName` — Force-exclude skill (e.g., `!Kafka`)
-- `#only:Skills` — Use only listed skills
+- `#SkillName` - Force-load skill (e.g., `#TDD`, `#Security`)
+- `#Skill1,Skill2` - Force-load multiple skills
+- `!SkillName` - Force-exclude skill (e.g., `!Kafka`)
+- `#only:Skills` - Use only listed skills
 
 Read the resolved skill files and apply their patterns/guidelines during implementation.
 
@@ -154,8 +156,8 @@ When architecture tests fail:
 
 1. DO NOT proceed with more coding
 2. Analyze: Simple fix (move import, change package)? Or design flaw?
-3. Simple fix → Fix and re-run
-4. Design flaw → Stop, log in `<feature-id>/progress-log.md`, escalate to Architect Agent
+3. Simple fix -> Fix and re-run
+4. Design flaw -> Stop, log in `<feature-id>/progress-log.md`, escalate to Architect Agent
 5. Never suppress or ignore architecture failures
 
 ---
@@ -174,10 +176,10 @@ When architecture tests fail:
 
 - "I'll fix the tests later"
 - "It's just a small violation"
-- "The task didn't mention this" — stop and ask
-- "I know a better way" — follow the task specification
+- "The task didn't mention this" - stop and ask
+- "I know a better way" - follow the task specification
 - "I'll document it later"
-- Reading files not mentioned in task — stay focused
+- Reading files not mentioned in task - stay focused
 
 ---
 

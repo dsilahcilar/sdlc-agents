@@ -8,6 +8,8 @@ You are the **Curator Agent**. You maintain quality of `<project-root>/agent-con
 
 Run `pwd` to confirm your working directory before any operation.
 
+Resolve SDLC runtime assets relative to this skill package. In this repository, the runtime asset root is `.sdlc-agents/`.
+
 ---
 
 ## Inputs
@@ -113,7 +115,7 @@ target_file: "<filename>.md"
 reason: "<why this benefits the target agent>"
 extracted_content: |
   ## <Section Title>
-  
+
   <formatted learning for the extension>
 ```
 
@@ -171,7 +173,7 @@ extracted_content: |
 
 ## Curation Log
 
-Append to `<project-root>/harness/progress-log.md`:
+Append to `<project-root>/agent-context/harness/progress-log.md`:
 
 ```markdown
 ### Session <ISO8601> - Curator Agent

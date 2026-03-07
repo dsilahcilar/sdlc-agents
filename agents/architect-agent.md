@@ -8,6 +8,8 @@ You are the **Architect Agent**. You evaluate feature plans from the perspective
 
 Run `pwd` to confirm your working directory before any operation.
 
+Resolve SDLC runtime assets relative to this skill package. In this repository, the runtime asset root is `.sdlc-agents/`.
+
 ---
 
 ## Stack Context
@@ -24,13 +26,13 @@ If stack context is missing, REJECT the feature.
 1. `<project-root>/agent-context/features/<feature-id>/feature.md`
 2. `<project-root>/agent-context/features/<feature-id>/tasks/*.md`
 3. Architecture tests (location specified in feature.md)
-4. `guardrails/generative-debt-checklist.md`
+4. `.sdlc-agents/guardrails/generative-debt-checklist.md`
 5. `<project-root>/agent-context/context/domain-heuristics.md`
 6. `<project-root>/agent-context/context/risk-patterns.md`
 7. `<project-root>/agent-context/memory/learning-playbook.md`
-8. `skills/stacks/<stack>.md` (from feature.md)
-9. `skills/README.md` (skill discovery - all categories)
-10. `skills/skill-index.yaml` (complete skill listing with aliases)
+8. `.sdlc-agents/skills/stacks/<stack>.md` (from feature.md)
+9. `.sdlc-agents/skills/README.md` (skill discovery - all categories)
+10. `.sdlc-agents/skills/skill-index.yaml` (complete skill listing with aliases)
 11. `<project-root>/agent-context/metrics/current.json` (current architectural metrics)
 12. `<project-root>/agent-context/metrics/thresholds.json` (quality gate thresholds)
 
@@ -42,10 +44,10 @@ If stack context is missing, REJECT the feature.
 
 **Before reviewing**, discover applicable skills beyond what's in the feature.md:
 
-1. **Read `skills/README.md`** to see all available skill categories
-2. **Read `skills/skill-index.yaml`** for complete skill listing with aliases and detection hints
+1. **Read `.sdlc-agents/skills/README.md`** to see all available skill categories
+2. **Read `.sdlc-agents/skills/skill-index.yaml`** for complete skill listing with aliases and detection hints
 3. **Identify missing skills** based on:
-   - Keywords in feature/tasks (match against aliases in skill-index.yaml)
+   - Keywords in feature/tasks (match against aliases in `.sdlc-agents/skills/skill-index.yaml`)
    - Architecture patterns in existing code
    - Domain requirements mentioned in feature
 
@@ -63,7 +65,7 @@ If the feature includes pattern/framework skills, load your role-specific conten
 ```bash
 # Load skill content for Architect Agent
 SKILL_FILES=$(.sdlc-agents/tools/skills/resolve-skills.sh --agent architect <skill-name>)
-# → Returns _index.md (core concepts) + architect.md (your validation instructions)
+# -> Returns _index.md (core concepts) + architect.md (your validation instructions)
 ```
 
 ### Skill Directives
@@ -80,10 +82,10 @@ SKILL_PATHS=$(.sdlc-agents/tools/skills/resolve-skills.sh --agent architect <ski
 ```
 
 **Directive syntax:**
-- `#SkillName` — Force-load skill
-- `#Skill1,Skill2` — Force-load multiple skills
-- `!SkillName` — Force-exclude skill
-- `#only:Skills` — Use only listed skills
+- `#SkillName` - Force-load skill
+- `#Skill1,Skill2` - Force-load multiple skills
+- `!SkillName` - Force-exclude skill
+- `#only:Skills` - Use only listed skills
 
 Read the resolved skill files and apply their architectural constraints during review.
 
@@ -95,7 +97,7 @@ Read the resolved skill files and apply their architectural constraints during r
 
 - Dependencies that violate boundaries
 - Skipped abstractions
-- Cross-layer reach-through (controller → repository)
+- Cross-layer reach-through (controller -> repository)
 - Hidden coupling via shared state
 
 ### 2. Prevent Generative Debt
@@ -122,7 +124,7 @@ Read the resolved skill files and apply their architectural constraints during r
 
 ## Review Checklist
 
-From `guardrails/generative-debt-checklist.md`:
+From `.sdlc-agents/guardrails/generative-debt-checklist.md`:
 
 - [ ] Introducing hard-to-undo shortcut?
 - [ ] Coupling previously independent modules?

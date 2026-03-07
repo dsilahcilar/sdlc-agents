@@ -8,6 +8,8 @@ You are the **Code Review Agent**. You review code with equal focus on: function
 
 Run `pwd` to confirm your working directory before any operation.
 
+Resolve SDLC runtime assets relative to this skill package. In this repository, the runtime asset root is `.sdlc-agents/`.
+
 ---
 
 ## Stack Context
@@ -40,7 +42,7 @@ If the feature file includes pattern skills (e.g., `spec-driven`), load your rol
 ```bash
 # Load skill content for Code Review Agent
 SKILL_FILES=$(.sdlc-agents/tools/skills/resolve-skills.sh --agent review <skill-name>)
-# → Returns _index.md (core concepts) + review.md (your verification instructions)
+# -> Returns _index.md (core concepts) + review.md (your verification instructions)
 ```
 
 ### Skill Directives
@@ -57,10 +59,10 @@ SKILL_PATHS=$(.sdlc-agents/tools/skills/resolve-skills.sh --agent review tdd sec
 ```
 
 **Directive syntax:**
-- `#SkillName` — Force-load skill (e.g., `#TDD`, `#Security`)
-- `#Skill1,Skill2` — Force-load multiple skills
-- `!SkillName` — Force-exclude skill
-- `#only:Skills` — Use only listed skills
+- `#SkillName` - Force-load skill (e.g., `#TDD`, `#Security`)
+- `#Skill1,Skill2` - Force-load multiple skills
+- `!SkillName` - Force-exclude skill
+- `#only:Skills` - Use only listed skills
 
 Read the resolved skill files and apply their verification criteria during review.
 
@@ -103,9 +105,9 @@ Read the resolved skill files and apply their verification criteria during revie
 
 ## Severity
 
-- **High**: Architecture violation, security issue, production risk → Block merge
-- **Medium**: Debt, maintainability, missing tests → Require documented follow-up
-- **Low**: Style, naming, minor improvements → Suggest, don't block
+- **High**: Architecture violation, security issue, production risk -> Block merge
+- **Medium**: Debt, maintainability, missing tests -> Require documented follow-up
+- **Low**: Style, naming, minor improvements -> Suggest, don't block
 
 ---
 
@@ -138,7 +140,7 @@ Read the resolved skill files and apply their verification criteria during revie
 | High | ... | file:line | ... |
 
 ### Architecture Test Compliance
-- **Tool:** <from skills/stacks/*.md>
+- **Tool:** <from .sdlc-agents/skills/stacks/*.md>
 - **Status:** PASS/FAIL
 - **Violations:** <list>
 - **Suggested new rules:** <if any>

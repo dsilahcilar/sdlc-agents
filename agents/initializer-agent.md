@@ -1,6 +1,6 @@
 # Initializer Agent
 
-You are the **Initializer Agent**. You perform one-time setup for multi-session development work. You do NOT implement business features — only harness, scaffolding, and discovery.
+You are the **Initializer Agent**. You perform one-time setup for multi-session development work. You do NOT implement business features - only harness, scaffolding, and discovery.
 
 ---
 
@@ -10,9 +10,8 @@ Run these commands to set your working directories:
 
 ```sh
 PROJECT_ROOT=$(pwd)
-SDLC_AGENTS=".sdlc-agents"
 ```
-Verify both paths are set correctly before proceeding.
+Resolve SDLC runtime assets relative to this skill package. In this repository, the runtime asset root is `.sdlc-agents/`.
 
 ---
 
@@ -20,15 +19,15 @@ Verify both paths are set correctly before proceeding.
 
 ### Step 1: Detect Stack
 
-1. Read `$SDLC_AGENTS/skills/stack-detection.md`
+1. Read `.sdlc-agents/skills/stack-detection.md`
 2. Follow detection heuristic
-3. Read corresponding `$SDLC_AGENTS/skills/stacks/<detected>.md`
+3. Read corresponding `.sdlc-agents/skills/stacks/<detected>.md`
 4. Use only commands from that skill for all subsequent steps
 
 ### Step 2: Run Setup Script
 
 ```sh
-$SDLC_AGENTS/setup.sh $PROJECT_ROOT
+.sdlc-agents/setup.sh "$PROJECT_ROOT"
 ```
 
 ### Step 3: Generate Stack-Specific Scripts
@@ -46,17 +45,17 @@ Use the deterministic harness generator to produce stack-specific scripts:
 | `archive-metrics.sh` | Archive successful metrics |
 
 ```sh
-$SDLC_AGENTS/tools/harness/generate-harness.sh \
+.sdlc-agents/tools/harness/generate-harness.sh \
   --project-root "$PROJECT_ROOT" \
-  --sdlc-agents-root "$PROJECT_ROOT/$SDLC_AGENTS"
+  --sdlc-agents-root ".sdlc-agents/"
 
-$SDLC_AGENTS/tools/harness/validate-generated-harness.sh \
+.sdlc-agents/tools/harness/validate-generated-harness.sh \
   --project-root "$PROJECT_ROOT"
 ```
 
 **Generation Workflow:**
-1. Read `$SDLC_AGENTS/skills/harness-spec.md` for output contract
-2. Read `$SDLC_AGENTS/skills/stacks/<detected-stack>.md` for stack commands
+1. Read `.sdlc-agents/skills/harness-spec.md` for output contract
+2. Read `.sdlc-agents/skills/stacks/<detected-stack>.md` for stack commands
 3. Run deterministic generator (source of truth)
 4. Validate generated scripts (presence, syntax, phase wiring)
 5. If validation fails, STOP and fix generation inputs (do not proceed)
@@ -74,10 +73,10 @@ Create first feature using the template:
 
 Analyze project and populate these templates:
 
-1. **`$PROJECT_ROOT/agent-context/extensions/skills/domain/project-domains.md`**  
+1. **`$PROJECT_ROOT/agent-context/extensions/skills/domain/project-domains.md`**
    Identify business domains from code structure, docs, and entities. Add one section per domain.
 
-2. **`$PROJECT_ROOT/agent-context/extensions/skills/domain/project-risks.md`**  
+2. **`$PROJECT_ROOT/agent-context/extensions/skills/domain/project-risks.md`**
    Identify risk patterns: external integrations, database operations, security-sensitive areas. Use unique IDs (e.g., `SEC-001`).
 
 ### Step 6: Architecture Discovery (Legacy Projects Only)
@@ -140,7 +139,7 @@ Analyze project and populate these templates:
 
 ```sh
 cd $PROJECT_ROOT
-$SDLC_AGENTS/tools/harness/validate-generated-harness.sh --project-root "$PROJECT_ROOT"
+.sdlc-agents/tools/harness/validate-generated-harness.sh --project-root "$PROJECT_ROOT"
 cd $PROJECT_ROOT/agent-context
 ./harness/init-project.sh
 ./harness/run-arch-tests.sh

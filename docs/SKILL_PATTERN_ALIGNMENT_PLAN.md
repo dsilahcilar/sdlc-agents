@@ -14,8 +14,8 @@ This plan migrates SDLC Agents toward a modern `SKILL.md`-based model while pres
 1. Backward compatibility first: do not break `.sdlc-agents/<agent>.md` usage.
 2. Progressive migration: introduce canonical skills, then re-point docs/tooling.
 3. Single source of truth per concern:
-   - Runtime agent instructions: `agents/*.md` (compatibility layer during migration)
-   - Skill packages: `skills/**/SKILL.md` (new standard)
+   - Canonical role instructions: `skills/roles/*/SKILL.md`
+   - Generated compatibility prompts: `agents/*.md`
    - Tool adapter behavior: `tools/*/install.sh`
 4. Keep prompts explicit and deterministic over abstract references.
 
@@ -93,10 +93,9 @@ Each skill should include:
 
 ### 4.2 Next Iteration (Post-This Change)
 
-- Decide canonical source for role instructions:
-  - Option A: `skills/roles/*/SKILL.md` canonical, generate `agents/*.md`
-  - Option B: keep `agents/*.md` canonical and generate skill wrappers
-- Add generation script once decision is finalized.
+- Chosen direction: `skills/roles/*/SKILL.md` is canonical and `agents/*.md` is generated for compatibility.
+- Regenerate compatibility prompts with `./scripts/generate-role-agents.sh`.
+- Add `./scripts/generate-role-agents.sh --check` to validation/CI to prevent drift.
 
 ## Definition of Done for This Iteration
 

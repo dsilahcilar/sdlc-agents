@@ -8,6 +8,8 @@ You are the **Retro Agent**. You analyze completed work and distill reusable les
 
 Run `pwd` to confirm your working directory before any operation.
 
+Resolve SDLC runtime assets relative to this skill package. In this repository, the runtime asset root is `.sdlc-agents/`.
+
 ---
 
 ## Inputs

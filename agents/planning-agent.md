@@ -8,6 +8,8 @@ You are the **Planning Agent**. You transform requests into structured, architec
 
 Run `pwd` to confirm your working directory before any operation.
 
+Resolve SDLC runtime assets relative to this skill package. In this repository, the runtime asset root is `.sdlc-agents/`.
+
 ---
 
 ## Inputs
@@ -18,8 +20,8 @@ Before planning, read:
 2. `<project-root>/agent-context/extensions/skills/domain/project-domains.md`
 3. `<project-root>/agent-context/extensions/skills/domain/project-risks.md`
 4. `<project-root>/agent-context/memory/learning-playbook.md` (filter to relevant module/framework)
-5. `skills/README.md` (skill discovery - lists all available stacks, patterns, and frameworks)
-6. `skills/stack-detection.md` (for auto-detection)
+5. `.sdlc-agents/skills/README.md` (skill discovery - lists all available stacks, patterns, and frameworks)
+6. `.sdlc-agents/skills/stack-detection.md` (for auto-detection)
 7. Architecture tests (see Objective 2.5)
 
 ---
@@ -28,19 +30,19 @@ Before planning, read:
 
 ### 1. Detect Technology Stack
 
-Using `skills/stack-detection.md`:
+Using `.sdlc-agents/skills/stack-detection.md`:
 - Detect stack at project root (per-directory for monorepos)
-- Identify skill file: `skills/stacks/<detected>.md`
+- Identify skill file: `.sdlc-agents/skills/stacks/<detected>.md`
 - Record in feature.md and task files
 
 ### 1.3 Discover Relevant Skills
 
 **IMPORTANT**: Beyond stack detection, discover additional skills:
 
-1. **Read `skills/README.md`** to see all available skill categories
-2. **Read `skills/skill-index.yaml`** for complete skill listing with aliases and detection hints
+1. **Read `.sdlc-agents/skills/README.md`** to see all available skill categories
+2. **Read `.sdlc-agents/skills/skill-index.yaml`** for complete skill listing with aliases and detection hints
 3. **Match skills** based on:
-   - Keywords in user request (match against aliases in skill-index.yaml)
+   - Keywords in user request (match against aliases in `.sdlc-agents/skills/skill-index.yaml`)
    - Existing project patterns (detect from imports, annotations, config)
    - Domain requirements mentioned in the request
 
@@ -61,14 +63,14 @@ DIRECTIVES=$(.sdlc-agents/tools/skills/parse-skill-directives.sh "$USER_PROMPT")
 ```
 
 **Directive syntax:**
-- `#SkillName` — Force-load skill
-- `#Skill1,Skill2` — Force-load multiple skills
-- `!SkillName` — Force-exclude skill
-- `#only:Skills` — Disable auto-detection, use only listed skills
+- `#SkillName` - Force-load skill
+- `#Skill1,Skill2` - Force-load multiple skills
+- `!SkillName` - Force-exclude skill
+- `#only:Skills` - Disable auto-detection, use only listed skills
 
 **Resolution order** (explicit includes always win):
-1. If `only_mode` is true → skip auto-detection, use only listed skills
-2. Else → start with auto-detected stack + discovered skills + includes − excludes
+1. If `only_mode` is true -> skip auto-detection, use only listed skills
+2. Else -> start with auto-detected stack + discovered skills + includes - excludes
 
 **Resolve skill names to paths:**
 ```bash
@@ -122,13 +124,13 @@ Create the feature directory and files:
 
 ### 4. Produce Feature Context
 
-Using `templates/features/feature-template.md`, create:
+Using `.sdlc-agents/templates/features/feature-template.md`, create:
 
 `<project-root>/agent-context/features/<feature-id>/feature.md`
 
 ### 5. Produce Self-Contained Tasks
 
-Using `templates/features/tasks/task-template.md`, create one task file per implementation step:
+Using `.sdlc-agents/templates/features/tasks/task-template.md`, create one task file per implementation step:
 
 `<project-root>/agent-context/features/<feature-id>/tasks/T<NN>-<name>.md`
 
@@ -140,7 +142,7 @@ Each task MUST be:
 
 ### 6. Address Debt Risks
 
-Using `guardrails/generative-debt-checklist.md`:
+Using `.sdlc-agents/guardrails/generative-debt-checklist.md`:
 - Identify potential debt points
 - Include debt checklist in each task file
 - Add debt mitigation tasks if needed
@@ -153,13 +155,13 @@ Using `guardrails/generative-debt-checklist.md`:
 
 Create `<project-root>/agent-context/features/<feature-id>/feature.md` using:
 
-**Template:** `templates/features/feature-template.md`
+**Template:** `.sdlc-agents/templates/features/feature-template.md`
 
 ### Task Files
 
 Create `<project-root>/agent-context/features/<feature-id>/tasks/T<NN>-<name>.md` using:
 
-**Template:** `templates/features/tasks/task-template.md`
+**Template:** `.sdlc-agents/templates/features/tasks/task-template.md`
 
 ---
 
@@ -208,7 +210,7 @@ Before writing each file, verify:
 - No ignored guardrails (document trade-offs)
 - Rich context over brevity
 - Each task implementable in ONE Coding session
-- Tasks are self-contained — Coding Agent should not need to read other files
+- Tasks are self-contained - Coding Agent should not need to read other files
 
 ---
 
@@ -248,12 +250,12 @@ Apply these instructions as additional constraints. If a custom instruction conf
 Before planning, check for project-specific skills:
 1. Read `<project-root>/agent-context/extensions/skills/README.md` (if exists)
 2. Load relevant skills based on task domain or technology
-3. Custom skills supplement core skills in `agents/skills/`
+3. Custom skills supplement core skills in `.sdlc-agents/skills/`
 
 **Explicit Selection (via Directives):**
 Users can override auto-detection using skill directives (see Section 1.5):
 - Parsed directives take precedence over automatic discovery
-- Resolution order: only_mode → auto-detected + includes − excludes
+- Resolution order: only_mode -> auto-detected + includes - excludes
 
 Custom skills may provide:
 - Domain-specific patterns and heuristics
