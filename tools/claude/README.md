@@ -13,54 +13,27 @@ Install SDLC Agents for Claude Code with proper subagent support.
 
 ```
 your-project/
-├── .claude/
-│   └── agents/                      # Subagent definitions
-│       ├── planning-agent.md
-│       ├── coding-agent.md
-│       ├── architect-agent.md
-│       ├── codereview-agent.md
-│       ├── retro-agent.md
-│       ├── curator-agent.md
-│       └── initializer-agent.md
-├── .sdlc-agents/                          # Symlinked from sdlc-agents/agents
-└── .gitignore                        # Updated to exclude .sdlc-agents/
+├── .claude/skills/
+├── .github/skills/
+├── .agents/skills/
+└── .sdlc-agents/                    # Symlinked or copied support assets
 ```
 
 ## How It Works
 
-Claude Code's subagent system allows you to create specialized AI agents with:
-- **Separate context windows** for each agent
-- **Specific tool permissions** per agent
-- **Custom system prompts** defining agent behavior
-- **Automatic or explicit invocation**
-
-Each subagent in `.claude/agents/` references the full instructions in `.sdlc-agents/<agent-name>.md`.
+Claude can load SDLC role skills from `.claude/skills/`.
+The installer also mirrors the same skills to `.github/skills/` and `.agents/skills/` so the project stays compatible across tools.
 
 ## Usage
 
-### View Available Subagents
+### Use a Skill
 
 ```
-/agents
+Use the initializer-agent skill to set up project structure
+Use the planning-agent skill to create a plan for user authentication
+Use the coding-agent skill to implement task T01 from FEAT-001
+Use the codereview-agent skill to review my recent changes
 ```
-
-This shows all available subagents including the 7 SDLC Agents.
-
-### Use a Subagent
-
-**Explicit invocation:**
-```
-Use the initializer-agent to set up project structure
-
-Use the planning-agent to create a plan for user authentication
-
-Use the coding-agent to implement task T01 from FEAT-001
-
-Use the codereview-agent to review my recent changes
-```
-
-**Automatic delegation:**
-Claude can automatically invoke the appropriate subagent based on your request and the agent's description.
 
 ---
 
@@ -92,32 +65,7 @@ Use the planning-agent. I need to refactor our payment module:
 
 ## Managing Subagents
 
-### Via /agents Command
-
-```
-/agents
-```
-
-- View all subagents
-- Create new custom subagents
-- Edit existing subagents
-- Delete custom subagents
-
-### Direct File Management
-
-You can also manually edit files in `.claude/agents/`:
-
-```bash
-# Edit a subagent
-code .claude/agents/planning-agent.md
-
-# Create a custom subagent
-echo '---
-name: my-custom-agent
-description: Use for specific task
----
-Custom instructions here' > .claude/agents/my-custom-agent.md
-```
+You can inspect or edit installed SDLC skill packages under `.claude/skills/`.
 
 ## Benefits of Claude Code Subagents
 

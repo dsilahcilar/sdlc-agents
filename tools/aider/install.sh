@@ -1,7 +1,7 @@
 #!/bin/sh
 #
 # Aider Install Script
-# Creates .aider.conf.yml with agent context files
+# Creates .aider.conf.yml and installs SDLC skills plus support assets.
 #
 # Usage: ./install.sh --target /path/to/project [--copy]
 #
@@ -49,6 +49,7 @@ fi
 # Resolve paths
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 SDLC_AGENTS=$(cd "$SCRIPT_DIR/../.." && pwd)
+. "$SDLC_AGENTS/tools/lib/install-skills.sh"
 TARGET=$(cd "$TARGET" 2>/dev/null && pwd) || {
     log_error "Target directory does not exist: $TARGET"
     exit 1
@@ -74,14 +75,14 @@ else
 # These files are loaded as read-only context
 
 read:
-  # Core agents
-  - .sdlc-agents/planning-agent.md
-  - .sdlc-agents/coding-agent.md
-  - .sdlc-agents/architect-agent.md
-  - .sdlc-agents/codereview-agent.md
-  - .sdlc-agents/retro-agent.md
-  - .sdlc-agents/curator-agent.md
-  - .sdlc-agents/initializer-agent.md
+  # Core SDLC role skills
+  - .agents/skills/planning-agent/SKILL.md
+  - .agents/skills/coding-agent/SKILL.md
+  - .agents/skills/architect-agent/SKILL.md
+  - .agents/skills/codereview-agent/SKILL.md
+  - .agents/skills/retro-agent/SKILL.md
+  - .agents/skills/curator-agent/SKILL.md
+  - .agents/skills/initializer-agent/SKILL.md
 
 # Note: For large projects, you may want to comment out agents
 # you don't need to reduce context size. The planning and coding
@@ -90,28 +91,17 @@ EOF
     log_info "Created: $CONFIG_FILE"
 fi
 
-# Link or copy .sdlc-agents directory (hidden)
-AGENTS_TARGET="$TARGET/.sdlc-agents"
-if [ -e "$AGENTS_TARGET" ]; then
-    log_warn ".sdlc-agents directory exists, skipping: $AGENTS_TARGET"
-else
-    if [ "$COPY_MODE" = true ]; then
-        cp -r "$SDLC_AGENTS/agents" "$AGENTS_TARGET"
-        log_info "Copied agents to: $AGENTS_TARGET"
-    else
-        ln -s "$SDLC_AGENTS/agents" "$AGENTS_TARGET"
-        log_info "Symlinked agents to: $AGENTS_TARGET"
-    fi
-fi
+install_skill_catalog "$SDLC_AGENTS" "$TARGET"
+install_support_bundle "$SDLC_AGENTS" "$TARGET" "$COPY_MODE"
 
 echo ""
 log_info "Aider setup complete!"
 echo ""
-echo "✓ Created .aider.conf.yml with agent instructions"
+echo "✓ Created .aider.conf.yml with skill instructions"
 echo ""
 echo "Next steps:"
 echo "  1. Run: aider"
-echo "  2. Type: 'Follow the instructions in .sdlc-agents/initializer-agent.md'"
+echo "  2. Type: 'Use the initializer-agent skill to bootstrap this project'"
 echo "  3. Start planning features with:"
-echo "     'Follow .sdlc-agents/planning-agent.md to create a plan for [feature description]'"
+echo "     'Use the planning-agent skill to create a plan for [feature description]'"
 echo ""

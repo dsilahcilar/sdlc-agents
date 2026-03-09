@@ -10,6 +10,7 @@
 #   ./install.sh --windsurf --target /path/to/project
 #   ./install.sh --aider --target /path/to/project
 #   ./install.sh --all --target /path/to/project
+#   ./install.sh --codex --codex-home ~/.codex/skills --target /path/to/project
 #
 
 set -e
@@ -38,10 +39,12 @@ usage() {
     echo "  --cursor          Install for Cursor"
     echo "  --windsurf        Install for Windsurf"
     echo "  --aider           Install for Aider"
-    echo "  --all             Install for all tools"
+    echo "  --codex           Install for Codex"
+    echo "  --all             Install for all project-local tools"
     echo ""
     echo "Required:"
-    echo "  --target <path>   Target project directory"
+    echo "  --target <path>   Target project directory for project-local installs"
+    echo "  --codex-home <p>  Codex skills directory when using --codex"
     echo ""
     echo "Options:"
     echo "  --copy            Copy agents instead of symlinking"
@@ -51,6 +54,7 @@ usage() {
     echo "  $0 --ghcp --target ./my-project"
     echo "  $0 --claude --cursor --target ./my-project"
     echo "  $0 --all --target ./my-project --copy"
+    echo "  $0 --codex --codex-home ~/.codex/skills --target ./my-project"
     echo ""
     exit 1
 }
@@ -60,22 +64,26 @@ SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 
 # Parse arguments
 TARGET=""
+CODEX_HOME=""
 COPY_FLAG=""
 INSTALL_GHCP=false
 INSTALL_CLAUDE=false
 INSTALL_CURSOR=false
 INSTALL_WINDSURF=false
 INSTALL_AIDER=false
+INSTALL_CODEX=false
 
 while [ $# -gt 0 ]; do
     case "$1" in
         --target) TARGET="$2"; shift 2 ;;
+        --codex-home) CODEX_HOME="$2"; shift 2 ;;
         --copy) COPY_FLAG="--copy"; shift ;;
         --ghcp) INSTALL_GHCP=true; shift ;;
         --claude) INSTALL_CLAUDE=true; shift ;;
         --cursor) INSTALL_CURSOR=true; shift ;;
         --windsurf) INSTALL_WINDSURF=true; shift ;;
         --aider) INSTALL_AIDER=true; shift ;;
+        --codex) INSTALL_CODEX=true; shift ;;
         --all)
             INSTALL_GHCP=true
             INSTALL_CLAUDE=true
@@ -90,34 +98,46 @@ while [ $# -gt 0 ]; do
 done
 
 # Validate arguments
-if [ -z "$TARGET" ]; then
-    log_error "Missing required --target argument"
-    usage
-fi
-
 # Check at least one tool selected
 if [ "$INSTALL_GHCP" = false ] && \
    [ "$INSTALL_CLAUDE" = false ] && \
    [ "$INSTALL_CURSOR" = false ] && \
    [ "$INSTALL_WINDSURF" = false ] && \
-   [ "$INSTALL_AIDER" = false ]; then
-    log_error "No tool selected. Use --ghcp, --claude, --cursor, --windsurf, --aider, or --all"
+   [ "$INSTALL_AIDER" = false ] && \
+   [ "$INSTALL_CODEX" = false ]; then
+    log_error "No tool selected. Use --ghcp, --claude, --cursor, --windsurf, --aider, --codex, or --all"
     usage
 fi
 
-# Validate target exists
-if [ ! -d "$TARGET" ]; then
-    log_error "Target directory does not exist: $TARGET"
-    exit 1
+# Validate required paths
+if [ "$INSTALL_GHCP" = true ] || \
+   [ "$INSTALL_CLAUDE" = true ] || \
+   [ "$INSTALL_CURSOR" = true ] || \
+   [ "$INSTALL_WINDSURF" = true ] || \
+   [ "$INSTALL_AIDER" = true ]; then
+    if [ -z "$TARGET" ]; then
+        log_error "Missing required --target argument"
+        usage
+    fi
+
+    if [ ! -d "$TARGET" ]; then
+        log_error "Target directory does not exist: $TARGET"
+        exit 1
+    fi
+
+    TARGET=$(cd "$TARGET" && pwd)
 fi
 
-TARGET=$(cd "$TARGET" && pwd)
+if [ "$INSTALL_CODEX" = true ] && { [ -z "$CODEX_HOME" ] || [ -z "$TARGET" ]; }; then
+    log_error "Missing required --codex-home or --target argument for --codex"
+    usage
+fi
 
 echo ""
 echo "╔═══════════════════════════════════════════╗"
 echo "║     SDLC Agents - Multi-Tool Install      ║"
 echo "╠═══════════════════════════════════════════╣"
-echo "║  Target: $(printf '%-32s' "$TARGET")║"
+echo "║  Target: $(printf '%-32s' "${TARGET:-n/a}")║"
 echo "║  Mode:   $(printf '%-32s' "$([ -n "$COPY_FLAG" ] && echo 'copy' || echo 'symlink')")║"
 echo "╚═══════════════════════════════════════════╝"
 
@@ -172,6 +192,16 @@ if [ "$INSTALL_AIDER" = true ]; then
         INSTALLED="$INSTALLED aider"
     else
         FAILED="$FAILED aider"
+    fi
+fi
+
+# Codex
+if [ "$INSTALL_CODEX" = true ]; then
+    log_header "Installing for Codex..."
+    if "$SCRIPT_DIR/tools/codex/install.sh" --codex-home "$CODEX_HOME" --target "$TARGET" $COPY_FLAG; then
+        INSTALLED="$INSTALLED codex"
+    else
+        FAILED="$FAILED codex"
     fi
 fi
 

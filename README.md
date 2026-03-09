@@ -8,6 +8,7 @@
 [![Cursor](https://img.shields.io/badge/Cursor-✓-purple)](./tools/cursor/README.md)
 [![Windsurf](https://img.shields.io/badge/Windsurf-✓-teal)](./tools/windsurf/README.md)
 [![Aider](https://img.shields.io/badge/Aider-✓-yellow)](./tools/aider/README.md)
+[![Codex](https://img.shields.io/badge/Codex-✓-black)](./tools/codex/README.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ---
@@ -113,7 +114,8 @@ git clone https://github.com/dsilahcilar/sdlc-agents.git
 ./install.sh --ghcp --target /path/to/your/project    # GitHub Copilot
 ./install.sh --claude --target /path/to/your/project  # Claude Code
 ./install.sh --cursor --target /path/to/your/project  # Cursor
-./install.sh --all --target /path/to/your/project     # All tools
+./install.sh --all --target /path/to/your/project     # All project-local tools
+./install.sh --codex --codex-home ~/.codex/skills --target /path/to/your/project  # Codex
 ```
 
 **3.** Run the **Initializer Agent** to set up your project structure.
@@ -187,7 +189,7 @@ See [`extensions/README.md`](./agents/templates/extensions/README.md) for detail
 
 | 📄 Document | Description |
 |------------|-------------|
-| [Multi-Assistant Support](./docs/MULTI_ASSISTANT_SUPPORT.md) | Setup for Copilot, Claude, Cursor, Windsurf, Aider |
+| [Multi-Assistant Support](./docs/MULTI_ASSISTANT_SUPPORT.md) | Setup for Copilot, Claude, Cursor, Windsurf, Aider, Codex |
 | [Skills System](./docs/skills/README.md) | Progressive disclosure, skill directives, custom skills |
 | [SKILL Package Catalog](./skills/README.md) | `SKILL.md` role-skill packages for modern skill runtimes |
 | [Agent Architecture](./docs/AGENT_ARCHITECTURE.md) | System design, file lifecycle, data flow |

@@ -14,19 +14,20 @@ Install SDLC Agents for Aider.
 ```
 your-project/
 ├── .aider.conf.yml               # Context files configuration
-└── .sdlc-agents/                 # Symlinked/copied runtime prompts
+├── .agents/skills/
+└── .sdlc-agents/                 # Symlinked/copied support assets
 ```
 
 ## Manual Setup
 
-1. Copy or symlink the repository `agents/` directory to `.sdlc-agents/` in your project
+1. Install SDLC role skills into `.agents/skills/`
 2. Create `.aider.conf.yml`:
 
 ```yaml
 read:
-  - .sdlc-agents/planning-agent.md
-  - .sdlc-agents/coding-agent.md
-  - .sdlc-agents/architect-agent.md
+  - .agents/skills/planning-agent/SKILL.md
+  - .agents/skills/coding-agent/SKILL.md
+  - .agents/skills/architect-agent/SKILL.md
 ```
 
 ## Usage
@@ -44,7 +45,7 @@ Follow the planning agent instructions to create a feature plan
 
 ```bash
 # Start aider with agent context
-aider --read .sdlc-agents/planning-agent.md
+aider --read .agents/skills/planning-agent/SKILL.md
 
 # In aider:
 > Create a plan for adding API rate limiting
@@ -56,7 +57,7 @@ aider --read .sdlc-agents/planning-agent.md
 
 Aider's git integration makes incremental commits easy:
 ```bash
-aider --read .sdlc-agents/coding-agent.md src/auth/*.ts
+aider --read .agents/skills/coding-agent/SKILL.md src/auth/*.ts
 > Implement the login validation following the coding agent guidelines
 # Aider auto-commits with meaningful messages
 ```
@@ -65,7 +66,7 @@ aider --read .sdlc-agents/coding-agent.md src/auth/*.ts
 
 ```bash
 # In CI/CD script
-aider --read .sdlc-agents/codereview-agent.md \
+aider --read .agents/skills/codereview-agent/SKILL.md \
       --message "Review the changes in this PR" \
       --no-auto-commits \
       $(git diff --name-only origin/main)
@@ -75,7 +76,7 @@ aider --read .sdlc-agents/codereview-agent.md \
 
 ```bash
 # Process multiple files
-aider --read .sdlc-agents/coding-agent.md \
+aider --read .agents/skills/coding-agent/SKILL.md \
       --message "Add error handling to all service methods" \
       src/services/*.ts
 ```

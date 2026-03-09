@@ -1,7 +1,7 @@
 #!/bin/sh
 #
 # GitHub Copilot Install Script
-# Creates .github/agents/*.agent.md files and symlinks .sdlc-agents/
+# Installs SDLC skills into project skill directories and links support assets.
 #
 # Usage: ./install.sh --target /path/to/project [--copy]
 #
@@ -64,90 +64,19 @@ echo "  Mode:    $([ "$COPY_MODE" = true ] && echo 'copy' || echo 'symlink')"
 echo "========================================"
 echo ""
 
-# Create .github/agents directory
-AGENTS_DIR="$TARGET/.github/agents"
-mkdir -p "$AGENTS_DIR"
-
-# Helper function to create agent file
-create_agent_file() {
-    local agent_name="$1"
-    local agent_title="$2"
-    local agent_desc="$3"
-    local agent_file="$AGENTS_DIR/${agent_name}.agent.md"
-    
-    if [ -f "$agent_file" ]; then
-        log_warn "File exists, skipping: $agent_file"
-        return
-    fi
-    
-    cat > "$agent_file" <<EOF
----
-name: ${agent_name}
-description: ${agent_desc}
----
-
-# ${agent_title}
-
-This agent is part of the SDLC Agents system for structured, architecture-aware development.
-
-## Instructions
-
-The complete instructions for this agent are located in:
-\`.sdlc-agents/${agent_name}.md\`
-
-Please read and follow those instructions carefully.
-
-## Agent Context
-
-This agent operates within the SDLC Agents workflow:
-- **Input**: Receives context from previous agents or user requests
-- **Process**: Follows the workflow defined in \`.sdlc-agents/${agent_name}.md\`
-- **Output**: Produces artifacts for downstream agents or final deliverables
-
-## Extensions
-
-Check for project-specific customizations:
-1. **Global rules**: \`agent-context/extensions/_all-agents/*.md\`
-2. **Agent-specific**: \`agent-context/extensions/${agent_name}/*.md\`
-
-Custom instructions take precedence over core behavior.
-EOF
-    
-    log_info "Created: $agent_file"
-}
-
-# Create individual agent files
-create_agent_file "planning-agent" "Planning Agent" "Transforms requests into structured, architecture-aware plans with isolated tasks"
-create_agent_file "coding-agent" "Coding Agent" "Implements ONE task at a time from a self-contained task file"
-create_agent_file "architect-agent" "Architect Agent" "Evaluates feature plans for structural integrity, modularity, and maintainability"
-create_agent_file "codereview-agent" "Code Review Agent" "Reviews code for quality, debt, and architectural violations"
-create_agent_file "retro-agent" "Retro Agent" "Extracts lessons learned from completed work"
-create_agent_file "curator-agent" "Curator Agent" "Maintains knowledge quality and prevents playbook bloat"
-create_agent_file "initializer-agent" "Initializer Agent" "Sets up project structure and discovers existing architecture"
-
-# Link or copy .sdlc-agents directory (hidden)
-AGENTS_TARGET="$TARGET/.sdlc-agents"
-if [ -e "$AGENTS_TARGET" ]; then
-    log_warn ".sdlc-agents directory exists, skipping: $AGENTS_TARGET"
-else
-    if [ "$COPY_MODE" = true ]; then
-        cp -r "$SDLC_AGENTS/agents" "$AGENTS_TARGET"
-        log_info "Copied agents to: $AGENTS_TARGET"
-    else
-        ln -s "$SDLC_AGENTS/agents" "$AGENTS_TARGET"
-        log_info "Symlinked agents to: $AGENTS_TARGET"
-    fi
-fi
+. "$SDLC_AGENTS/tools/lib/install-skills.sh"
+install_skill_catalog "$SDLC_AGENTS" "$TARGET"
+install_support_bundle "$SDLC_AGENTS" "$TARGET" "$COPY_MODE"
 
 echo ""
 log_info "GitHub Copilot setup complete!"
 echo ""
-echo "✓ Created .github/agents/ with individual agent files"
-echo "✓ Agents are accessible via VS Code UI agent picker"
+echo "✓ Installed skills into .github/skills/, .claude/skills/, and .agents/skills/"
+echo "✓ Linked .sdlc-agents/ support bundle for templates, tools, and guardrails"
 echo ""
 echo "Next steps:"
 echo "  1. Open GitHub Copilot Chat in VS Code"
-echo "  2. Click the agent picker (@ icon) and select 'initializer-agent'"
-echo "  3. Type: 'Follow the instructions in the .sdlc-agents/initializer-agent.md file'"
-echo "  4. Start planning features with '@planning-agent create a plan for [feature description]'"
+echo "  2. Pick the installed SDLC skill from .github/skills/"
+echo "  3. Start with: 'Use the initializer-agent skill to bootstrap this project'"
+echo "  4. Continue with: 'Use the planning-agent skill to create a plan for [feature description]'"
 echo ""

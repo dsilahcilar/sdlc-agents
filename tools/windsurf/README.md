@@ -15,20 +15,21 @@ Install SDLC Agents for Windsurf IDE.
 your-project/
 ├── .windsurf/
 │   └── rules/
-│       └── sdlc-agents.md        # References .sdlc-agents/
-└── .sdlc-agents/                 # Symlinked/copied runtime prompts
+│       └── sdlc-agents.md        # References .agents/skills/
+├── .agents/skills/
+└── .sdlc-agents/                 # Symlinked/copied support assets
 ```
 
 ## Manual Setup
 
-1. Copy or symlink the repository `agents/` directory to `.sdlc-agents/` in your project
+1. Install SDLC role skills into `.agents/skills/`
 2. Create `.windsurf/rules/sdlc-agents.md` with agent references
 
 ## Usage
 
 In Windsurf Cascade, reference the agents:
 ```
-Use .sdlc-agents/planning-agent.md to create a feature plan
+Use .agents/skills/planning-agent/SKILL.md to create a feature plan
 ```
 
 ---
@@ -38,10 +39,10 @@ Use .sdlc-agents/planning-agent.md to create a feature plan
 ### Complete Feature Implementation
 
 ```
-1. Follow .sdlc-agents/planning-agent.md to plan a notification system
-2. Follow .sdlc-agents/architect-agent.md to validate the design
-3. Follow .sdlc-agents/coding-agent.md to implement the first task
-4. Follow .sdlc-agents/codereview-agent.md to review changes
+1. Follow .agents/skills/planning-agent/SKILL.md to plan a notification system
+2. Follow .agents/skills/architect-agent/SKILL.md to validate the design
+3. Follow .agents/skills/coding-agent/SKILL.md to implement the first task
+4. Follow .agents/skills/codereview-agent/SKILL.md to review changes
 ```
 
 ### Using Flows
@@ -57,6 +58,6 @@ Create a Flow:
 ### Deep Codebase Understanding
 
 ```
-Using .sdlc-agents/architect-agent.md, analyze the dependency graph 
+Using .agents/skills/architect-agent/SKILL.md, analyze the dependency graph 
 of our service layer and identify coupling issues
 ```

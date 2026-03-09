@@ -11,6 +11,7 @@ SDLC Agents works with multiple AI coding assistants. This guide explains how to
 | [Cursor](#cursor) | ✅ Full | `./install.sh --cursor --target ./your-project` |
 | [Windsurf](#windsurf) | ✅ Full | `./install.sh --windsurf --target ./your-project` |
 | [Aider](#aider) | ✅ Full | `./install.sh --aider --target ./your-project` |
+| [Codex](#codex) | ✅ Full | `./install.sh --codex --codex-home ~/.codex/skills --target ./your-project` |
 
 ## Quick Start
 
@@ -25,7 +26,7 @@ cd sdlc-agents
 # Or install for multiple tools at once
 ./install.sh --ghcp --claude --target /path/to/your/project
 
-# Or install for all supported tools
+# Or install for all project-local tools
 ./install.sh --all --target /path/to/your/project
 ```
 
@@ -49,23 +50,25 @@ sdlc-agents/
 ```
 
 The install script:
-1. Symlinks (or copies) the `agents/` directory into your project as `.sdlc-agents/`
-2. Creates tool-specific configuration referencing the agents
+1. Installs the canonical role skills into `.github/skills/`, `.claude/skills/`, and `.agents/skills/`
+2. Links (or copies) the `agents/` directory into your project as `.sdlc-agents/` support assets
+3. Creates any tool-specific rules or config needed by the selected tool
 
 ## Tool-Specific Setup
 
 ### GitHub Copilot
 
 **Creates:**
-- `.github/agents/*.agent.md` — Individual agent definitions
-- `.sdlc-agents/` → symlink to sdlc-agents/agents
-- `.gitignore` — Updated to exclude `.sdlc-agents/`
+- `.github/skills/*/SKILL.md`
+- `.claude/skills/*/SKILL.md`
+- `.agents/skills/*/SKILL.md`
+- `.sdlc-agents/` → symlink or copy of support assets
 
 **Usage:**
-Open GitHub Copilot Chat in VS Code, click the agent picker (@ icon), and select an agent:
-- Select **planning-agent** → "Create a feature for user authentication"
-- Select **architect-agent** → "Review the feature plan in agent-context/features/FEAT-001/feature.md"
-- Select **coding-agent** → "Implement task T01 from FEAT-001"
+Open GitHub Copilot Chat and use the installed SDLC skills:
+- Use **initializer-agent** to bootstrap a project
+- Use **planning-agent** to create feature plans
+- Use **coding-agent** to execute an approved task
 
 See [tools/github-copilot/README.md](../tools/github-copilot/README.md)
 
@@ -75,17 +78,18 @@ See [tools/github-copilot/README.md](../tools/github-copilot/README.md)
 ### Claude Code
 
 **Creates:**
-- `.claude/agents/*.md` — Individual subagent definitions
-- `.sdlc-agents/` → symlink to sdlc-agents/agents
-- `.gitignore` — Updated to exclude `.sdlc-agents/`
+- `.claude/skills/*/SKILL.md`
+- `.github/skills/*/SKILL.md`
+- `.agents/skills/*/SKILL.md`
+- `.sdlc-agents/` → symlink or copy of support assets
 
 **Usage:**
-Use Claude Code's subagent system:
+Use the installed SDLC skills:
 ```
-/agents                    # View all available subagents
-Use the planning-agent to create a plan for user authentication
-Use the coding-agent to implement task T01
-Use the codereview-agent to review my changes
+Use the initializer-agent skill to bootstrap this project
+Use the planning-agent skill to create a plan for user authentication
+Use the coding-agent skill to implement task T01
+Use the codereview-agent skill to review my changes
 ```
 
 See [tools/claude/README.md](../tools/claude/README.md)
@@ -96,11 +100,12 @@ See [tools/claude/README.md](../tools/claude/README.md)
 
 **Creates:**
 - `.cursor/rules/sdlc-agents.mdc`
-- `.sdlc-agents/` → symlink to sdlc-agents/agents
+- `.agents/skills/*/SKILL.md`
+- `.sdlc-agents/` → symlink or copy of support assets
 
 **Usage:**
 ```
-@.sdlc-agents/planning-agent.md Create a feature for user authentication
+@.agents/skills/planning-agent/SKILL.md Create a feature for user authentication
 ```
 
 See [tools/cursor/README.md](../tools/cursor/README.md)
@@ -111,11 +116,12 @@ See [tools/cursor/README.md](../tools/cursor/README.md)
 
 **Creates:**
 - `.windsurf/rules/sdlc-agents.md`
-- `.sdlc-agents/` → symlink to sdlc-agents/agents
+- `.agents/skills/*/SKILL.md`
+- `.sdlc-agents/` → symlink or copy of support assets
 
 **Usage:**
 ```
-Use .sdlc-agents/planning-agent.md to create a feature plan
+Use .agents/skills/planning-agent/SKILL.md to create a feature plan
 ```
 
 See [tools/windsurf/README.md](../tools/windsurf/README.md)
@@ -126,14 +132,31 @@ See [tools/windsurf/README.md](../tools/windsurf/README.md)
 
 **Creates:**
 - `.aider.conf.yml`
-- `.sdlc-agents/` → symlink to sdlc-agents/agents
+- `.agents/skills/*/SKILL.md`
+- `.sdlc-agents/` → symlink or copy of support assets
 
 **Usage:**
 ```
-Follow the planning agent instructions to create a feature plan
+Use the planning-agent skill to create a feature plan
 ```
 
 See [tools/aider/README.md](../tools/aider/README.md)
+
+---
+
+### Codex
+
+**Creates:**
+- `<codex-home>/*/SKILL.md`
+- `.sdlc-agents/` in the target project
+
+**Usage:**
+Install the SDLC role skills into your Codex skill home and the support bundle into the target project:
+```bash
+./install.sh --codex --codex-home ~/.codex/skills --target ./your-project
+```
+
+See [tools/codex/README.md](../tools/codex/README.md)
 
 ---
 
@@ -149,9 +172,9 @@ See [tools/aider/README.md](../tools/aider/README.md)
 
 ## Updating
 
-If you used **symlink mode**, updating is automatic—just `git pull` in the sdlc-agents repo.
+If you used **symlink mode**, updates to `.sdlc-agents/` flow through automatically after `git pull`, but you should still re-run the installer when the skill directory layout changes.
 
-If you used **copy mode**, re-run the install with `--copy` to update:
+If you used **copy mode**, re-run the install to refresh both the skill directories and the support bundle:
 ```bash
 ./install.sh --ghcp --target ./your-project --copy
 ```
@@ -182,7 +205,7 @@ Not sure which tool to use? Here's a quick guide:
 
 ## Using Multiple Tools
 
-You can install SDLC Agents for multiple tools on the same project:
+You can install SDLC Agents for multiple project-local tools on the same project:
 
 ```bash
 # Install all tools at once
@@ -194,8 +217,9 @@ You can install SDLC Agents for multiple tools on the same project:
 
 ### How Multi-Tool Works
 
-- **Shared `.sdlc-agents/` directory**: All tools use the same runtime prompt instructions
-- **Separate configs**: Each tool gets its own configuration file
+- **Shared support bundle**: Project installers reuse the same `.sdlc-agents/` assets
+- **Shared skill catalog**: Project installers mirror role skills into `.github/skills/`, `.claude/skills/`, and `.agents/skills/`
+- **Separate configs**: Cursor, Windsurf, and Aider still get their own config files
 - **No conflicts**: Tool configs are independent (`.github/`, `.claude/`, `.cursor`, etc.)
 
 ### When to Use Multiple Tools
@@ -235,10 +259,9 @@ Installing multiple tools is safe—each creates its own configuration files wit
 
 ### GitHub Copilot
 
-**Agents not discovered:**
-- Ensure `.github/agents/*.agent.md` files exist
+**Skills not discovered:**
+- Ensure `.github/skills/*/SKILL.md` files exist
 - Verify `.sdlc-agents/` directory symlink is valid: `ls -la .sdlc-agents/`
-- Check `.sdlc-agents/` is excluded in `.gitignore`
 - Restart VS Code
 
 ### Claude Code

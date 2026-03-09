@@ -1,244 +1,61 @@
-# GitHub Copilot Agent Support
+# GitHub Copilot Skill Support
 
-This document explains how SDLC Agents implements custom agent support for GitHub Copilot.
+This document explains how SDLC Agents installs project skills for GitHub Copilot.
 
 ## Overview
 
-GitHub Copilot supports custom agents through a specific directory structure:
-- **Location**: `.github/agents/`
-- **File format**: `<agent-name>.agent.md`
-- **Content**: YAML frontmatter + Markdown instructions
-- **Usage**: Via VS Code UI agent picker (not `@syntax`)
+GitHub Copilot can discover project skills from skill directories rather than legacy agent-wrapper files.
 
-## Why This Matters
+- Primary location: `.github/skills/`
+- Mirrored for compatibility: `.agents/skills/` and `.claude/skills/`
+- Skill format: `<skill-name>/SKILL.md`
+- Optional UI metadata: `<skill-name>/agents/openai.yaml`
 
-### The Correct Approach
-The installation creates individual `.agent.md` files in `.github/agents/`, which GitHub Copilot recognizes as custom agents. These agents are then accessible via the **UI agent picker** in VS Code.
+SDLC Agents also installs `.sdlc-agents/` as a support bundle for templates, harness tooling, guardrails, and capability skills.
 
-### Important Note
-GitHub Copilot custom agents are **not** invoked using `@agent-name` syntax in the chat. Instead, users select agents from a dropdown UI picker.
+## Installed Structure
 
-## File Structure
-
-```
+```text
 your-project/
-├── .github/
-│   └── agents/                          # Individual agent definitions
-│       ├── planning-agent.agent.md
-│       ├── coding-agent.agent.md
-│       ├── architect-agent.agent.md
-│       ├── codereview-agent.agent.md
-│       ├── retro-agent.agent.md
-│       ├── curator-agent.agent.md
-│       └── initializer-agent.agent.md
-├── .sdlc-agents/                              # ← Hidden: Full agent instructions (symlinked)
-│   ├── planning-agent.md
-│   ├── coding-agent.md
+├── .github/skills/
+│   ├── planning-agent/
+│   │   ├── SKILL.md
+│   │   └── agents/openai.yaml
 │   └── ...
-└── .gitignore                            # ← Updated to exclude .sdlc-agents/
-```
-
-## Agent File Format
-
-Each `.agent.md` file follows this structure:
-
-```markdown
----
-name: planning-agent
-description: Transforms requests into structured, architecture-aware plans with isolated tasks
----
-
-# Planning Agent
-
-This agent is part of the SDLC Agents system for structured, architecture-aware development.
-
-## Instructions
-
-The complete instructions for this agent are located in:
-`.sdlc-agents/planning-agent.md`
-
-Please read and follow those instructions carefully.
-
-## Agent Context
-
-This agent operates within the SDLC Agents workflow:
-- **Input**: Receives context from previous agents or user requests
-- **Process**: Follows the workflow defined in `.sdlc-agents/planning-agent.md`
-- **Output**: Produces artifacts for downstream agents or final deliverables
-
-## Extensions
-
-Check for project-specific customizations:
-1. **Global rules**: `agent-context/extensions/_all-agents/*.md`
-2. **Agent-specific**: `agent-context/extensions/planning-agent/*.md`
-
-Custom instructions take precedence over core behavior.
+├── .agents/skills/
+├── .claude/skills/
+└── .sdlc-agents/
 ```
 
 ## How It Works
 
-1. **GitHub Copilot scans** `.github/agents/` directory on startup
-2. **Discovers** all `.agent.md` files
-3. **Parses** YAML frontmatter to get agent name and description
-4. **Registers** each agent in the UI agent picker
-5. **Loads** the full markdown content when the agent is selected
-6. **References** the detailed instructions in `.sdlc-agents/<agent-name>.md`
+1. GitHub Copilot discovers SDLC role skills from `.github/skills/`.
+2. Each skill contains the role instructions in `SKILL.md`.
+3. The skill instructions use `.sdlc-agents/` support assets when they need templates, harness generators, guardrails, or capability-skill resolution.
 
-## Usage in VS Code
+## Usage
 
-### Step-by-Step
+Typical SDLC flow:
 
-1. **Open GitHub Copilot Chat** panel in VS Code
-2. **Click the agent picker** (@ icon in the chat input field)
-3. **Select an agent** from the dropdown menu
-4. **Type your request** in the chat
-
-### Example Workflow
-
-```
-1. Select: initializer-agent
-   Type: "Set up project structure"
-
-2. Select: planning-agent
-   Type: "Create a feature for user authentication"
-
-3. Select: architect-agent
-   Type: "Review the feature plan in agent-context/features/FEAT-001/feature.md"
-
-4. Select: coding-agent
-   Type: "Implement task T01 from FEAT-001"
-
-5. Select: codereview-agent
-   Type: "Review my changes before creating a PR"
-
-6. Select: retro-agent
-   Type: "Extract lessons from completing this feature"
+```text
+Use the initializer-agent skill to bootstrap this project
+Use the planning-agent skill to create a feature plan
+Use the architect-agent skill to review the plan
+Use the coding-agent skill to implement task T01
+Use the codereview-agent skill to review the changes
+Use the retro-agent skill to extract lessons learned
 ```
 
-## Installation
+## Migration From Legacy `.github/agents`
 
-### New Projects
+Older SDLC Agents installs created `.github/agents/*.agent.md` wrappers. Current installs are skill-first:
+
+1. Re-run the installer:
 
 ```bash
 ./install.sh --ghcp --target /path/to/your/project
 ```
 
-This creates:
-- `.github/agents/*.agent.md` (7 agent files)
-- `.sdlc-agents/` symlink to sdlc-agents/agents (hidden directory)
-- Updates `.gitignore` to exclude `.sdlc-agents/`
-
-### Existing Projects (Migration)
-
-If you previously installed SDLC Agents, re-run the installer:
-
-```bash
-./install.sh --ghcp --target /path/to/your/project
-```
-
-The installer will:
-- ✅ Create `.github/agents/` directory
-- ✅ Create individual `.agent.md` files
-- ✅ Create `.sdlc-agents/` symlink (hidden)
-- ✅ Update `.gitignore` to exclude `.sdlc-agents/`
-- ✅ Preserve your existing `agent-context/` directory
-
-### Clean Up Old Installation
-
-If you have an old `agents/` directory (not hidden):
-
-```bash
-# Remove old symlink
-rm agents
-
-# The new .sdlc-agents/ directory is hidden and git-ignored
-ls -la .sdlc-agents/  # Verify it exists
-```
-
-## Technical Details
-
-### YAML Frontmatter Properties
-
-| Property | Required | Description |
-|----------|----------|-------------|
-| `name` | Yes | Unique identifier for the agent (shown in UI picker) |
-| `description` | Yes | Brief description of the agent's purpose (shown in UI) |
-| `prompt` | No | Additional custom instructions (we use markdown body instead) |
-| `tools` | No | Specific tools the agent can access (defaults to all) |
-| `infer` | No | Whether Copilot can auto-invoke this agent (defaults to true) |
-
-### Why We Use `.sdlc-agents/` (Hidden Directory)
-
-1. **Cleaner project root**: Hidden directory doesn't clutter the file explorer
-2. **Git-friendly**: Automatically excluded via `.gitignore`
-3. **Clear separation**: User code vs. agent configuration
-4. **Symlink best practice**: Hidden directories for external dependencies
-
-### Why We Use References
-
-Instead of duplicating the full agent instructions in each `.agent.md` file, we:
-1. **Keep the source of truth** in `.sdlc-agents/<agent-name>.md`
-2. **Reference it** from `.github/agents/<agent-name>.agent.md`
-3. **Benefits**:
-   - Single source of truth for agent instructions
-   - Tool-agnostic agent definitions
-   - Easier maintenance and updates
-   - Consistent across all supported tools
-
-## Troubleshooting
-
-### Agents Not Discovered
-
-**Symptoms**: Agent picker doesn't show custom agents
-
-**Solutions**:
-1. Verify `.github/agents/*.agent.md` files exist
-2. Check YAML frontmatter is valid (no syntax errors)
-3. Restart VS Code
-4. Check GitHub Copilot extension is enabled and up to date
-
-### Agent Not Loading Instructions
-
-**Symptoms**: Agent responds but doesn't follow SDLC workflow
-
-**Solutions**:
-1. Verify `.sdlc-agents/` symlink is valid: `ls -la .sdlc-agents/`
-2. Check that `.sdlc-agents/<agent-name>.md` exists
-3. Ensure the reference path in `.agent.md` is correct (`.sdlc-agents/` not `agents/`)
-
-### Symlink Issues (Windows)
-
-**Symptoms**: `.sdlc-agents/` directory not accessible
-
-**Solutions**:
-Use copy mode instead of symlink:
-```bash
-./install.sh --ghcp --target /path/to/your/project --copy
-```
-
-### .gitignore Not Updated
-
-**Symptoms**: `.sdlc-agents/` directory appears in git status
-
-**Solutions**:
-Manually add to `.gitignore`:
-```bash
-echo "" >> .gitignore
-echo "# SDLC Agents (symlinked directory)" >> .gitignore
-echo ".sdlc-agents/" >> .gitignore
-```
-
-## References
-
-- [GitHub Copilot Custom Agents Documentation](https://docs.github.com/en/copilot/customizing-copilot/creating-custom-agents)
-- [SDLC Agents Multi-Assistant Support](./MULTI_ASSISTANT_SUPPORT.md)
-- [GitHub Copilot Tool README](../tools/github-copilot/README.md)
-
-## Changelog
-
-- **2024-12-14**: 
-  - Implemented proper custom agent support with `.github/agents/` directory structure
-  - Changed to `.sdlc-agents/` (hidden directory) for agent instructions
-  - Added automatic `.gitignore` updates
-  - Removed `copilot-instructions.md` (not needed)
-  - Clarified that agents are selected via UI picker, not `@syntax`
+2. Confirm `.github/skills/*/SKILL.md` exists.
+3. Keep `.sdlc-agents/` because the skills still rely on the support bundle.
+4. Remove old `.github/agents/` wrappers after you verify the new skill-based setup works for your workflow.

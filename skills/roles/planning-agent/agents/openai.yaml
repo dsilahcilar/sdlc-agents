@@ -1,0 +1,3 @@
+interface:
+  display_name: "Planning Agent"
+  short_description: "Turn requests into SDLC feature and task artifacts"

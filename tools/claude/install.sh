@@ -1,7 +1,7 @@
 #!/bin/sh
 #
 # Claude Code Install Script
-# Creates .claude/agents/ subagents
+# Installs SDLC skills into project skill directories and links support assets.
 #
 # Usage: ./install.sh --target /path/to/project [--copy]
 #
@@ -64,69 +64,18 @@ echo "  Mode:    $([ "$COPY_MODE" = true ] && echo 'copy' || echo 'symlink')"
 echo "========================================"
 echo ""
 
-# Create .claude/agents directory
-AGENTS_DIR="$TARGET/.claude/agents"
-mkdir -p "$AGENTS_DIR"
-
-# Helper function to create subagent file
-create_subagent() {
-    local agent_name="$1"
-    local agent_desc="$2"
-    local agent_file="$AGENTS_DIR/${agent_name}.md"
-    
-    if [ -f "$agent_file" ]; then
-        log_warn "File exists, skipping: $agent_file"
-        return
-    fi
-    
-    cat > "$agent_file" <<EOF
----
-name: ${agent_name}
-description: ${agent_desc}
----
-
-Read and follow the instructions in \`.sdlc-agents/${agent_name}.md\`.
-
-This agent is part of the SDLC Agents system for structured, architecture-aware development.
-EOF
-    
-    log_info "Created subagent: $agent_file"
-}
-
-# Create individual subagent files
-create_subagent "planning-agent" "Use to create structured, architecture-aware plans with isolated tasks"
-create_subagent "coding-agent" "Use to implement ONE task at a time from a self-contained task file"
-create_subagent "architect-agent" "Use to evaluate feature plans for structural integrity and maintainability"
-create_subagent "codereview-agent" "Use proactively after code changes to review for quality, debt, and violations"
-create_subagent "retro-agent" "Use after completing features to extract lessons learned"
-create_subagent "curator-agent" "Use to maintain knowledge quality and prevent playbook bloat"
-create_subagent "initializer-agent" "Use for first-time project setup to discover architecture"
-
-# Link or copy .sdlc-agents directory (hidden)
-AGENTS_TARGET="$TARGET/.sdlc-agents"
-if [ -e "$AGENTS_TARGET" ]; then
-    log_warn ".sdlc-agents directory exists, skipping: $AGENTS_TARGET"
-else
-    if [ "$COPY_MODE" = true ]; then
-        cp -r "$SDLC_AGENTS/agents" "$AGENTS_TARGET"
-        log_info "Copied agents to: $AGENTS_TARGET"
-    else
-        ln -s "$SDLC_AGENTS/agents" "$AGENTS_TARGET"
-        log_info "Symlinked agents to: $AGENTS_TARGET"
-    fi
-fi
+. "$SDLC_AGENTS/tools/lib/install-skills.sh"
+install_skill_catalog "$SDLC_AGENTS" "$TARGET"
+install_support_bundle "$SDLC_AGENTS" "$TARGET" "$COPY_MODE"
 
 echo ""
 log_info "Claude Code setup complete!"
 echo ""
-echo "✓ Created .claude/agents/ with SDLC subagent files"
-echo "✓ Linked .sdlc-agents/ runtime prompts"
-echo "✓ Agents are discoverable via /agents"
+echo "✓ Installed skills into .claude/skills/, .github/skills/, and .agents/skills/"
+echo "✓ Linked .sdlc-agents/ support bundle for templates, tools, and guardrails"
 echo ""
 echo "Next steps:"
-echo "  1. Run: /agents to see all available subagents"
-echo "  2. Run the initializer agent by typing:"
-echo "     'Follow the instructions in the .sdlc-agents/initializer-agent.md file'"
-echo "  3. Start planning features with:"
-echo "     '@agent-planning-agent create a plan for [feature description]'"
+echo "  1. Open Claude in the target project"
+echo "  2. Start with: 'Use the initializer-agent skill to bootstrap this project'"
+echo "  3. Continue with: 'Use the planning-agent skill to create a plan for [feature description]'"
 echo ""

@@ -1,0 +1,3 @@
+interface:
+  display_name: "Architect Agent"
+  short_description: "Review plans for boundaries, debt, and architecture fit"

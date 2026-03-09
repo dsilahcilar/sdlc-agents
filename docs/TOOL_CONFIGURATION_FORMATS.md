@@ -4,59 +4,46 @@ This document describes the actual configuration files created by SDLC Agents in
 
 ---
 
-## Common Runtime Path
+## Common Skill Paths
 
-All installers link or copy runtime prompts to:
+Project-local installers install the canonical role skills into all of these directories:
+
+- `.github/skills/`
+- `.claude/skills/`
+- `.agents/skills/`
+
+Each role skill is a folder with at least:
+
+- `SKILL.md`
+- `agents/openai.yaml`
+
+## Common Support Bundle
+
+Project-local installers also link or copy:
 
 - `.sdlc-agents/`
 
-This directory contains the executable agent prompt files:
-
-- `.sdlc-agents/planning-agent.md`
-- `.sdlc-agents/coding-agent.md`
-- `.sdlc-agents/architect-agent.md`
-- `.sdlc-agents/codereview-agent.md`
-- `.sdlc-agents/retro-agent.md`
-- `.sdlc-agents/curator-agent.md`
-- `.sdlc-agents/initializer-agent.md`
+This support bundle contains templates, harness tooling, guardrails, and capability skills.
 
 ---
 
 ## GitHub Copilot
 
-**Config Location:** `.github/agents/*.agent.md`
+**Primary Skill Location:** `.github/skills/<skill-name>/SKILL.md`
 
-**Format:** Markdown with YAML frontmatter
-
-**Generated files:**
-- `.github/agents/planning-agent.agent.md`
-- `.github/agents/coding-agent.agent.md`
-- `.github/agents/architect-agent.agent.md`
-- `.github/agents/codereview-agent.agent.md`
-- `.github/agents/retro-agent.agent.md`
-- `.github/agents/curator-agent.agent.md`
-- `.github/agents/initializer-agent.agent.md`
-
-These files reference `.sdlc-agents/<agent>.md` as the source instructions.
+**Mirrors also installed:**
+- `.claude/skills/<skill-name>/SKILL.md`
+- `.agents/skills/<skill-name>/SKILL.md`
 
 ---
 
 ## Claude Code
 
-**Config Location:** `.claude/agents/*.md`
+**Primary Skill Location:** `.claude/skills/<skill-name>/SKILL.md`
 
-**Format:** Markdown with YAML frontmatter
-
-**Generated files:**
-- `.claude/agents/planning-agent.md`
-- `.claude/agents/coding-agent.md`
-- `.claude/agents/architect-agent.md`
-- `.claude/agents/codereview-agent.md`
-- `.claude/agents/retro-agent.md`
-- `.claude/agents/curator-agent.md`
-- `.claude/agents/initializer-agent.md`
-
-These subagent files reference `.sdlc-agents/<agent>.md`.
+**Mirrors also installed:**
+- `.github/skills/<skill-name>/SKILL.md`
+- `.agents/skills/<skill-name>/SKILL.md`
 
 ---
 
@@ -66,7 +53,7 @@ These subagent files reference `.sdlc-agents/<agent>.md`.
 
 **Format:** MDC (Markdown + YAML frontmatter)
 
-The rule file references `.sdlc-agents/*.md` prompts.
+The rule file references `.agents/skills/*/SKILL.md`.
 
 ---
 
@@ -76,7 +63,7 @@ The rule file references `.sdlc-agents/*.md` prompts.
 
 **Format:** Markdown
 
-The rule file references `.sdlc-agents/*.md` prompts.
+The rule file references `.agents/skills/*/SKILL.md`.
 
 ---
 
@@ -87,22 +74,33 @@ The rule file references `.sdlc-agents/*.md` prompts.
 **Format:** YAML
 
 **Generated `read:` entries:**
-- `.sdlc-agents/planning-agent.md`
-- `.sdlc-agents/coding-agent.md`
-- `.sdlc-agents/architect-agent.md`
-- `.sdlc-agents/codereview-agent.md`
-- `.sdlc-agents/retro-agent.md`
-- `.sdlc-agents/curator-agent.md`
-- `.sdlc-agents/initializer-agent.md`
+- `.agents/skills/planning-agent/SKILL.md`
+- `.agents/skills/coding-agent/SKILL.md`
+- `.agents/skills/architect-agent/SKILL.md`
+- `.agents/skills/codereview-agent/SKILL.md`
+- `.agents/skills/retro-agent/SKILL.md`
+- `.agents/skills/curator-agent/SKILL.md`
+- `.agents/skills/initializer-agent/SKILL.md`
+
+---
+
+## Codex
+
+**Install Locations:**
+- `<codex-home>/<skill-name>/SKILL.md`
+- `<project-root>/.sdlc-agents/`
+
+The Codex installer copies the canonical role skills into the configured Codex skills home and provisions the project support bundle in the target repository.
 
 ---
 
 ## Comparison
 
-| Tool | Tool-Specific Config | Runtime Prompt Source |
-|------|----------------------|-----------------------|
-| GitHub Copilot | `.github/agents/*.agent.md` | `.sdlc-agents/*.md` |
-| Claude Code | `.claude/agents/*.md` | `.sdlc-agents/*.md` |
-| Cursor | `.cursor/rules/sdlc-agents.mdc` | `.sdlc-agents/*.md` |
-| Windsurf | `.windsurf/rules/sdlc-agents.md` | `.sdlc-agents/*.md` |
-| Aider | `.aider.conf.yml` | `.sdlc-agents/*.md` |
+| Tool | Primary Skill Location | Extra Config |
+|------|------------------------|-------------|
+| GitHub Copilot | `.github/skills/` | `.sdlc-agents/` support bundle |
+| Claude Code | `.claude/skills/` | `.sdlc-agents/` support bundle |
+| Cursor | `.agents/skills/` | `.cursor/rules/sdlc-agents.mdc` |
+| Windsurf | `.agents/skills/` | `.windsurf/rules/sdlc-agents.md` |
+| Aider | `.agents/skills/` | `.aider.conf.yml` |
+| Codex | `<codex-home>/` | `.sdlc-agents/` support bundle in target project |

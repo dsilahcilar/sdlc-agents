@@ -8,6 +8,12 @@ SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 SDLC_AGENTS_ROOT="$PROJECT_ROOT/.sdlc-agents"
 GENERATOR="$SDLC_AGENTS_ROOT/tools/harness/generate-harness.sh"
+STACK_DETECTION_LIB="$SCRIPT_DIR/lib/stack-detection.sh"
+
+if [ -f "$STACK_DETECTION_LIB" ]; then
+  # shellcheck source=/dev/null
+  . "$STACK_DETECTION_LIB"
+fi
 
 if [ "${SDLC_HARNESS_NO_REGEN:-0}" != "1" ] && [ -x "$GENERATOR" ]; then
   echo "[arch-tests] Attempting deterministic harness generation..."
@@ -21,9 +27,7 @@ if [ "${SDLC_HARNESS_NO_REGEN:-0}" != "1" ] && [ -x "$GENERATOR" ]; then
 fi
 
 detect_stack_fallback() {
-  if [ -f "$SCRIPT_DIR/lib/stack-detection.sh" ]; then
-    # shellcheck source=/dev/null
-    . "$SCRIPT_DIR/lib/stack-detection.sh"
+  if command -v detect_stack >/dev/null 2>&1; then
     detect_stack "$PROJECT_ROOT"
     return 0
   fi
@@ -49,6 +53,36 @@ run_in_project_root() {
   (cd "$PROJECT_ROOT" && sh -c "$cmd")
 }
 
+quote_target_args() {
+  targets="$1"
+  result=""
+  old_ifs=$IFS
+  IFS='
+'
+  for target in $targets; do
+    if [ -z "$result" ]; then
+      result="\"$target\""
+    else
+      result="$result \"$target\""
+    fi
+  done
+  IFS=$old_ifs
+
+  if [ -z "$result" ]; then
+    result='"."'
+  fi
+
+  printf '%s' "$result"
+}
+
+resolve_typescript_target() {
+  if command -v detect_typescript_source_target >/dev/null 2>&1; then
+    detect_typescript_source_target "$PROJECT_ROOT"
+  else
+    printf '.\n'
+  fi
+}
+
 echo "[arch-tests] ============================================"
 echo "[arch-tests] Fallback architecture checks (stack=$STACK)"
 echo "[arch-tests] ============================================"
@@ -64,15 +98,17 @@ case "$STACK" in
     fi
     ;;
   typescript)
+    TS_TARGETS=$(resolve_typescript_target)
+    TS_TARGET_ARGS=$(quote_target_args "$TS_TARGETS")
     if [ -f "$PROJECT_ROOT/.dependency-cruiser.js" ] || [ -f "$PROJECT_ROOT/.dependency-cruiser.cjs" ] || [ -f "$PROJECT_ROOT/.dependency-cruiser.mjs" ] || [ -f "$PROJECT_ROOT/.dependency-cruiser.json" ]; then
       CONFIG=".dependency-cruiser.js"
       if [ -f "$PROJECT_ROOT/.dependency-cruiser.cjs" ]; then CONFIG=".dependency-cruiser.cjs"; fi
       if [ -f "$PROJECT_ROOT/.dependency-cruiser.mjs" ]; then CONFIG=".dependency-cruiser.mjs"; fi
       if [ -f "$PROJECT_ROOT/.dependency-cruiser.json" ]; then CONFIG=".dependency-cruiser.json"; fi
-      run_in_project_root "npx depcruise src --config $CONFIG"
+      run_in_project_root "npx depcruise $TS_TARGET_ARGS --config $CONFIG"
     else
       echo "[arch-tests] dependency-cruiser config not found; using madge circular check"
-      run_in_project_root 'npx madge --circular --extensions ts,tsx,js,jsx src/' || true
+      run_in_project_root "npx madge --circular --extensions ts,tsx,js,jsx $TS_TARGET_ARGS" || true
     fi
     ;;
   python)

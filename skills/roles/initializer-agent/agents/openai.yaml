@@ -1,0 +1,3 @@
+interface:
+  display_name: "Initializer Agent"
+  short_description: "Bootstrap SDLC scaffolding, harnesses, and project context"

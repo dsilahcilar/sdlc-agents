@@ -72,6 +72,12 @@ fi
 
 mkdir -p "$TARGET_DIR"
 
+SHARED_STACK_LIB="$SDLC_AGENTS_ROOT/templates/harness/lib/stack-detection.sh"
+if [ -f "$SHARED_STACK_LIB" ]; then
+  # shellcheck source=/dev/null
+  . "$SHARED_STACK_LIB"
+fi
+
 is_configured() {
   file="$1"
   pattern="$2"
@@ -99,6 +105,91 @@ append_cmd() {
   fi
 }
 
+quote_target_args() {
+  targets="$1"
+  result=""
+  old_ifs=$IFS
+  IFS='
+'
+  for target in $targets; do
+    if [ -z "$result" ]; then
+      result="\"$target\""
+    else
+      result="$result \"$target\""
+    fi
+  done
+  IFS=$old_ifs
+
+  if [ -z "$result" ]; then
+    result='"."'
+  fi
+
+  printf '%s' "$result"
+}
+
+detect_python_source_target() {
+  for candidate in src app lib python; do
+    if [ -d "$PROJECT_ROOT/$candidate" ]; then
+      printf '%s\n' "$candidate"
+      return 0
+    fi
+  done
+
+  if find "$PROJECT_ROOT" -maxdepth 2 -type d \
+      ! -path "$PROJECT_ROOT" \
+      ! -path "*/.*" \
+      ! -path "*/test" \
+      ! -path "*/tests" \
+      ! -path "*/test_*" \
+      ! -path "*/tests_*" \
+      ! -path "*/*_test" \
+      ! -path "*/*_tests" \
+      ! -path "*/__pycache__*" \
+      ! -path "*/.venv*" \
+      ! -path "*/venv*" \
+      ! -path "*/dist*" \
+      ! -path "*/build*" \
+      ! -path "*/node_modules*" \
+      -exec test -f "{}/__init__.py" \; -print -quit 2>/dev/null | grep -q .; then
+    find "$PROJECT_ROOT" -maxdepth 2 -type d \
+      ! -path "$PROJECT_ROOT" \
+      ! -path "*/.*" \
+      ! -path "*/test" \
+      ! -path "*/tests" \
+      ! -path "*/test_*" \
+      ! -path "*/tests_*" \
+      ! -path "*/*_test" \
+      ! -path "*/*_tests" \
+      ! -path "*/__pycache__*" \
+      ! -path "*/.venv*" \
+      ! -path "*/venv*" \
+      ! -path "*/dist*" \
+      ! -path "*/build*" \
+      ! -path "*/node_modules*" \
+      -exec test -f "{}/__init__.py" \; -print -quit 2>/dev/null | sed "s|$PROJECT_ROOT/||"
+    return 0
+  fi
+
+  printf '.\n'
+}
+
+sync_template_script() {
+  source_path="$1"
+  destination_path="$2"
+
+  if [ ! -f "$source_path" ]; then
+    return 0
+  fi
+
+  mkdir -p "$(dirname "$destination_path")"
+
+  if [ ! -f "$destination_path" ] || ! cmp -s "$source_path" "$destination_path"; then
+    cp "$source_path" "$destination_path"
+  fi
+
+  chmod +x "$destination_path"
+}
+
 write_script() {
   path="$1"
   tmp="${path}.tmp.$$"
@@ -113,12 +204,8 @@ write_script() {
   chmod +x "$path"
 }
 
-detect_stack() {
-  # Prefer shared detector when available.
-  SHARED_STACK_LIB="$SDLC_AGENTS_ROOT/templates/harness/lib/stack-detection.sh"
-  if [ -f "$SHARED_STACK_LIB" ]; then
-    # shellcheck source=/dev/null
-    . "$SHARED_STACK_LIB"
+detect_project_stack() {
+  if command -v detect_stack >/dev/null 2>&1; then
     STACK=$(detect_stack "$PROJECT_ROOT")
   elif [ -f "$PROJECT_ROOT/pom.xml" ] || [ -f "$PROJECT_ROOT/build.gradle" ] || [ -f "$PROJECT_ROOT/build.gradle.kts" ]; then
     STACK="java"
@@ -167,7 +254,7 @@ pm_run_script_cmd() {
   esac
 }
 
-STACK=$(detect_stack)
+STACK=$(detect_project_stack)
 BUILD_SYSTEM="unknown"
 INIT_CMD=""
 TEST_CMD=""
@@ -207,22 +294,26 @@ if [ "$STACK" = "java" ]; then
     fi
   else
     BUILD_SYSTEM="gradle"
-    INIT_CMD='./gradlew assemble --quiet'
-    TEST_CMD='./gradlew test'
-    FEATURE_TEST_TEMPLATE='./gradlew test'
-    FEATURE_MODULE_TEST_TEMPLATE='./gradlew ":__FEATURE_MODULE__:test"'
+    GRADLE_CMD='gradle'
+    if [ -x "$PROJECT_ROOT/gradlew" ]; then
+      GRADLE_CMD='./gradlew'
+    fi
+    INIT_CMD="$GRADLE_CMD assemble --quiet"
+    TEST_CMD="$GRADLE_CMD test"
+    FEATURE_TEST_TEMPLATE="$GRADLE_CMD test"
+    FEATURE_MODULE_TEST_TEMPLATE="$GRADLE_CMD \":__FEATURE_MODULE__:test\""
 
     if is_configured "$PROJECT_ROOT/build.gradle" 'checkstyle|spotbugs' || is_configured "$PROJECT_ROOT/build.gradle.kts" 'checkstyle|spotbugs'; then
-      LINT_CMD='./gradlew check'
+      LINT_CMD="$GRADLE_CMD check"
     fi
 
-    ARCH_CMD='./gradlew test --tests "*Arch*"'
+    ARCH_CMD="$GRADLE_CMD test --tests \"*Arch*\""
     if is_configured "$PROJECT_ROOT/build.gradle" 'archunit' || is_configured "$PROJECT_ROOT/build.gradle.kts" 'archunit'; then
       ARCH_SOFT_FAIL='false'
     fi
 
     if is_configured "$PROJECT_ROOT/build.gradle" 'jacoco' || is_configured "$PROJECT_ROOT/build.gradle.kts" 'jacoco'; then
-      COVERAGE_CMD='./gradlew jacocoTestReport'
+      COVERAGE_CMD="$GRADLE_CMD jacocoTestReport"
     fi
   fi
 elif [ "$STACK" = "typescript" ]; then
@@ -256,11 +347,16 @@ elif [ "$STACK" = "typescript" ]; then
   fi
 
   DEPCRUISE_CONFIG=$(find_first_existing '.dependency-cruiser.js' '.dependency-cruiser.cjs' '.dependency-cruiser.mjs' '.dependency-cruiser.json' || true)
+  TYPESCRIPT_TARGETS='.'
+  if command -v detect_typescript_source_target >/dev/null 2>&1; then
+    TYPESCRIPT_TARGETS=$(detect_typescript_source_target "$PROJECT_ROOT")
+  fi
+  TYPESCRIPT_TARGET_ARGS=$(quote_target_args "$TYPESCRIPT_TARGETS")
   if [ -n "$DEPCRUISE_CONFIG" ]; then
-    ARCH_CMD="npx depcruise src --config $DEPCRUISE_CONFIG"
+    ARCH_CMD="npx depcruise $TYPESCRIPT_TARGET_ARGS --config $DEPCRUISE_CONFIG"
     ARCH_SOFT_FAIL='false'
   else
-    ARCH_CMD='npx madge --circular --extensions ts,tsx,js,jsx src/'
+    ARCH_CMD="npx madge --circular --extensions ts,tsx,js,jsx $TYPESCRIPT_TARGET_ARGS"
     ARCH_SOFT_FAIL='true'
   fi
 
@@ -279,6 +375,7 @@ elif [ "$STACK" = "typescript" ]; then
   esac
 elif [ "$STACK" = "python" ]; then
   BUILD_SYSTEM="python"
+  PYTHON_TARGET=$(detect_python_source_target)
   if is_configured "$PROJECT_ROOT/pyproject.toml" '\[tool.poetry\]'; then
     INIT_CMD='poetry install'
   elif [ -f "$PROJECT_ROOT/requirements.txt" ]; then
@@ -301,7 +398,7 @@ elif [ "$STACK" = "python" ]; then
     LINT_CMD=$(append_cmd "$LINT_CMD" 'flake8')
   fi
   if [ -f "$PROJECT_ROOT/mypy.ini" ] || is_configured "$PROJECT_ROOT/pyproject.toml" '\[tool.mypy\]'; then
-    LINT_CMD=$(append_cmd "$LINT_CMD" 'mypy src/')
+    LINT_CMD=$(append_cmd "$LINT_CMD" "mypy \"$PYTHON_TARGET\"")
   fi
 
   if [ -f "$PROJECT_ROOT/.importlinter" ] || is_configured "$PROJECT_ROOT/pyproject.toml" 'importlinter'; then
@@ -310,25 +407,20 @@ elif [ "$STACK" = "python" ]; then
   fi
 
   if is_configured "$PROJECT_ROOT/requirements.txt" 'pytest-cov' || is_configured "$PROJECT_ROOT/pyproject.toml" 'pytest-cov'; then
-    COVERAGE_CMD='pytest --cov=src'
+    COVERAGE_CMD="pytest --cov=\"$PYTHON_TARGET\""
   fi
   if is_configured "$PROJECT_ROOT/requirements.txt" 'bandit' || is_configured "$PROJECT_ROOT/pyproject.toml" 'bandit'; then
-    SECURITY_CMD='bandit -r src/'
+    SECURITY_CMD="bandit -r \"$PYTHON_TARGET\""
   fi
 fi
 
 TEMPLATE_HARNESS_DIR="$SDLC_AGENTS_ROOT/templates/harness"
 for metrics_script in collect-metrics.sh compare-metrics.sh archive-metrics.sh; do
-  if [ -f "$TEMPLATE_HARNESS_DIR/$metrics_script" ] && [ ! -f "$TARGET_DIR/$metrics_script" ]; then
-    cp "$TEMPLATE_HARNESS_DIR/$metrics_script" "$TARGET_DIR/$metrics_script"
-    chmod +x "$TARGET_DIR/$metrics_script"
-  fi
+  sync_template_script "$TEMPLATE_HARNESS_DIR/$metrics_script" "$TARGET_DIR/$metrics_script"
 done
 
-if [ -d "$TEMPLATE_HARNESS_DIR/lib" ] && [ ! -d "$TARGET_DIR/lib" ]; then
-  mkdir -p "$TARGET_DIR/lib"
-  cp "$TEMPLATE_HARNESS_DIR/lib/stack-detection.sh" "$TARGET_DIR/lib/stack-detection.sh"
-  chmod +x "$TARGET_DIR/lib/stack-detection.sh"
+if [ -d "$TEMPLATE_HARNESS_DIR/lib" ]; then
+  sync_template_script "$TEMPLATE_HARNESS_DIR/lib/stack-detection.sh" "$TARGET_DIR/lib/stack-detection.sh"
 fi
 
 INIT_PATH="$TARGET_DIR/init-project.sh"
@@ -430,6 +522,7 @@ SCRIPT_DIR="\$(CDPATH= cd -- "\$(dirname -- "\$0")" && pwd)"
 PROJECT_ROOT="\$(cd "\$SCRIPT_DIR/../.." && pwd)"
 ARCH_CMD='$ARCH_CMD'
 ARCH_SOFT_FAIL='$ARCH_SOFT_FAIL'
+ARCH_STATUS_FILE="\$SCRIPT_DIR/.last-arch-status"
 
 echo "[arch-tests] ============================================"
 echo "[arch-tests] Running architecture validation"
@@ -437,21 +530,25 @@ echo "[arch-tests] ============================================"
 
 if [ -z "\$ARCH_CMD" ]; then
   echo "[arch-tests] No architecture command detected. Skipping."
+  printf 'SKIP\n' > "\$ARCH_STATUS_FILE"
   exit 0
 fi
 
 echo "[arch-tests] Running: \$ARCH_CMD"
 if (cd "\$PROJECT_ROOT" && sh -c "\$ARCH_CMD"); then
   echo "[arch-tests] ✓ Architecture checks passed"
+  printf 'PASS\n' > "\$ARCH_STATUS_FILE"
   exit 0
 fi
 
 if [ "\$ARCH_SOFT_FAIL" = "true" ]; then
   echo "[arch-tests] ⚠ Architecture command failed, but this check is configured as soft-fail for current project signals"
+  printf 'SOFT_FAIL\n' > "\$ARCH_STATUS_FILE"
   exit 0
 fi
 
 echo "[arch-tests] ✗ Architecture checks failed"
+printf 'FAIL\n' > "\$ARCH_STATUS_FILE"
 exit 1
 EOF_ARCH
 
@@ -468,6 +565,7 @@ TEST_CMD='$TEST_CMD'
 LINT_CMD='$LINT_CMD'
 COVERAGE_CMD='$COVERAGE_CMD'
 SECURITY_CMD='$SECURITY_CMD'
+ARCH_STATUS_FILE="\$SCRIPT_DIR/.last-arch-status"
 
 WARNINGS=0
 FAILURES=0
@@ -506,8 +604,18 @@ echo "[quality-gates] ============================================"
 run_phase test "\$TEST_CMD" hard || true
 run_phase lint "\$LINT_CMD" hard || true
 
+rm -f "\$ARCH_STATUS_FILE"
 if "\$SCRIPT_DIR/run-arch-tests.sh"; then
-  echo "[quality-gates] [arch] PASS"
+  ARCH_STATUS='PASS'
+  if [ -f "\$ARCH_STATUS_FILE" ]; then
+    ARCH_STATUS=\$(cat "\$ARCH_STATUS_FILE" 2>/dev/null || printf 'PASS')
+  fi
+  if [ "\$ARCH_STATUS" = "SOFT_FAIL" ]; then
+    WARNINGS=\$((WARNINGS + 1))
+    echo "[quality-gates] [arch] WARN"
+  else
+    echo "[quality-gates] [arch] PASS"
+  fi
 else
   FAILURES=\$((FAILURES + 1))
   echo "[quality-gates] [arch] FAIL"

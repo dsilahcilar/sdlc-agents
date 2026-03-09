@@ -1,0 +1,3 @@
+interface:
+  display_name: "Curator Agent"
+  short_description: "Curate, merge, and extract high-signal learnings"

@@ -37,5 +37,44 @@ detect_stack() {
         echo "php"
     else
         echo "unknown"
+	    fi
+	}
+
+dir_has_typescript_files() {
+    local base_dir="$1"
+
+    find "$base_dir" -type f \( -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" \) \
+        ! -path "*/node_modules/*" \
+        ! -path "*/dist/*" \
+        ! -path "*/build/*" \
+        ! -path "*/coverage/*" \
+        ! -path "*/.next/*" \
+        ! -path "*/.turbo/*" \
+        ! -path "*/.git/*" \
+        -print -quit 2>/dev/null | grep -q .
+}
+
+detect_typescript_source_target() {
+    local base_dir="${1:-.}"
+    local candidate
+    local found_any="false"
+
+    for candidate in src app lib server client packages apps; do
+        if [ -d "$base_dir/$candidate" ] && dir_has_typescript_files "$base_dir/$candidate"; then
+            printf '%s\n' "$candidate"
+            found_any="true"
+        fi
+    done
+
+    if [ "$found_any" = "true" ]; then
+        return 0
     fi
+
+    if dir_has_typescript_files "$base_dir"; then
+        printf '.\n'
+        return 0
+    fi
+
+    # Fall back to the project root so architecture tools can still load config-only projects.
+    printf '.\n'
 }

@@ -224,11 +224,17 @@ collect_java_metrics() {
 
 collect_typescript_metrics() {
     echo "[metrics] Collecting TypeScript metrics..."
+
+    TS_TARGETS="."
+    if command -v detect_typescript_source_target >/dev/null 2>&1; then
+        TS_TARGETS=$(detect_typescript_source_target "$PROJECT_ROOT")
+    fi
+    TS_TARGET_ARGS=$(printf '%s\n' "$TS_TARGETS" | awk 'NF { printf "%s\"%s\"", sep, $0; sep=" " } END { if (NR == 0) printf "\".\"" }')
     
     # Check for circular dependencies using madge
     CIRCULAR_DEPS=0
     if command -v npx >/dev/null 2>&1; then
-        CIRCULAR_OUTPUT=$(npx --yes madge --circular --extensions ts,tsx,js,jsx src/ 2>/dev/null || echo "")
+        CIRCULAR_OUTPUT=$(cd "$PROJECT_ROOT" && sh -c "npx --yes madge --circular --extensions ts,tsx,js,jsx $TS_TARGET_ARGS" 2>/dev/null || echo "")
         if [ -n "$CIRCULAR_OUTPUT" ]; then
             CIRCULAR_DEPS=$(echo "$CIRCULAR_OUTPUT" | grep -c "→" || echo "0")
         fi

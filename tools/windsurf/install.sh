@@ -1,7 +1,7 @@
 #!/bin/sh
 #
 # Windsurf Install Script
-# Creates .windsurf/rules/sdlc-agents.md
+# Creates a Windsurf rule and installs SDLC skills plus support assets.
 #
 # Usage: ./install.sh --target /path/to/project [--copy]
 #
@@ -49,6 +49,7 @@ fi
 # Resolve paths
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 SDLC_AGENTS=$(cd "$SCRIPT_DIR/../.." && pwd)
+. "$SDLC_AGENTS/tools/lib/install-skills.sh"
 TARGET=$(cd "$TARGET" 2>/dev/null && pwd) || {
     log_error "Target directory does not exist: $TARGET"
     exit 1
@@ -78,58 +79,47 @@ else
 
 This project uses SDLC Agents for structured, architecture-aware development.
 
-## Available Agents
+## Available Skills
 
-| Agent | File | Purpose |
+Use the installed role skills from `.agents/skills/`:
+
+| Skill | File | Purpose |
 |-------|------|---------|
-| Planning | `.sdlc-agents/planning-agent.md` | Creates structured plans |
-| Coding | `.sdlc-agents/coding-agent.md` | Implements changes |
-| Architect | `.sdlc-agents/architect-agent.md` | Validates architecture |
-| Code Review | `.sdlc-agents/codereview-agent.md` | Reviews for quality |
-| Retro | `.sdlc-agents/retro-agent.md` | Captures lessons |
-| Initializer | `.sdlc-agents/initializer-agent.md` | Sets up project |
+| Planning | `.agents/skills/planning-agent/SKILL.md` | Creates structured plans |
+| Coding | `.agents/skills/coding-agent/SKILL.md` | Implements changes |
+| Architect | `.agents/skills/architect-agent/SKILL.md` | Validates architecture |
+| Code Review | `.agents/skills/codereview-agent/SKILL.md` | Reviews for quality |
+| Retro | `.agents/skills/retro-agent/SKILL.md` | Captures lessons |
+| Initializer | `.agents/skills/initializer-agent/SKILL.md` | Sets up project |
 
 ## Workflow
 
-1. **Initialize**: Read and follow `.sdlc-agents/initializer-agent.md` for first-time setup
-2. **Plan**: Use `.sdlc-agents/planning-agent.md` to create feature plans
-3. **Architect**: Have `.sdlc-agents/architect-agent.md` review plans
-4. **Code**: Follow `.sdlc-agents/coding-agent.md` to implement tasks
-5. **Review**: Apply `.sdlc-agents/codereview-agent.md` on changes
-6. **Learn**: Use `.sdlc-agents/retro-agent.md` to capture lessons
+1. **Initialize**: Read and follow `.agents/skills/initializer-agent/SKILL.md`
+2. **Plan**: Use `.agents/skills/planning-agent/SKILL.md`
+3. **Architect**: Review with `.agents/skills/architect-agent/SKILL.md`
+4. **Code**: Follow `.agents/skills/coding-agent/SKILL.md`
+5. **Review**: Apply `.agents/skills/codereview-agent/SKILL.md`
+6. **Learn**: Use `.agents/skills/retro-agent/SKILL.md`
 
 ## Usage
 
 ```
-Read .sdlc-agents/planning-agent.md and create a plan for [feature description]
+Read .agents/skills/planning-agent/SKILL.md and create a plan for [feature description]
 ```
 EOF
     log_info "Created: $RULES_FILE"
 fi
 
-# Link or copy .sdlc-agents directory (hidden)
-AGENTS_TARGET="$TARGET/.sdlc-agents"
-if [ -e "$AGENTS_TARGET" ]; then
-    log_warn ".sdlc-agents directory exists, skipping: $AGENTS_TARGET"
-else
-    if [ "$COPY_MODE" = true ]; then
-        cp -r "$SDLC_AGENTS/agents" "$AGENTS_TARGET"
-        log_info "Copied agents to: $AGENTS_TARGET"
-    else
-        ln -s "$SDLC_AGENTS/agents" "$AGENTS_TARGET"
-        log_info "Symlinked agents to: $AGENTS_TARGET"
-    fi
-fi
+install_skill_catalog "$SDLC_AGENTS" "$TARGET"
+install_support_bundle "$SDLC_AGENTS" "$TARGET" "$COPY_MODE"
 
 echo ""
 log_info "Windsurf setup complete!"
 echo ""
-echo "✓ Created .windsurfrules with agent instructions"
+echo "✓ Installed skills into .github/skills/, .claude/skills/, and .agents/skills/"
 echo ""
 echo "Next steps:"
 echo "  1. Open your project in Windsurf"
-echo "  2. Run the initializer agent by typing:"
-echo "     'Read and follow the instructions in .sdlc-agents/initializer-agent.md'"
-echo "  3. Start planning features with:"
-echo "     'Read and follow .sdlc-agents/planning-agent.md to create a plan for [feature description]'"
+echo "  2. Start with: 'Read .agents/skills/initializer-agent/SKILL.md and bootstrap this project'"
+echo "  3. Continue with: 'Read .agents/skills/planning-agent/SKILL.md and create a plan for [feature description]'"
 echo ""

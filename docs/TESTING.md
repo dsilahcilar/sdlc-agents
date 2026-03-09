@@ -9,14 +9,16 @@ This document provides a quick checklist for validating SDLC Agents installation
 After running `./install.sh`, verify:
 
 ```bash
-# Runtime prompt directory exists
-ls -la your-project/.sdlc-agents/
+# Skill directories exist
+ls -la your-project/.github/skills/
+ls -la your-project/.claude/skills/
+ls -la your-project/.agents/skills/
 
-# Core prompt files exist
-ls your-project/.sdlc-agents/*-agent.md
+# Core skill files exist
+ls your-project/.github/skills/*/SKILL.md
 
 # Tool-specific config exists (example: GitHub Copilot)
-ls your-project/.github/agents/*.agent.md
+ls your-project/.cursor/rules/sdlc-agents.mdc
 ```
 
 ---
@@ -39,8 +41,8 @@ Before merging prompt or harness changes in this repository:
 
 | Tool | Expected Config | Validation Command |
 |------|-----------------|-------------------|
-| GitHub Copilot | `.github/agents/*.agent.md` | `ls .github/agents/*.agent.md` |
-| Claude Code | `.claude/agents/*.md` | `ls .claude/agents/*.md` |
+| GitHub Copilot | `.github/skills/*/SKILL.md` | `ls .github/skills/*/SKILL.md` |
+| Claude Code | `.claude/skills/*/SKILL.md` | `ls .claude/skills/*/SKILL.md` |
 | Cursor | `.cursor/rules/sdlc-agents.mdc` | `cat .cursor/rules/sdlc-agents.mdc` |
 | Windsurf | `.windsurf/rules/sdlc-agents.md` | `cat .windsurf/rules/sdlc-agents.md` |
 | Aider | `.aider.conf.yml` | `cat .aider.conf.yml` |
@@ -62,21 +64,18 @@ ls -la your-project/.sdlc-agents
 ls -la your-project/.sdlc-agents
 # Should show a normal directory (not a symlink)
 
-file your-project/.sdlc-agents/planning-agent.md
+file your-project/.github/skills/planning-agent/SKILL.md
 # Should show text file output
 ```
 
 ---
 
-## Runtime Prompt Checklist
+## Skill Checklist
 
-- [ ] `.sdlc-agents/planning-agent.md` is readable
-- [ ] `.sdlc-agents/architect-agent.md` is readable
-- [ ] `.sdlc-agents/coding-agent.md` is readable
-- [ ] `.sdlc-agents/codereview-agent.md` is readable
-- [ ] `.sdlc-agents/retro-agent.md` is readable
-- [ ] `.sdlc-agents/curator-agent.md` is readable
-- [ ] `.sdlc-agents/initializer-agent.md` is readable
+- [ ] `.github/skills/planning-agent/SKILL.md` is readable
+- [ ] `.claude/skills/planning-agent/SKILL.md` is readable
+- [ ] `.agents/skills/planning-agent/SKILL.md` is readable
+- [ ] `.sdlc-agents/` support bundle is present
 
 ---
 
@@ -88,7 +87,7 @@ file your-project/.sdlc-agents/planning-agent.md
 ./install.sh --ghcp --target ./your-project --copy
 ```
 
-### Tool config not created
+### Skill directories missing
 
 ```bash
 # Re-run installer for the target tool
@@ -115,10 +114,10 @@ else
   ERRORS=$((ERRORS + 1))
 fi
 
-if ls "$TARGET/.sdlc-agents/"*-agent.md >/dev/null 2>&1; then
-  echo "✅ Runtime prompt files present"
+if ls "$TARGET/.github/skills/"*/SKILL.md >/dev/null 2>&1; then
+  echo "✅ Skill files present"
 else
-  echo "❌ No runtime prompt files found"
+  echo "❌ No skill files found"
   ERRORS=$((ERRORS + 1))
 fi
 

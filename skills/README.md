@@ -15,9 +15,13 @@ This directory contains `SKILL.md`-packaged SDLC skills for runtimes that native
 ## Compatibility Model
 
 - Canonical role instructions now live in `skills/roles/*/SKILL.md`.
-- Compatibility runtime prompts remain available at `agents/*-agent.md` for existing installers and `.sdlc-agents/*.md` workflows.
+- Installers now place these role skills into project-local skill directories:
+  - `.github/skills/`
+  - `.claude/skills/`
+  - `.agents/skills/`
+- Compatibility runtime prompts remain available at `agents/*-agent.md` for support-bundle and legacy workflows.
 - Regenerate compatibility prompts with `./scripts/generate-role-agents.sh`.
-- Installed projects continue to use `.sdlc-agents/*.md` as before.
+- Installed projects still receive `.sdlc-agents/` as a support bundle for templates, harness tooling, guardrails, and capability skills.
 
 ## Existing Capability Skills
 
@@ -28,4 +32,4 @@ Core progressive-disclosure capability skills still live under `agents/skills/`.
 - Framework skills: `agents/skills/frameworks/`
 - Skill index: `agents/skills/skill-index.yaml`
 
-Migration to full `SKILL.md` packaging for capability skills can be done incrementally in future iterations.
+Migration to full `SKILL.md` packaging for capability skills can happen incrementally in future iterations.

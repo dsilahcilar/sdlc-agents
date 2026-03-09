@@ -1,7 +1,7 @@
 #!/bin/sh
 #
 # Cursor Install Script
-# Creates .cursor/rules/sdlc-agents.mdc
+# Creates a Cursor rule and installs SDLC skills plus support assets.
 #
 # Usage: ./install.sh --target /path/to/project [--copy]
 #
@@ -49,6 +49,7 @@ fi
 # Resolve paths
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 SDLC_AGENTS=$(cd "$SCRIPT_DIR/../.." && pwd)
+. "$SDLC_AGENTS/tools/lib/install-skills.sh"
 TARGET=$(cd "$TARGET" 2>/dev/null && pwd) || {
     log_error "Target directory does not exist: $TARGET"
     exit 1
@@ -83,52 +84,39 @@ alwaysApply: true
 
 This project uses SDLC Agents for structured, architecture-aware development.
 
-## Available Agents
+## Available Skills
 
-Reference these agent files for specialized workflows:
+Role skills live in `.agents/skills/` and are mirrored to `.github/skills/` and `.claude/skills/`.
 
-| Agent | File | Purpose |
+| Skill | File | Purpose |
 |-------|------|---------|
-| Planning | @.sdlc-agents/planning-agent.md | Creates structured plans |
-| Coding | @.sdlc-agents/coding-agent.md | Implements changes |
-| Architect | @.sdlc-agents/architect-agent.md | Validates architecture |
-| Code Review | @.sdlc-agents/codereview-agent.md | Reviews for quality |
-| Retro | @.sdlc-agents/retro-agent.md | Captures lessons |
-| Initializer | @.sdlc-agents/initializer-agent.md | Sets up project |
+| Planning | @.agents/skills/planning-agent/SKILL.md | Creates structured plans |
+| Coding | @.agents/skills/coding-agent/SKILL.md | Implements changes |
+| Architect | @.agents/skills/architect-agent/SKILL.md | Validates architecture |
+| Code Review | @.agents/skills/codereview-agent/SKILL.md | Reviews for quality |
+| Retro | @.agents/skills/retro-agent/SKILL.md | Captures lessons |
+| Initializer | @.agents/skills/initializer-agent/SKILL.md | Sets up project |
 
 ## Workflow
 
-1. **Initialize**: Use @.sdlc-agents/initializer-agent.md for first-time setup
-2. **Plan**: Use @.sdlc-agents/planning-agent.md to create feature plans
-3. **Architect**: Have @.sdlc-agents/architect-agent.md review plans
-4. **Code**: Use @.sdlc-agents/coding-agent.md to implement tasks
-5. **Review**: Run @.sdlc-agents/codereview-agent.md on changes
-6. **Learn**: Use @.sdlc-agents/retro-agent.md to capture lessons
+1. **Initialize**: Use @.agents/skills/initializer-agent/SKILL.md for first-time setup
+2. **Plan**: Use @.agents/skills/planning-agent/SKILL.md to create feature plans
+3. **Architect**: Have @.agents/skills/architect-agent/SKILL.md review plans
+4. **Code**: Use @.agents/skills/coding-agent/SKILL.md to implement tasks
+5. **Review**: Run @.agents/skills/codereview-agent/SKILL.md on changes
+6. **Learn**: Use @.agents/skills/retro-agent/SKILL.md to capture lessons
 EOF
     log_info "Created: $RULES_FILE"
 fi
 
-# Link or copy .sdlc-agents directory (hidden)
-AGENTS_TARGET="$TARGET/.sdlc-agents"
-if [ -e "$AGENTS_TARGET" ]; then
-    log_warn ".sdlc-agents directory exists, skipping: $AGENTS_TARGET"
-else
-    if [ "$COPY_MODE" = true ]; then
-        cp -r "$SDLC_AGENTS/agents" "$AGENTS_TARGET"
-        log_info "Copied agents to: $AGENTS_TARGET"
-    else
-        ln -s "$SDLC_AGENTS/agents" "$AGENTS_TARGET"
-        log_info "Symlinked agents to: $AGENTS_TARGET"
-    fi
-fi
+install_skill_catalog "$SDLC_AGENTS" "$TARGET"
+install_support_bundle "$SDLC_AGENTS" "$TARGET" "$COPY_MODE"
 
 echo ""
 log_info "Cursor setup complete!"
 echo ""
 echo "Next steps:"
 echo "  1. Open your project in Cursor"
-echo "  2. Run the initializer agent by typing:"
-echo "     '@.sdlc-agents/initializer-agent.md follow the instructions in this file'"
-echo "  3. Start planning features with:"
-echo "     '@.sdlc-agents/planning-agent.md create a plan for [feature description]'"
+echo "  2. Start with: '@.agents/skills/initializer-agent/SKILL.md bootstrap this project'"
+echo "  3. Continue with: '@.agents/skills/planning-agent/SKILL.md create a plan for [feature description]'"
 echo ""

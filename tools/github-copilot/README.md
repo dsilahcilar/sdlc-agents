@@ -13,29 +13,22 @@ Install SDLC Agents for GitHub Copilot.
 
 ```text
 your-project/
-├── .github/
-│   └── agents/
-│       ├── planning-agent.agent.md
-│       ├── coding-agent.agent.md
-│       ├── architect-agent.agent.md
-│       ├── codereview-agent.agent.md
-│       ├── retro-agent.agent.md
-│       ├── curator-agent.agent.md
-│       └── initializer-agent.agent.md
-├── .sdlc-agents/                  # Symlink or copy of runtime prompts
-└── .gitignore                     # Updated to exclude .sdlc-agents/
+├── .github/skills/
+├── .claude/skills/
+├── .agents/skills/
+└── .sdlc-agents/                  # Symlink or copy of support assets
 ```
 
 ## How It Works
 
-- Copilot discovers `.github/agents/*.agent.md` files in VS Code.
-- Each `.agent.md` file references `.sdlc-agents/<agent>.md` as the source instructions.
-- You select agents via the Copilot Chat agent picker UI.
+- Copilot can discover project skills from `.github/skills/`.
+- SDLC Agents mirrors the same role skills into `.claude/skills/` and `.agents/skills/` for cross-tool compatibility.
+- `.sdlc-agents/` remains the support bundle for templates, harness tooling, guardrails, and capability skills.
 
 ## Usage
 
 1. Open GitHub Copilot Chat.
-2. Choose an agent from the picker.
+2. Use an installed SDLC skill such as `planning-agent` or `coding-agent`.
 3. Prompt it with a task.
 
 Example flow:
