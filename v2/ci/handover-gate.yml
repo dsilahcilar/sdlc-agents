@@ -1,0 +1,32 @@
+# Prints what each pull request owes and where it would go next. Shadow mode: it blocks nothing.
+# Copy to .github/workflows/handover-gate.yml.
+name: Handover gate
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  owed:
+    name: What this change owes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The gate compares against the branch point, so it needs the history.
+          fetch-depth: 0
+      - name: Run the gate
+        env:
+          BASE_REF: ${{ github.base_ref }}
+          # Passed through the environment, never pasted into the script: the text is written by the author.
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          printf '%s' "$PR_BODY" > "$RUNNER_TEMP/pull-request.md"
+          python3 .sdlc/gate/handover_gate.py \
+            --base "origin/$BASE_REF" --head HEAD \
+            --waivers-from "$RUNNER_TEMP/pull-request.md" | tee -a "$GITHUB_STEP_SUMMARY"
+          # With a judge (see docs/gates.md), add for example:
+          #   --judge-cmd "python3 .sdlc/gate/my_judge.py"
+          # and pass its key as a secret in `env`. Without a judge only the path rules apply.

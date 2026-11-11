@@ -1,0 +1,170 @@
+{
+  "version": 1,
+  "note": "Starter rules. The path patterns are guesses at a common layout: change them to where things live in your repository before you trust any answer. Reference: docs/gates.md.",
+  "ignore": ["docs/**", "**/*.md", ".sdlc/**"],
+  "items": [
+    {
+      "id": "brief-testable",
+      "title": "A check that can be run",
+      "kind": "evidence",
+      "handover": "brief-to-code",
+      "note": "No satisfied_by: the author fixes the brief and runs the gate again, or waives it in one line.",
+      "owed_when": {
+        "ask": {
+          "about": "brief",
+          "question": "Does this brief lack an acceptance check that someone could run and that comes back pass or fail?",
+          "true": "No acceptance check in the brief can be run as written, or none is named.",
+          "false": "The brief names at least one command, test or step with a pass or fail result.",
+          "threshold": 0.5
+        }
+      }
+    },
+    {
+      "id": "architect-pass",
+      "title": "Architect pass on the brief",
+      "kind": "review",
+      "handover": "brief-to-code",
+      "reviewer": "architect",
+      "owed_when": {
+        "ask": {
+          "about": "brief",
+          "question": "Does this brief say the change alters the shape of data that is already stored, changes a contract other code or another service reads, or introduces a pattern the codebase does not use yet?",
+          "true": "The brief describes a change to stored data shape, to an existing contract, or a new structural pattern.",
+          "false": "The brief describes a change inside existing structures and contracts.",
+          "threshold": 0.4
+        }
+      }
+    },
+    {
+      "id": "brief-approval",
+      "title": "Approval of the brief",
+      "kind": "approval",
+      "handover": "brief-to-code",
+      "owed_when": {
+        "ask": {
+          "about": "brief",
+          "question": "Does this brief say the change touches sign-in or access rules, payment, stored personal data, or deletes or rewrites data that already exists?",
+          "true": "The brief describes a change to access, payment, personal data, or a destructive change to existing data.",
+          "false": "The brief describes none of these.",
+          "threshold": 0.4
+        }
+      }
+    },
+    {
+      "id": "unit-test",
+      "title": "Unit test",
+      "kind": "evidence",
+      "note": "Path rule only: any source change owes a test file change, and a rename-only change is waived in one line. Add an 'ask' here if that proves too coarse.",
+      "owed_when": {
+        "changed": ["src/**", "app/**", "lib/**", "!src/test/**", "!**/__tests__/**", "!**/*.test.*", "!**/*.spec.*", "!**/*Test.*"]
+      },
+      "satisfied_by": ["src/test/**", "**/__tests__/**", "**/*.test.*", "**/*Test.*", "tests/unit/**"]
+    },
+    {
+      "id": "integration-test",
+      "title": "Database or integration test",
+      "kind": "evidence",
+      "owed_when": {
+        "changed": ["**/migrations/**", "**/persistence/**", "**/repository/**", "**/repositories/**", "**/*.sql", "**/*.cypher"],
+        "ask": {
+          "paths": ["src/**", "app/**", "lib/**", "!src/test/**", "!**/__tests__/**", "!**/*.test.*", "!**/*.spec.*", "!**/*Test.*"],
+          "question": "Could this change alter behaviour that only shows up against a real database or a started application: queries or writes, stored shapes, how components are wired together, scheduled jobs, or how HTTP requests are bound and answered?",
+          "true": "The change touches code that talks to the database or runs inside the started application, so a unit test with mocks could miss a break.",
+          "false": "The change is confined to pure logic, mapping, formatting, comments or renames that unit tests exercise without a database or a started application.",
+          "threshold": 0.3
+        }
+      },
+      "satisfied_by": ["**/*IntegrationTest.*", "**/*.integration.test.*", "tests/integration/**"]
+    },
+    {
+      "id": "api-contract",
+      "title": "API contract",
+      "kind": "evidence",
+      "owed_when": {
+        "ask": {
+          "paths": ["**/controller/**", "**/controllers/**", "**/routes/**", "**/api/**", "**/dto/**"],
+          "question": "Does this diff add or remove an endpoint, or change the name, type, nullability or meaning of a field, parameter or status code that an existing endpoint already exposes?",
+          "true": "The shape of what callers send or receive changes.",
+          "false": "Only the inside of a handler changes; callers send and receive the same shape.",
+          "threshold": 0.4
+        }
+      },
+      "satisfied_by": ["**/openapi*", "**/swagger*", "**/*.proto", "**/*.graphql", "**/contracts/**"]
+    },
+    {
+      "id": "journey-test",
+      "title": "User journey test",
+      "kind": "evidence",
+      "note": "A new page owes at least a 'the page opens' line. A journey test is owed when the user does something across steps.",
+      "owed_when": {
+        "added": ["**/page.tsx", "**/page.jsx", "**/pages/**"],
+        "ask": {
+          "paths": ["src/**/*.tsx", "src/**/*.jsx", "src/**/*.vue", "src/**/*.svelte", "app/**/*.tsx", "!**/*.test.*", "!**/*.spec.*"],
+          "question": "Does this diff add or change a sequence of two or more actions that a user performs in the browser to reach a result, such as signing up, importing data, following an item or paying?",
+          "true": "A multi-step user flow is added, or a step of an existing flow changes what the user must do.",
+          "false": "The change is presentational, or changes one screen without changing the steps of a flow.",
+          "threshold": 0.4
+        }
+      },
+      "satisfied_by": ["tests/e2e/**", "tests/smoke/**", "e2e/**", "cypress/**", "playwright/**", "**/*.spec.ts", "**/*.e2e.*"]
+    },
+    {
+      "id": "translations",
+      "title": "Language check",
+      "kind": "evidence",
+      "owed_when": {
+        "changed": ["**/messages/en.json", "**/locales/en/**", "**/i18n/en.*"]
+      },
+      "satisfied_by": ["**/messages/*.json", "**/locales/**", "**/i18n/**", "!**/messages/en.json", "!**/locales/en/**", "!**/i18n/en.*"]
+    },
+    {
+      "id": "security-review",
+      "title": "Security review",
+      "kind": "review",
+      "reviewer": "security-review",
+      "note": "The scans (secrets, static analysis, dependencies) run on every change and are not decided here. This item decides the extra review.",
+      "owed_when": {
+        "changed": ["**/security/**", "**/auth/**", "**/*Auth*", "**/middleware.*", "**/ratelimit/**", "**/*RateLimit*", "**/*ebhook*", "**/*Cors*", "**/cors*", ".gitleaks.toml", ".trivyignore*", "**/.semgrep*", "!src/test/**", "!**/__tests__/**", "!**/*.test.*", "!**/*.spec.*", "!**/*Test.*"],
+        "ask": {
+          "paths": ["src/**", "app/**", "lib/**", "!src/test/**", "!**/__tests__/**", "!**/*.test.*", "!**/*.spec.*", "!**/*Test.*"],
+          "question": "Does this diff change who can read or change which user's data, how a caller is identified, what a visitor who is not signed in can reach, what the system fetches from or sends to an outside address, or how a file or text supplied by a user is parsed or stored?",
+          "true": "The change affects access to data, the identity of the caller, the anonymous surface, outbound requests, or the handling of user-supplied files or text.",
+          "false": "The change affects none of these.",
+          "threshold": 0.3
+        }
+      }
+    },
+    {
+      "id": "stored-data",
+      "title": "Architect review of a stored-data change",
+      "kind": "review",
+      "reviewer": "architect",
+      "owed_when": {
+        "ask": {
+          "paths": ["**/migrations/**", "**/*.sql", "**/*.cypher"],
+          "question": "Does this change alter or delete data that is already stored, rather than only add new optional data?",
+          "true": "Existing rows, nodes, columns or properties are rewritten, removed or given a new meaning.",
+          "false": "The change only adds new optional structures or data.",
+          "threshold": 0.3
+        }
+      }
+    },
+    {
+      "id": "model-run",
+      "title": "Live model run",
+      "kind": "approval",
+      "note": "A live run costs money, so the gate only says it is owed. A person decides whether to run it.",
+      "owed_when": {
+        "changed": ["**/prompts/**", "**/*.prompt.*", "**/*.jinja", "**/*.j2"]
+      }
+    },
+    {
+      "id": "sensitive-change",
+      "title": "Approval of a sensitive change",
+      "kind": "approval",
+      "owed_when": {
+        "changed": ["**/payment/**", "**/payments/**", "**/billing/**", "**/*Payment*", "!src/test/**", "!**/__tests__/**", "!**/*.test.*", "!**/*.spec.*", "!**/*Test.*"]
+      }
+    }
+  ]
+}

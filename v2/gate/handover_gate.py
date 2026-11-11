@@ -1,0 +1,525 @@
+#!/usr/bin/env python3
+"""Handover gate: works out what a change owes before it moves on, and where it goes next.
+
+The agent that did the work must not be the one that decides how much checking the work gets. This script
+makes that decision instead, from rules kept as data (rules.json). For every item in the rules it answers:
+
+  1. Is it owed?   Path rules decide what they can decide exactly. For the unclear rest, one factual yes/no
+                   question goes to a judge: any program that returns a probability. When the judge gives no
+                   answer the item counts as owed, so a failed call never lowers the scrutiny. With no judge
+                   configured, only the path rules apply and the question is reported as not asked.
+  2. Is it there?  For an "evidence" item (a kind of test, a contract file): did the change touch a file in
+                   the place such evidence lives? If not, the author adds it or waives it in one line, and
+                   the reviewer judges that line.
+
+The output is the list "Owed by this change" and the next step: back to the author while evidence is missing,
+otherwise on to the reviewers the list names, plus a human approval when a rule asks for one.
+
+The gate routes. It does not judge quality, and it can add checking but never remove a human approval.
+See ../docs/gates.md for the design, the rules reference and the judge protocol.
+
+Usage:
+  handover_gate.py --base <ref> --head <ref> [--rules .sdlc/rules.json] [--judge-cmd "<command>"]
+                   [--waivers-from FILE] [--format markdown|json]
+  handover_gate.py --handover brief-to-code --brief-from FILE [--judge-cmd "<command>"]
+
+Exits 0 whatever it decides: the decision is the output. --fail-on-missing makes missing evidence exit 1.
+Python 3.8+, standard library only.
+"""
+from __future__ import annotations
+
+import argparse
+import dataclasses
+import json
+import pathlib
+import re
+import shlex
+import subprocess
+import sys
+from typing import Callable, Dict, List, Optional, Sequence, Tuple
+
+HANDOVERS = ("brief-to-code", "code-to-review")
+KINDS = ("evidence", "review", "approval")
+ABOUT = ("diff", "brief")
+DEFAULT_THRESHOLD = 0.5
+DEFAULT_MAX_INPUT_CHARS = 40_000
+DEFAULT_MAX_QUESTIONS = 8
+# Spaces and tabs only between the parts: \s would run on into the next line and take it for the reason.
+WAIVER_RE = re.compile(r"^[ \t]*(?:[-*][ \t]*)?waive[ \t]+([A-Za-z0-9_.-]+)[ \t]*:[ \t]*(\S.*)$",
+                       re.IGNORECASE | re.MULTILINE)
+
+ITEM_KEYS = {"id", "title", "kind", "handover", "owed_when", "satisfied_by", "reviewer", "note"}
+OWED_KEYS = {"changed", "added", "ask"}
+ASK_KEYS = {"about", "paths", "question", "true", "false", "threshold"}
+
+# A judge takes {"id", "question", "criteria": {"true", "false"}, "input": {...}} and returns the probability
+# that the answer is yes, or None when it cannot answer.
+Judge = Callable[[dict], Optional[float]]
+
+
+class RulesError(ValueError):
+    """The rules file is not usable. The message names the item and the field."""
+
+
+# ---------------------------------------------------------------------------------------------------------
+# Paths
+
+
+def glob_to_regex(pattern: str) -> "re.Pattern[str]":
+    """`**` crosses directories, `*` and `?` stay inside one path segment. `**/x` also matches `x` at the root."""
+    out, i = [], 0
+    while i < len(pattern):
+        if pattern.startswith("**/", i):
+            out.append("(?:.*/)?")
+            i += 3
+        elif pattern.startswith("**", i):
+            out.append(".*")
+            i += 2
+        elif pattern[i] == "*":
+            out.append("[^/]*")
+            i += 1
+        elif pattern[i] == "?":
+            out.append("[^/]")
+            i += 1
+        else:
+            out.append(re.escape(pattern[i]))
+            i += 1
+    return re.compile("^" + "".join(out) + "$")
+
+
+class PathSet:
+    """A list of globs. A pattern that starts with `!` takes paths out again, wherever it stands in the list."""
+
+    def __init__(self, patterns: Sequence[str]):
+        self.patterns = list(patterns)
+        self._yes = [glob_to_regex(p) for p in patterns if not p.startswith("!")]
+        self._no = [glob_to_regex(p[1:]) for p in patterns if p.startswith("!")]
+
+    def __bool__(self) -> bool:
+        return bool(self._yes)
+
+    def matches(self, path: str) -> bool:
+        return any(r.match(path) for r in self._yes) and not any(r.match(path) for r in self._no)
+
+    def of(self, paths: Sequence[str]) -> List[str]:
+        return [p for p in paths if self.matches(p)]
+
+
+@dataclasses.dataclass(frozen=True)
+class Change:
+    status: str  # A added, M modified, D deleted, R renamed (path is the new name)
+    path: str
+
+
+def parse_name_status(text: str) -> List[Change]:
+    """The output of `git diff --name-status`. A rename or copy is reported under its new path."""
+    changes = []
+    for line in text.splitlines():
+        parts = line.split("\t")
+        if len(parts) < 2 or not parts[0]:
+            continue
+        changes.append(Change(parts[0][0], parts[-1]))
+    return changes
+
+
+# ---------------------------------------------------------------------------------------------------------
+# Rules
+
+
+@dataclasses.dataclass
+class Ask:
+    about: str
+    paths: PathSet
+    question: str
+    true: str
+    false: str
+    threshold: float
+
+
+@dataclasses.dataclass
+class Item:
+    id: str
+    title: str
+    kind: str
+    handover: str
+    changed: PathSet
+    added: PathSet
+    ask: Optional[Ask]
+    satisfied_by: PathSet
+    reviewer: Optional[str]
+
+
+@dataclasses.dataclass
+class Rules:
+    ignore: PathSet
+    items: List[Item]
+    max_input_chars: int = DEFAULT_MAX_INPUT_CHARS
+
+
+def _strings(value, where: str) -> List[str]:
+    if value is None:
+        return []
+    if not isinstance(value, list) or not all(isinstance(v, str) and v for v in value):
+        raise RulesError(f"{where}: expected a list of path patterns")
+    return value
+
+
+def _unknown(obj: dict, allowed: set, where: str) -> None:
+    extra = sorted(set(obj) - allowed)
+    if extra:
+        raise RulesError(f"{where}: unknown field(s) {', '.join(extra)}")
+
+
+def parse_rules(data: dict) -> Rules:
+    """Strict on purpose: a misspelt field in a rule would otherwise switch that rule off without a word."""
+    if not isinstance(data, dict) or not isinstance(data.get("items"), list):
+        raise RulesError("rules: expected an object with an 'items' list")
+    _unknown(data, {"version", "ignore", "items", "max_input_chars", "note"}, "rules")
+    items, seen = [], set()
+    for n, raw in enumerate(data["items"]):
+        where = f"item {raw.get('id', n) if isinstance(raw, dict) else n}"
+        if not isinstance(raw, dict):
+            raise RulesError(f"{where}: expected an object")
+        _unknown(raw, ITEM_KEYS, where)
+        for key in ("id", "title", "kind"):
+            if not isinstance(raw.get(key), str) or not raw[key]:
+                raise RulesError(f"{where}: '{key}' is required")
+        if raw["id"] in seen:
+            raise RulesError(f"{where}: duplicate id")
+        seen.add(raw["id"])
+        if raw["kind"] not in KINDS:
+            raise RulesError(f"{where}: kind must be one of {', '.join(KINDS)}")
+        handover = raw.get("handover", "code-to-review")
+        if handover not in HANDOVERS:
+            raise RulesError(f"{where}: handover must be one of {', '.join(HANDOVERS)}")
+        owed = raw.get("owed_when")
+        if not isinstance(owed, dict) or not owed:
+            raise RulesError(f"{where}: 'owed_when' needs 'changed', 'added' or 'ask'")
+        _unknown(owed, OWED_KEYS, f"{where}.owed_when")
+        ask = None
+        if "ask" in owed:
+            a = owed["ask"]
+            if not isinstance(a, dict):
+                raise RulesError(f"{where}.owed_when.ask: expected an object")
+            _unknown(a, ASK_KEYS, f"{where}.owed_when.ask")
+            for key in ("question", "true", "false"):
+                if not isinstance(a.get(key), str) or not a[key].strip():
+                    raise RulesError(f"{where}.owed_when.ask: '{key}' is required")
+            about = a.get("about", "diff")
+            if about not in ABOUT:
+                raise RulesError(f"{where}.owed_when.ask: about must be one of {', '.join(ABOUT)}")
+            threshold = a.get("threshold", DEFAULT_THRESHOLD)
+            if isinstance(threshold, bool) or not isinstance(threshold, (int, float)) or not 0 < threshold <= 1:
+                raise RulesError(f"{where}.owed_when.ask: threshold must be a number above 0 and at most 1")
+            paths = _strings(a.get("paths"), f"{where}.owed_when.ask.paths")
+            if about == "diff" and not paths:
+                raise RulesError(f"{where}.owed_when.ask: 'paths' says which changed files the question is about")
+            ask = Ask(about, PathSet(paths), a["question"].strip(), a["true"].strip(), a["false"].strip(),
+                      float(threshold))
+        changed = PathSet(_strings(owed.get("changed"), f"{where}.owed_when.changed"))
+        added = PathSet(_strings(owed.get("added"), f"{where}.owed_when.added"))
+        if not (changed or added or ask):
+            raise RulesError(f"{where}: 'owed_when' needs 'changed', 'added' or 'ask'")
+        if handover == "brief-to-code" and (changed or added or (ask and ask.about != "brief")):
+            raise RulesError(f"{where}: at brief-to-code there is no diff yet, so only an 'ask' about the brief works")
+        satisfied = PathSet(_strings(raw.get("satisfied_by"), f"{where}.satisfied_by"))
+        if raw["kind"] != "evidence" and satisfied:
+            raise RulesError(f"{where}: only an evidence item has 'satisfied_by'")
+        reviewer = raw.get("reviewer")
+        if raw["kind"] == "review" and not (isinstance(reviewer, str) and reviewer):
+            raise RulesError(f"{where}: a review item names its 'reviewer'")
+        if raw["kind"] != "review" and reviewer is not None:
+            raise RulesError(f"{where}: only a review item has a 'reviewer'")
+        items.append(Item(raw["id"], raw["title"], raw["kind"], handover, changed, added, ask, satisfied, reviewer))
+    max_chars = data.get("max_input_chars", DEFAULT_MAX_INPUT_CHARS)
+    if isinstance(max_chars, bool) or not isinstance(max_chars, int) or max_chars <= 0:
+        raise RulesError("rules: max_input_chars must be a positive whole number")
+    return Rules(PathSet(_strings(data.get("ignore"), "rules.ignore")), items, max_chars)
+
+
+def load_rules(path: pathlib.Path) -> Rules:
+    try:
+        return parse_rules(json.loads(path.read_text()))
+    except json.JSONDecodeError as e:
+        raise RulesError(f"{path}: not valid JSON ({e})") from e
+
+
+def parse_waivers(text: str) -> Dict[str, str]:
+    """Lines of the form `Waive <item id>: <reason>`, as the author writes them in the pull request."""
+    return {m.group(1): m.group(2).strip() for m in WAIVER_RE.finditer(text or "")}
+
+
+# ---------------------------------------------------------------------------------------------------------
+# Deciding
+
+
+@dataclasses.dataclass
+class ItemResult:
+    id: str
+    title: str
+    kind: str
+    # not-owed | not-asked | present | missing | waived | owed
+    state: str
+    reason: str
+    probability: Optional[float] = None
+    evidence: List[str] = dataclasses.field(default_factory=list)
+    reviewer: Optional[str] = None
+
+    @property
+    def is_owed(self) -> bool:
+        return self.state in ("present", "missing", "waived", "owed")
+
+
+@dataclasses.dataclass
+class Decision:
+    handover: str
+    # back-to-author | review | code
+    next: str
+    reviewers: List[str]
+    needs_human: bool
+    items: List[ItemResult]
+
+    def to_json(self) -> dict:
+        return {
+            "handover": self.handover,
+            "next": self.next,
+            "reviewers": self.reviewers,
+            "needs_human": self.needs_human,
+            "items": [dataclasses.asdict(i) for i in self.items],
+        }
+
+
+def _first(paths: Sequence[str]) -> str:
+    return paths[0] + (f" (+{len(paths) - 1} more)" if len(paths) > 1 else "")
+
+
+class _Asker:
+    """Counts the questions of one run, so a rules file with many of them cannot run up a bill unnoticed."""
+
+    def __init__(self, judge: Optional[Judge], max_questions: int):
+        self.judge, self.left = judge, max_questions
+
+    def ask(self, item: Item, payload_input: dict) -> Tuple[Optional[float], str]:
+        """(probability, why there is none)."""
+        assert self.judge is not None and item.ask is not None
+        if self.left <= 0:
+            return None, "question limit of this run reached"
+        self.left -= 1
+        try:
+            p = self.judge({
+                "id": item.id,
+                "question": item.ask.question,
+                "criteria": {"true": item.ask.true, "false": item.ask.false},
+                "input": payload_input,
+            })
+        except Exception as e:  # a judge that throws has not answered; the stricter route applies
+            return None, f"judge failed ({type(e).__name__})"
+        if p is None or isinstance(p, bool) or not isinstance(p, (int, float)) or not 0 <= p <= 1:
+            return None, "judge gave no answer"
+        return float(p), ""
+
+
+def _owed(item: Item, changes: Sequence[Change], diff_for: Callable[[List[str]], str], brief: Optional[str],
+          asker: _Asker, max_chars: int) -> Tuple[str, str, Optional[float]]:
+    """('yes' | 'no' | 'not-asked', reason, probability)."""
+    paths = [c.path for c in changes]
+    sure = item.changed.of(paths) or item.added.of([c.path for c in changes if c.status == "A"])
+    if sure:
+        return "yes", f"path rule: {_first(sure)}", None
+    ask = item.ask
+    if ask is None:
+        return "no", "no path rule matched", None
+    if ask.about == "brief":
+        if not brief or not brief.strip():
+            return "no", "no brief to ask about", None
+        subject, payload = "the brief", {"brief": brief}
+    else:
+        candidates = ask.paths.of(paths)
+        if not candidates:
+            return "no", "no path rule matched", None
+        subject, payload = _first(candidates), None
+    if asker.judge is None:
+        return "not-asked", f"no judge configured, so only the path rules apply ({subject})", None
+    if payload is None:
+        payload = {"changed_files": "\n".join(candidates), "diff": diff_for(candidates)}
+    size = sum(len(v) for v in payload.values())
+    if size > max_chars:
+        return "yes", f"too large to ask the judge ({size} characters), so it counts as owed", None
+    p, why = asker.ask(item, payload)
+    if p is None:
+        return "yes", f"{why}, so it counts as owed", None
+    if p >= ask.threshold:
+        return "yes", f"judge: p={p:.2f}, at or above {ask.threshold:g}", p
+    return "no", f"judge: p={p:.2f}, below {ask.threshold:g}", p
+
+
+def decide(rules: Rules, handover: str, changes: Sequence[Change], diff_for: Callable[[List[str]], str],
+           judge: Optional[Judge] = None, brief: Optional[str] = None, waivers: Optional[Dict[str, str]] = None,
+           max_questions: int = DEFAULT_MAX_QUESTIONS) -> Decision:
+    """changes: the changed files. diff_for(paths) -> the unified diff of those files. judge: None when none is set up."""
+    waivers = waivers or {}
+    changes = [c for c in changes if not rules.ignore.matches(c.path)]
+    paths = [c.path for c in changes if c.status != "D"]
+    asker = _Asker(judge, max_questions)
+    results: List[ItemResult] = []
+    for item in rules.items:
+        if item.handover != handover:
+            continue
+        owed, reason, p = _owed(item, changes, diff_for, brief, asker, rules.max_input_chars)
+        if owed != "yes":
+            results.append(ItemResult(item.id, item.title, item.kind, "not-owed" if owed == "no" else "not-asked",
+                                      reason, p))
+            continue
+        if item.kind != "evidence":
+            results.append(ItemResult(item.id, item.title, item.kind, "owed", reason, p, reviewer=item.reviewer))
+            continue
+        evidence = item.satisfied_by.of(paths)
+        if evidence:
+            results.append(ItemResult(item.id, item.title, item.kind, "present", reason, p, evidence))
+        elif item.id in waivers:
+            results.append(ItemResult(item.id, item.title, item.kind, "waived",
+                                      f"{reason}. Waived by the author: {waivers[item.id]}", p))
+        else:
+            results.append(ItemResult(item.id, item.title, item.kind, "missing", reason, p))
+    missing = any(r.state == "missing" for r in results)
+    extra = []
+    for r in results:
+        if r.kind == "review" and r.state == "owed" and r.reviewer not in extra:
+            extra.append(r.reviewer)
+    needs_human = any(r.kind == "approval" and r.state == "owed" for r in results)
+    if handover == "code-to-review":
+        return Decision(handover, "back-to-author" if missing else "review", ["reviewer"] + extra, needs_human, results)
+    step = "back-to-author" if missing else ("review" if extra else "code")
+    return Decision(handover, step, extra, needs_human, results)
+
+
+# ---------------------------------------------------------------------------------------------------------
+# Output
+
+
+def _sentence(text: str) -> str:
+    text = text[:1].upper() + text[1:]
+    return text if text.endswith((".", "?", "!")) else text + "."
+
+
+def render_markdown(d: Decision) -> str:
+    lines = ["### Owed by this change" if d.handover == "code-to-review" else "### Owed by this brief", ""]
+    quiet = []
+    for r in d.items:
+        why = _sentence(r.reason)
+        if r.state == "not-owed":
+            quiet.append(r.title)
+        elif r.state == "not-asked":
+            lines.append(f"- {r.title}: not decided. {why}")
+        elif r.state == "present":
+            lines.append(f"- {r.title}: present ({_first(r.evidence)}). {why}")
+        elif r.state == "missing":
+            lines.append(f"- {r.title}: **MISSING**. {why}")
+        elif r.state == "waived":
+            lines.append(f"- {r.title}: waived, and the reviewer judges the reason. {why}")
+        elif r.kind == "review":
+            lines.append(f"- {r.title}: owed. {why}")
+        else:
+            lines.append(f"- {r.title}: owed, and a person decides. {why}")
+    if quiet:
+        lines.append(f"- Not owed: {', '.join(quiet)}")
+    if not d.items:
+        lines.append("- No rule applies at this handover.")
+    lines.append("")
+    if d.next == "back-to-author":
+        ids = ", ".join(r.id for r in d.items if r.state == "missing")
+        lines.append(f"**Next: back to the author** ({ids}). Add what is missing, or write "
+                     "`Waive <item>: <reason>` in the pull request. No reviewer starts yet.")
+    elif d.next == "review":
+        lines.append(f"**Next: review by** {', '.join(d.reviewers)}.")
+    else:
+        lines.append("**Next: write the code.**")
+    if d.needs_human:
+        lines.append("**Needs human approval** before it is merged or released, whatever the reviewers say.")
+    return "\n".join(lines) + "\n"
+
+
+# ---------------------------------------------------------------------------------------------------------
+# Command line
+
+
+def command_judge(command: str, timeout: float = 60.0) -> Judge:
+    """A judge that is a program: the question goes in as JSON on stdin, {"probability": 0.0-1.0} comes back
+    on stdout. Anything else (a non-zero exit, a timeout, other output) means it gave no answer."""
+    argv = shlex.split(command)
+
+    def judge(payload: dict) -> Optional[float]:
+        try:
+            done = subprocess.run(argv, input=json.dumps(payload), capture_output=True, text=True, timeout=timeout)
+        except (OSError, subprocess.TimeoutExpired):
+            return None
+        if done.returncode != 0:
+            return None
+        try:
+            p = json.loads(done.stdout).get("probability")
+        except (ValueError, AttributeError):
+            return None
+        return p if isinstance(p, (int, float)) and not isinstance(p, bool) else None
+
+    return judge
+
+
+def _git(repo: pathlib.Path, *args: str) -> str:
+    return subprocess.run(["git", "-C", str(repo), *args], capture_output=True, text=True, check=True).stdout
+
+
+def main(argv: Optional[List[str]] = None) -> int:
+    ap = argparse.ArgumentParser(description="Works out what a change owes before it moves on, and where it goes next.")
+    ap.add_argument("--handover", choices=HANDOVERS, default="code-to-review")
+    ap.add_argument("--rules", default=".sdlc/rules.json", help="the rules file (default: .sdlc/rules.json)")
+    ap.add_argument("--repo", default=".", help="the repository to read the diff from (default: here)")
+    ap.add_argument("--base", help="the ref the change started from, for example origin/main")
+    ap.add_argument("--head", default="HEAD", help="the ref with the change (default: HEAD)")
+    ap.add_argument("--brief-from", help="a file with the brief, for rules that ask about it")
+    ap.add_argument("--waivers-from", help="a file with the pull request text, read for 'Waive <item>: <reason>' lines")
+    ap.add_argument("--judge-cmd", help="a program that answers one question: JSON in on stdin, {\"probability\": p} out")
+    ap.add_argument("--judge-timeout", type=float, default=60.0)
+    ap.add_argument("--max-questions", type=int, default=DEFAULT_MAX_QUESTIONS)
+    ap.add_argument("--format", choices=("markdown", "json"), default="markdown")
+    ap.add_argument("--fail-on-missing", action="store_true", help="exit 1 when owed evidence is missing")
+    args = ap.parse_args(argv)
+
+    repo = pathlib.Path(args.repo)
+    try:
+        rules = load_rules(pathlib.Path(args.rules))
+    except (OSError, RulesError) as e:
+        print(f"handover gate: {e}", file=sys.stderr)
+        return 2
+    try:
+        brief = pathlib.Path(args.brief_from).read_text() if args.brief_from else None
+        waiver_text = pathlib.Path(args.waivers_from).read_text() if args.waivers_from else ""
+    except OSError as e:
+        print(f"handover gate: {e}", file=sys.stderr)
+        return 2
+    waivers = parse_waivers(waiver_text + "\n" + (brief or ""))
+
+    changes: List[Change] = []
+    diff_for: Callable[[List[str]], str] = lambda paths: ""
+    if args.handover == "code-to-review":
+        if not args.base:
+            ap.error("--base is required at code-to-review")
+        try:
+            span = f"{_git(repo, 'merge-base', args.base, args.head).strip()}..{args.head}"
+            changes = parse_name_status(_git(repo, "diff", "--name-status", "-M", span))
+        except subprocess.CalledProcessError as e:
+            why = e.stderr.strip() or "no common commit found (a shallow clone needs more history)"
+            print(f"handover gate: git could not compare {args.base} and {args.head}: {why}", file=sys.stderr)
+            return 2
+        diff_for = lambda paths: _git(repo, "diff", "-M", span, "--", *paths)
+
+    judge = command_judge(args.judge_cmd, args.judge_timeout) if args.judge_cmd else None
+    decision = decide(rules, args.handover, changes, diff_for, judge, brief, waivers, args.max_questions)
+    if args.format == "json":
+        print(json.dumps(decision.to_json(), indent=2))
+    else:
+        print(render_markdown(decision), end="")
+    return 1 if args.fail_on_missing and decision.next == "back-to-author" else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
