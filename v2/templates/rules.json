@@ -64,6 +64,8 @@
       "id": "integration-test",
       "title": "Database or integration test",
       "kind": "evidence",
+      "note": "A run counts: where an existing suite already covers the change, such as a start-up test for a change in wiring, the author names it in a 'Ran integration-test: ...' line and the reviewer judges that. Take run_counts out if new behaviour here should always bring a new test.",
+      "run_counts": true,
       "owed_when": {
         "changed": ["**/migrations/**", "**/persistence/**", "**/repository/**", "**/repositories/**", "**/*.sql", "**/*.cypher"],
         "ask": {
@@ -107,6 +109,17 @@
         }
       },
       "satisfied_by": ["tests/e2e/**", "tests/smoke/**", "e2e/**", "cypress/**", "playwright/**", "**/*.spec.ts", "**/*.e2e.*"]
+    },
+    {
+      "id": "script-run",
+      "title": "Run of a changed script",
+      "kind": "evidence",
+      "note": "A script that runs against production rarely has a test, and a syntax check does not catch a wrong flag. So the evidence is a run of the commands the change adds or alters: 'Ran script-run: <command, where, what it printed>'. A read-only command can be run before the merge. Waive it for a change to comments only.",
+      "run_counts": true,
+      "owed_when": {
+        "changed": ["deploy/**", "ops/**", "**/*.sh"]
+      },
+      "satisfied_by": ["**/*.bats", "tests/scripts/**"]
     },
     {
       "id": "translations",

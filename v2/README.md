@@ -40,13 +40,15 @@ The gate at "code to review" prints a block like this into the pull request:
 **Next: back to the author** (journey-test). Add what is missing, or write `Waive <item>: <reason>` in the pull request. No reviewer starts yet.
 ```
 
-Not every change needs every kind of test, and few need a security review. The rules say which change owes what. See [docs/gates.md](./docs/gates.md).
+Not every change needs every kind of test, and few need a security review. The rules say which change owes what. Where a rule allows it, a run the author reports counts as the evidence, and the reviewer judges it. See [docs/gates.md](./docs/gates.md).
+
+The reviewer blocks only on what it can show and what matters now: a wrong result for a user, lost data, a failure in production, or an owed check that cannot catch its break. Smaller real defects travel with the approval as `worth_fixing`.
 
 ## What is in here
 
 | Path | What it is |
 |---|---|
-| `roles/reviewer.md`, `roles/architect.md` | The two agent files. Each is under 40 lines. |
+| `roles/reviewer.md`, `roles/architect.md` | The two agent files. Each is at most 40 lines. |
 | `gate/handover_gate.py` | The gate. Python 3.8+, standard library only, with its tests beside it. |
 | `templates/rules.json` | Starter rules: what is owed, decided by which paths, and which question goes to the judge. |
 | `templates/brief.md`, `templates/pull_request_template.md` | The brief, and a pull request template that holds the brief, the gate's block and the verdicts. |

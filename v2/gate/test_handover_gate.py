@@ -132,6 +132,31 @@ class Evidence(unittest.TestCase):
         d = run(rules(evidence(), ignore=["src/generated/**"]), changes("M src/generated/api.ts"))
         self.assertEqual(state(d, "unit-test").state, "not-owed")
 
+    def test_a_reported_run_counts_where_the_rule_allows_it(self):
+        ran = gate.parse_runs("Ran unit-test: the start-up suite passes on this commit")
+        d = run(rules(evidence(run_counts=True)), changes("M src/a.ts"), runs=ran)
+        self.assertEqual(state(d, "unit-test").state, "ran")
+        self.assertIn("the start-up suite passes on this commit", state(d, "unit-test").reason)
+        self.assertEqual(d.next, "review")
+
+    def test_a_reported_run_does_not_count_where_the_rule_is_silent(self):
+        ran = gate.parse_runs("Ran unit-test: the start-up suite passes on this commit")
+        d = run(rules(evidence()), changes("M src/a.ts"), runs=ran)
+        self.assertEqual(state(d, "unit-test").state, "missing")
+        self.assertEqual(d.next, "back-to-author")
+
+    def test_a_changed_test_file_comes_before_a_reported_run(self):
+        ran = gate.parse_runs("Ran unit-test: by hand")
+        d = run(rules(evidence(run_counts=True)), changes("M src/a.ts", "M src/a.test.ts"), runs=ran)
+        self.assertEqual(state(d, "unit-test").state, "present")
+
+    def test_an_item_with_no_file_evidence_can_be_met_by_a_run_alone(self):
+        item = evidence(id="script-run", owed_when={"changed": ["deploy/**"]}, run_counts=True)
+        del item["satisfied_by"]
+        self.assertEqual(state(run(rules(item), changes("M deploy/backup.sh")), "script-run").state, "missing")
+        ran = gate.parse_runs("- Ran script-run: `backup.sh --dry-run` against staging, printed the three steps")
+        self.assertEqual(state(run(rules(item), changes("M deploy/backup.sh"), runs=ran), "script-run").state, "ran")
+
 
 class Judge(unittest.TestCase):
     def test_the_path_rule_decides_without_asking(self):
@@ -188,6 +213,43 @@ class Judge(unittest.TestCase):
                 judge=lambda q: asked.append(q) or 0.0)
         self.assertEqual(state(d, "security-review").state, "owed")
         self.assertEqual(asked, [])
+
+    def test_a_diff_too_large_for_one_question_is_asked_about_in_parts(self):
+        asked = []
+        d = run(rules(review(), max_input_chars=55), changes("M src/c.ts", "M src/a.ts", "M src/b.ts"),
+                judge=lambda q: asked.append(q["input"]["changed_files"]) or 0.1)
+        self.assertEqual(asked, ["src/a.ts\nsrc/b.ts", "src/c.ts"])
+        item = state(d, "security-review")
+        self.assertEqual((item.state, item.probability), ("not-owed", 0.1))
+        self.assertIn("over 2 parts", item.reason)
+
+    def test_one_part_at_the_threshold_makes_it_owed_and_ends_the_asking(self):
+        asked = []
+        d = run(rules(review(), max_input_chars=30), changes("M src/a.ts", "M src/b.ts", "M src/c.ts"),
+                judge=lambda q: asked.append(q["input"]["changed_files"]) or (0.9 if "b.ts" in asked[-1] else 0.0))
+        self.assertEqual(asked, ["src/a.ts", "src/b.ts"])
+        self.assertEqual(state(d, "security-review").state, "owed")
+        self.assertIn("part 2 of 3 (src/b.ts)", state(d, "security-review").reason)
+
+    def test_no_answer_on_a_part_counts_as_owed(self):
+        d = run(rules(review(), max_input_chars=30), changes("M src/a.ts", "M src/b.ts"), judge=lambda q: None)
+        self.assertEqual(state(d, "security-review").state, "owed")
+        self.assertIn("part 1 of 2", state(d, "security-review").reason)
+
+    def test_more_parts_than_allowed_counts_as_owed_without_asking(self):
+        asked = []
+        many = changes(*[f"M src/{name}.ts" for name in "abcde"])
+        d = run(rules(review(), max_input_chars=30), many, judge=lambda q: asked.append(q) or 0.0)
+        self.assertEqual(state(d, "security-review").state, "owed")
+        self.assertIn("in 4 parts", state(d, "security-review").reason)
+        self.assertEqual(asked, [])
+
+    def test_the_parts_of_one_item_count_towards_the_question_limit(self):
+        asked = []
+        d = run(rules(review(), max_input_chars=30), changes("M src/a.ts", "M src/b.ts"),
+                judge=lambda q: asked.append(q) or 0.0, max_questions=1)
+        self.assertEqual(len(asked), 1)
+        self.assertEqual(state(d, "security-review").state, "owed")
 
     def test_past_the_question_limit_items_count_as_owed(self):
         second = review(id="second", owed_when={"ask": dict(ASK)})
@@ -271,6 +333,8 @@ class RulesFile(unittest.TestCase):
         self.bad(review(reviewer=None), "names its 'reviewer'")
         self.bad(evidence(reviewer="x"), "only a review item has a 'reviewer'")
         self.bad(review(satisfied_by=["x"]), "only an evidence item has 'satisfied_by'")
+        self.bad(review(run_counts=True), "only an evidence item has 'run_counts'")
+        self.bad(evidence(run_counts="yes"), "'run_counts' is true or false")
 
     def test_a_question_needs_its_criteria_and_its_paths(self):
         self.bad(review(owed_when={"ask": {"question": "q", "true": "t"}}), "'false' is required")
@@ -299,6 +363,10 @@ class Waivers(unittest.TestCase):
     def test_a_waiver_needs_a_reason(self):
         self.assertEqual(gate.parse_waivers("Waive unit-test:\nWaive unit-test"), {})
 
+    def test_reported_runs_are_read_the_same_way(self):
+        text = "We ran the tests.\n- Ran script-run: dry run on staging, three steps printed\nRan unit-test:\n"
+        self.assertEqual(gate.parse_runs(text), {"script-run": "dry run on staging, three steps printed"})
+
 
 class Output(unittest.TestCase):
     def test_the_block_names_what_is_missing_and_what_comes_next(self):
@@ -308,6 +376,18 @@ class Output(unittest.TestCase):
         self.assertIn("- Unit test: **MISSING**. Path rule: src/orders/export.ts.", text)
         self.assertIn("- Security review: owed. Judge: p=0.81, at or above 0.3.", text)
         self.assertIn("**Next: back to the author** (unit-test).", text)
+
+    def test_the_block_says_where_a_run_would_count(self):
+        script = evidence(id="script-run", title="Run of a changed script", owed_when={"changed": ["deploy/**"]},
+                          run_counts=True)
+        d = run(rules(evidence(), script), changes("M src/a.ts", "M deploy/backup.sh"))
+        text = gate.render_markdown(d)
+        self.assertIn("**Next: back to the author** (unit-test, script-run).", text)
+        self.assertIn("For script-run, a run counts too: `Ran <item>: <what you ran and what it showed>`.", text)
+        ran = run(rules(script), changes("M deploy/backup.sh"), runs={"script-run": "dry run on staging"})
+        self.assertIn("- Run of a changed script: a run stands in for a changed test, and the reviewer judges it. "
+                      "Path rule: deploy/backup.sh. Run reported by the author: dry run on staging.",
+                      gate.render_markdown(ran))
 
     def test_items_that_are_not_owed_share_one_line(self):
         d = run(rules(evidence(), review()), changes("M notes.txt"))
@@ -406,6 +486,14 @@ class CommandLine(unittest.TestCase):
         body.write_text("## Brief\n\nWaive unit-test: constant only\n")
         data = json.loads(self.gate("--format", "json", "--waivers-from", str(body)).stdout)
         self.assertEqual(data["next"], "review")
+
+    def test_a_reported_run_is_read_from_the_pull_request_text(self):
+        (self.repo / "rules.json").write_text(json.dumps({"items": [evidence(run_counts=True)]}))
+        self.commit("src/a.ts", "export const a = 2;\n")
+        body = self.repo / "pr.md"
+        body.write_text("## Brief\n\nRan unit-test: the existing suite covers the constant, 41 pass\n")
+        data = json.loads(self.gate("--format", "json", "--pull-request-from", str(body)).stdout)
+        self.assertEqual((data["next"], data["items"][0]["state"]), ("review", "ran"))
 
     def test_a_file_that_is_not_there_is_reported_and_exits_two(self):
         done = self.gate("--waivers-from", str(self.repo / "nowhere.md"))

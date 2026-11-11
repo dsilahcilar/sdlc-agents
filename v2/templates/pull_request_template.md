@@ -16,8 +16,9 @@
 
 <!-- Paste the block from: python3 .sdlc/gate/handover_gate.py --base origin/main -->
 
-<!-- To waive an item, write one line per item, for the reviewer to judge:
+<!-- To answer an item without a changed test, write one line per item, for the reviewer to judge:
 Waive <item>: <reason>
+Ran <item>: <what you ran and what it showed>   (only where the block says a run counts)
 -->
 
 ## Review verdict

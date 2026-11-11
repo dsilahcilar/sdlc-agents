@@ -33,6 +33,16 @@ Waive journey-test: the page is behind a flag and has no steps yet
 
 The gate then lets the change through and passes the reason to the reviewer, who judges it. A wrong answer from the judge costs the author a sentence, not a hollow test.
 
+### A run in place of a test
+
+Some changes are proved by running something, not by a new test file: a change in wiring that an existing start-up test already covers, or a script that has no test at all. A rule can say so with `"run_counts": true`. The author then answers the item with one line in the pull request:
+
+```text
+Ran integration-test: the start-up suite, 212 passed, and it loads the changed wiring
+```
+
+The gate shows the item as "a run stands in for a changed test" and passes the line to the reviewer, who judges whether that run would fail if the behaviour broke. A changed test file still wins over a reported run. Without `run_counts`, a `Ran` line is ignored and only a changed file or a waiver answers the item.
+
 ## Testing and security: who needs what
 
 Two questions are easy to mix up. Which existing tests must **run** is a cost question, and CI answers it. Which tests a change must **add** is a coverage question, and this gate answers it.
@@ -42,9 +52,10 @@ The starter rules in `templates/rules.json` cover:
 | Item | Owed when the change | Decided by |
 |---|---|---|
 | Unit test | touches source code | paths |
-| Database or integration test | touches queries, migrations or wiring | paths, then the judge |
+| Database or integration test (a run counts) | touches queries, migrations or wiring | paths, then the judge |
 | API contract | changes what callers send or receive | the judge, asked only when API code changed |
 | User journey test | adds a page, or changes steps a user takes | paths for a new page, then the judge |
+| Run of a changed script (a run counts) | touches a deploy or operations script | paths |
 | Language check | changes text in the base language | paths |
 | Security review | touches sign-in, access, limits, webhooks or scan settings, or changes who can reach what | paths, then the judge |
 | Architect review | alters or deletes data that is already stored | the judge, asked only when a migration changed |
@@ -70,7 +81,7 @@ Security has three levels, and most changes stop at the first:
 }
 ```
 
-`ignore` lists files that never make anything owed. `max_input_chars` caps what is sent to the judge. Above it the item counts as owed.
+`ignore` lists files that never make anything owed. `max_input_chars` caps what one question sends to the judge. A larger diff is asked about in parts: the files in path order, in groups that each fit, with the same question for each group. The item is owed as soon as one part says so. If it would take more than four parts, or one file alone does not fit, the item counts as owed without asking. A brief that is too large counts as owed too.
 
 One item:
 
@@ -98,7 +109,7 @@ One item:
 
 | Field | Meaning |
 |---|---|
-| `id`, `title` | The id is what a waiver names. The title is what the block shows. |
+| `id`, `title` | The id is what a `Waive` or `Ran` line names. The title is what the block shows. |
 | `kind` | `evidence`, `review` or `approval`. |
 | `handover` | `code-to-review` (the default) or `brief-to-code`. |
 | `owed_when.changed` | Owed for certain when any changed file matches. |
@@ -106,6 +117,7 @@ One item:
 | `owed_when.ask` | The question for the rest. `paths` says which changed files it is about: the question is asked only when one of them changed, and their diff is what the judge reads. With `"about": "brief"` the judge reads the brief instead, and `paths` is left out. |
 | `threshold` | Owed at or above this probability. Default 0.5. Set it low where a miss costs more than an extra look. |
 | `satisfied_by` | `evidence` only: where the evidence lives. Leave it out when nothing in the diff can satisfy the item, as for a brief. |
+| `run_counts` | `evidence` only, `true` or `false` (the default): whether a `Ran <item>: ...` line in the pull request answers the item when no such file changed. |
 | `reviewer` | `review` only: who is added to the route. |
 | `note` | Free text for whoever edits the rules. |
 
@@ -139,7 +151,7 @@ It answers on standard output:
 {"probability": 0.81}
 ```
 
-A non-zero exit, a timeout or any other output means "no answer", and the item counts as owed. The gate asks at most eight questions per run (`--max-questions`). Past that, the remaining items count as owed. Keep caching, spend limits and keys inside your judge.
+A non-zero exit, a timeout or any other output means "no answer", and the item counts as owed. The gate asks at most eight questions per run (`--max-questions`), and each part of a large diff is one question. Past that, the remaining items count as owed. Keep caching, spend limits and keys inside your judge.
 
 ```bash
 python3 .sdlc/gate/handover_gate.py --base origin/main --judge-cmd "python3 tools/my_judge.py"
@@ -151,13 +163,13 @@ Any model that gives a calibrated probability for a yes/no question will do: a s
 
 ```text
 handover_gate.py --base <ref> [--head HEAD] [--rules .sdlc/rules.json] [--repo .]
-                 [--waivers-from FILE] [--judge-cmd "<command>"] [--format markdown|json]
+                 [--pull-request-from FILE] [--judge-cmd "<command>"] [--format markdown|json]
 handover_gate.py --handover brief-to-code --brief-from FILE [--judge-cmd "<command>"]
 ```
 
-It compares `--head` with the point where it branched off `--base`. It exits 0 whatever it decides, because the decision is the output. `--fail-on-missing` makes missing evidence exit 1, for teams that want a red check. A rules file it cannot use exits 2.
+It compares `--head` with the point where it branched off `--base`. `--pull-request-from` names a file with the pull request text, which the gate reads for `Waive` and `Ran` lines (`--waivers-from` is the older name for the same flag). It exits 0 whatever it decides, because the decision is the output. `--fail-on-missing` makes missing evidence exit 1, for teams that want a red check. A rules file it cannot use exits 2.
 
-`--format json` gives the same decision for scripts: `next` (`back-to-author`, `review` or `code`), `reviewers`, `needs_human`, and one entry per item with its `state`, `reason`, `probability` and `evidence`.
+`--format json` gives the same decision for scripts: `next` (`back-to-author`, `review` or `code`), `reviewers`, `needs_human`, and one entry per item with its `state`, `reason`, `probability` and `evidence`. The states are `not-owed`, `not-asked`, `present`, `ran`, `missing`, `waived` and `owed`.
 
 ## Limits worth holding to
 

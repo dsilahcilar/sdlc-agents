@@ -26,7 +26,7 @@ jobs:
           printf '%s' "$PR_BODY" > "$RUNNER_TEMP/pull-request.md"
           python3 .sdlc/gate/handover_gate.py \
             --base "origin/$BASE_REF" --head HEAD \
-            --waivers-from "$RUNNER_TEMP/pull-request.md" | tee -a "$GITHUB_STEP_SUMMARY"
+            --pull-request-from "$RUNNER_TEMP/pull-request.md" | tee -a "$GITHUB_STEP_SUMMARY"
           # With a judge (see docs/gates.md), add for example:
           #   --judge-cmd "python3 .sdlc/gate/my_judge.py"
           # and pass its key as a secret in `env`. Without a judge only the path rules apply.

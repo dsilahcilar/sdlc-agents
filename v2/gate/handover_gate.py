@@ -9,8 +9,8 @@ makes that decision instead, from rules kept as data (rules.json). For every ite
                    answer the item counts as owed, so a failed call never lowers the scrutiny. With no judge
                    configured, only the path rules apply and the question is reported as not asked.
   2. Is it there?  For an "evidence" item (a kind of test, a contract file): did the change touch a file in
-                   the place such evidence lives? If not, the author adds it or waives it in one line, and
-                   the reviewer judges that line.
+                   the place such evidence lives? If not, the author adds it, reports a run where the rule
+                   lets a run count, or waives it in one line, and the reviewer judges that line.
 
 The output is the list "Owed by this change" and the next step: back to the author while evidence is missing,
 otherwise on to the reviewers the list names, plus a human approval when a rule asks for one.
@@ -20,7 +20,7 @@ See ../docs/gates.md for the design, the rules reference and the judge protocol.
 
 Usage:
   handover_gate.py --base <ref> --head <ref> [--rules .sdlc/rules.json] [--judge-cmd "<command>"]
-                   [--waivers-from FILE] [--format markdown|json]
+                   [--pull-request-from FILE] [--format markdown|json]
   handover_gate.py --handover brief-to-code --brief-from FILE [--judge-cmd "<command>"]
 
 Exits 0 whatever it decides: the decision is the output. --fail-on-missing makes missing evidence exit 1.
@@ -44,11 +44,16 @@ ABOUT = ("diff", "brief")
 DEFAULT_THRESHOLD = 0.5
 DEFAULT_MAX_INPUT_CHARS = 40_000
 DEFAULT_MAX_QUESTIONS = 8
+# A diff too large for one question is asked about in parts, up to this many. Past it the item counts as owed.
+MAX_PARTS = 4
 # Spaces and tabs only between the parts: \s would run on into the next line and take it for the reason.
 WAIVER_RE = re.compile(r"^[ \t]*(?:[-*][ \t]*)?waive[ \t]+([A-Za-z0-9_.-]+)[ \t]*:[ \t]*(\S.*)$",
                        re.IGNORECASE | re.MULTILINE)
 
-ITEM_KEYS = {"id", "title", "kind", "handover", "owed_when", "satisfied_by", "reviewer", "note"}
+RAN_RE = re.compile(r"^[ \t]*(?:[-*][ \t]*)?ran[ \t]+([A-Za-z0-9_.-]+)[ \t]*:[ \t]*(\S.*)$",
+                    re.IGNORECASE | re.MULTILINE)
+
+ITEM_KEYS = {"id", "title", "kind", "handover", "owed_when", "satisfied_by", "run_counts", "reviewer", "note"}
 OWED_KEYS = {"changed", "added", "ask"}
 ASK_KEYS = {"about", "paths", "question", "true", "false", "threshold"}
 
@@ -147,6 +152,7 @@ class Item:
     ask: Optional[Ask]
     satisfied_by: PathSet
     reviewer: Optional[str]
+    run_counts: bool = False
 
 
 @dataclasses.dataclass
@@ -225,12 +231,18 @@ def parse_rules(data: dict) -> Rules:
         satisfied = PathSet(_strings(raw.get("satisfied_by"), f"{where}.satisfied_by"))
         if raw["kind"] != "evidence" and satisfied:
             raise RulesError(f"{where}: only an evidence item has 'satisfied_by'")
+        run_counts = raw.get("run_counts", False)
+        if not isinstance(run_counts, bool):
+            raise RulesError(f"{where}: 'run_counts' is true or false")
+        if raw["kind"] != "evidence" and run_counts:
+            raise RulesError(f"{where}: only an evidence item has 'run_counts'")
         reviewer = raw.get("reviewer")
         if raw["kind"] == "review" and not (isinstance(reviewer, str) and reviewer):
             raise RulesError(f"{where}: a review item names its 'reviewer'")
         if raw["kind"] != "review" and reviewer is not None:
             raise RulesError(f"{where}: only a review item has a 'reviewer'")
-        items.append(Item(raw["id"], raw["title"], raw["kind"], handover, changed, added, ask, satisfied, reviewer))
+        items.append(Item(raw["id"], raw["title"], raw["kind"], handover, changed, added, ask, satisfied, reviewer,
+                          run_counts))
     max_chars = data.get("max_input_chars", DEFAULT_MAX_INPUT_CHARS)
     if isinstance(max_chars, bool) or not isinstance(max_chars, int) or max_chars <= 0:
         raise RulesError("rules: max_input_chars must be a positive whole number")
@@ -249,6 +261,11 @@ def parse_waivers(text: str) -> Dict[str, str]:
     return {m.group(1): m.group(2).strip() for m in WAIVER_RE.finditer(text or "")}
 
 
+def parse_runs(text: str) -> Dict[str, str]:
+    """Lines of the form `Ran <item id>: <what was run and what it showed>`, for items that let a run count."""
+    return {m.group(1): m.group(2).strip() for m in RAN_RE.finditer(text or "")}
+
+
 # ---------------------------------------------------------------------------------------------------------
 # Deciding
 
@@ -258,16 +275,17 @@ class ItemResult:
     id: str
     title: str
     kind: str
-    # not-owed | not-asked | present | missing | waived | owed
+    # not-owed | not-asked | present | ran | missing | waived | owed
     state: str
     reason: str
     probability: Optional[float] = None
     evidence: List[str] = dataclasses.field(default_factory=list)
     reviewer: Optional[str] = None
+    run_counts: bool = False
 
     @property
     def is_owed(self) -> bool:
-        return self.state in ("present", "missing", "waived", "owed")
+        return self.state in ("present", "ran", "missing", "waived", "owed")
 
 
 @dataclasses.dataclass
@@ -341,10 +359,12 @@ def _owed(item: Item, changes: Sequence[Change], diff_for: Callable[[List[str]],
     if asker.judge is None:
         return "not-asked", f"no judge configured, so only the path rules apply ({subject})", None
     if payload is None:
-        payload = {"changed_files": "\n".join(candidates), "diff": diff_for(candidates)}
-    size = sum(len(v) for v in payload.values())
+        payload = _diff_payload(candidates, diff_for)
+    size = _size(payload)
     if size > max_chars:
-        return "yes", f"too large to ask the judge ({size} characters), so it counts as owed", None
+        if ask.about == "brief":
+            return "yes", f"too large to ask the judge ({size} characters), so it counts as owed", None
+        return _owed_in_parts(item, candidates, diff_for, asker, max_chars, size)
     p, why = asker.ask(item, payload)
     if p is None:
         return "yes", f"{why}, so it counts as owed", None
@@ -353,11 +373,61 @@ def _owed(item: Item, changes: Sequence[Change], diff_for: Callable[[List[str]],
     return "no", f"judge: p={p:.2f}, below {ask.threshold:g}", p
 
 
+def _diff_payload(paths: Sequence[str], diff_for: Callable[[List[str]], str]) -> dict:
+    return {"changed_files": "\n".join(paths), "diff": diff_for(list(paths))}
+
+
+def _size(payload: dict) -> int:
+    return sum(len(v) for v in payload.values())
+
+
+def _parts(candidates: Sequence[str], diff_for: Callable[[List[str]], str], max_chars: int) -> Optional[List[List[str]]]:
+    """The files in path order, cut into groups that each fit one question. None when one file alone does not fit."""
+    parts: List[List[str]] = []
+    current: List[str] = []
+    used = 0
+    for path in sorted(candidates):
+        one = _size(_diff_payload([path], diff_for)) + 1
+        if one > max_chars:
+            return None
+        if current and used + one > max_chars:
+            parts.append(current)
+            current, used = [], 0
+        current.append(path)
+        used += one
+    if current:
+        parts.append(current)
+    return parts
+
+
+def _owed_in_parts(item: Item, candidates: Sequence[str], diff_for: Callable[[List[str]], str], asker: _Asker,
+                   max_chars: int, size: int) -> Tuple[str, str, Optional[float]]:
+    """A diff too large for one question: the same question per group of files. Owed as soon as one part says so."""
+    assert item.ask is not None
+    parts = _parts(candidates, diff_for, max_chars)
+    if parts is None:
+        return "yes", "one file is too large to ask the judge about, so it counts as owed", None
+    if len(parts) > MAX_PARTS:
+        return "yes", f"too large to ask the judge in {MAX_PARTS} parts ({size} characters), so it counts as owed", None
+    highest = 0.0
+    for n, part in enumerate(parts, 1):
+        where = f"part {n} of {len(parts)}"
+        p, why = asker.ask(item, _diff_payload(part, diff_for))
+        if p is None:
+            return "yes", f"{why} ({where}), so it counts as owed", None
+        if p >= item.ask.threshold:
+            return "yes", f"judge: p={p:.2f} on {where} ({_first(part)}), at or above {item.ask.threshold:g}", p
+        highest = max(highest, p)
+    return "no", f"judge: p={highest:.2f} at most over {len(parts)} parts, below {item.ask.threshold:g}", highest
+
+
 def decide(rules: Rules, handover: str, changes: Sequence[Change], diff_for: Callable[[List[str]], str],
            judge: Optional[Judge] = None, brief: Optional[str] = None, waivers: Optional[Dict[str, str]] = None,
-           max_questions: int = DEFAULT_MAX_QUESTIONS) -> Decision:
-    """changes: the changed files. diff_for(paths) -> the unified diff of those files. judge: None when none is set up."""
+           max_questions: int = DEFAULT_MAX_QUESTIONS, runs: Optional[Dict[str, str]] = None) -> Decision:
+    """changes: the changed files. diff_for(paths) -> the unified diff of those files. judge: None when none is set up.
+    waivers and runs: what the author wrote in the pull request, by item id."""
     waivers = waivers or {}
+    runs = runs or {}
     changes = [c for c in changes if not rules.ignore.matches(c.path)]
     paths = [c.path for c in changes if c.status != "D"]
     asker = _Asker(judge, max_questions)
@@ -376,11 +446,15 @@ def decide(rules: Rules, handover: str, changes: Sequence[Change], diff_for: Cal
         evidence = item.satisfied_by.of(paths)
         if evidence:
             results.append(ItemResult(item.id, item.title, item.kind, "present", reason, p, evidence))
+        elif item.run_counts and item.id in runs:
+            results.append(ItemResult(item.id, item.title, item.kind, "ran",
+                                      f"{reason}. Run reported by the author: {runs[item.id]}", p, run_counts=True))
         elif item.id in waivers:
             results.append(ItemResult(item.id, item.title, item.kind, "waived",
                                       f"{reason}. Waived by the author: {waivers[item.id]}", p))
         else:
-            results.append(ItemResult(item.id, item.title, item.kind, "missing", reason, p))
+            results.append(ItemResult(item.id, item.title, item.kind, "missing", reason, p,
+                                      run_counts=item.run_counts))
     missing = any(r.state == "missing" for r in results)
     extra = []
     for r in results:
@@ -413,6 +487,8 @@ def render_markdown(d: Decision) -> str:
             lines.append(f"- {r.title}: not decided. {why}")
         elif r.state == "present":
             lines.append(f"- {r.title}: present ({_first(r.evidence)}). {why}")
+        elif r.state == "ran":
+            lines.append(f"- {r.title}: a run stands in for a changed test, and the reviewer judges it. {why}")
         elif r.state == "missing":
             lines.append(f"- {r.title}: **MISSING**. {why}")
         elif r.state == "waived":
@@ -428,8 +504,10 @@ def render_markdown(d: Decision) -> str:
     lines.append("")
     if d.next == "back-to-author":
         ids = ", ".join(r.id for r in d.items if r.state == "missing")
+        by_run = ", ".join(r.id for r in d.items if r.state == "missing" and r.run_counts)
+        run_hint = f" For {by_run}, a run counts too: `Ran <item>: <what you ran and what it showed>`." if by_run else ""
         lines.append(f"**Next: back to the author** ({ids}). Add what is missing, or write "
-                     "`Waive <item>: <reason>` in the pull request. No reviewer starts yet.")
+                     f"`Waive <item>: <reason>` in the pull request.{run_hint} No reviewer starts yet.")
     elif d.next == "review":
         lines.append(f"**Next: review by** {', '.join(d.reviewers)}.")
     else:
@@ -476,7 +554,9 @@ def main(argv: Optional[List[str]] = None) -> int:
     ap.add_argument("--base", help="the ref the change started from, for example origin/main")
     ap.add_argument("--head", default="HEAD", help="the ref with the change (default: HEAD)")
     ap.add_argument("--brief-from", help="a file with the brief, for rules that ask about it")
-    ap.add_argument("--waivers-from", help="a file with the pull request text, read for 'Waive <item>: <reason>' lines")
+    ap.add_argument("--pull-request-from", "--waivers-from", dest="pull_request_from",
+                    help="a file with the pull request text, read for 'Waive <item>: <reason>' and "
+                         "'Ran <item>: <what was run>' lines")
     ap.add_argument("--judge-cmd", help="a program that answers one question: JSON in on stdin, {\"probability\": p} out")
     ap.add_argument("--judge-timeout", type=float, default=60.0)
     ap.add_argument("--max-questions", type=int, default=DEFAULT_MAX_QUESTIONS)
@@ -492,11 +572,12 @@ def main(argv: Optional[List[str]] = None) -> int:
         return 2
     try:
         brief = pathlib.Path(args.brief_from).read_text() if args.brief_from else None
-        waiver_text = pathlib.Path(args.waivers_from).read_text() if args.waivers_from else ""
+        pr_text = pathlib.Path(args.pull_request_from).read_text() if args.pull_request_from else ""
     except OSError as e:
         print(f"handover gate: {e}", file=sys.stderr)
         return 2
-    waivers = parse_waivers(waiver_text + "\n" + (brief or ""))
+    author_text = pr_text + "\n" + (brief or "")
+    waivers, runs = parse_waivers(author_text), parse_runs(author_text)
 
     changes: List[Change] = []
     diff_for: Callable[[List[str]], str] = lambda paths: ""
@@ -513,7 +594,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         diff_for = lambda paths: _git(repo, "diff", "-M", span, "--", *paths)
 
     judge = command_judge(args.judge_cmd, args.judge_timeout) if args.judge_cmd else None
-    decision = decide(rules, args.handover, changes, diff_for, judge, brief, waivers, args.max_questions)
+    decision = decide(rules, args.handover, changes, diff_for, judge, brief, waivers, args.max_questions, runs)
     if args.format == "json":
         print(json.dumps(decision.to_json(), indent=2))
     else:
