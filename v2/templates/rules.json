@@ -152,9 +152,10 @@
       "title": "Architect review of a stored-data change",
       "kind": "review",
       "reviewer": "architect",
+      "note": "Migration files are one way to change stored data. Code that merges, repairs or backfills records when it runs is another: add the folders where yours lives to the paths.",
       "owed_when": {
         "ask": {
-          "paths": ["**/migrations/**", "**/*.sql", "**/*.cypher"],
+          "paths": ["**/migrations/**", "**/*.sql", "**/*.cypher", "**/*ackfill*", "**/*epair*"],
           "question": "Does this change alter or delete data that is already stored, rather than only add new optional data?",
           "true": "Existing rows, nodes, columns or properties are rewritten, removed or given a new meaning.",
           "false": "The change only adds new optional structures or data.",

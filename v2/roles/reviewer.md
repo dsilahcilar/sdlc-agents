@@ -15,7 +15,7 @@ The block lists the tests this change owes. Read each one and ask whether it wou
 A finding blocks only if both of these hold:
 
 - You can show it: file and line, what happens, and how you confirmed it.
-- It matters now: a user gets a wrong result, data is lost or left hard to restore, something fails in production, or an owed check cannot catch the break it is there for.
+- It matters now: a user gets a wrong result, data is lost or left hard to restore, something fails in production, or an owed check cannot catch the break it is there for. A wrong value or wrong text on a screen counts even when few users reach it. So does the bug this change fixes when it is still there on the same screen or in sibling code.
 
 A real defect below that bar goes into `worth_fixing`, one line each. It does not hold the merge. If you cannot confirm a finding, or it rests on code you cannot read here, such as another repository or a service, report it as a question.
 

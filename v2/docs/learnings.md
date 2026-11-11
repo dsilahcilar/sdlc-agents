@@ -43,6 +43,12 @@ Rules for every file:
 - 2026-01-31 (#123): The nightly job and the API both write the order status. A fix in one was missing in the other. Check both writers. uses: 3
 ```
 
+## Start the reviewer's file on day one
+
+Do not install the reviewer with an empty file. Write five to ten entries from the bugs that got past a review in the last month or two, one or two lines each, and let the rules above prune them.
+
+In a trial on 20 merged pull requests of one project, the reviewer with an eight-line file caught 6 of the 12 bugs that were later fixed, and the same reviewer without the file caught 5. On the last 15 of those it also blocked on five more problems that were confirmed in the code, against one without the file. The reviews named the entry that led them there. An entry about searching the tests when visible text changes found a broken end-to-end test. An entry about asking what an empty account sees found a value on a public page that nothing checked. Twenty pull requests are a small sample, so measure it again in your own repository.
+
 ## When a retro runs
 
 Not after every change. A retro runs on a signal:

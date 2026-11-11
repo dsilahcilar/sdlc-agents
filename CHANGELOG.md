@@ -28,6 +28,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - `v2/install.sh`: copies files into a repository and links nothing.
   - `v2/docs/`: the gate design and rules reference, how learnings are kept, and a map from version 1.
   - After a trial on past pull requests: the reviewer has a bar for what blocks and a `worth_fixing` list for the rest, and reports findings that rest on code it cannot read as questions. An evidence rule can let a reported run count (`run_counts`, answered by a `Ran <item>: ...` line). The starter rules gain `script-run` for deploy and operations scripts. A diff too large for one question is asked about in up to four parts before it counts as owed. `--pull-request-from` replaces `--waivers-from`, which still works.
+  - After the trial on 20 merged pull requests: the reviewer's bar counts a wrong value or wrong text on a screen, and the fixed bug left standing in sibling code. `docs/learnings.md` says to start the reviewer's lessons file with entries on day one, with the trial's numbers. The starter `stored-data` rule also asks about backfill and repair code, and `docs/gates.md` reports how the starter thresholds behaved.
 
 - **Kotlin support**: Added `agents/skills/stacks/kotlin.md` with full Gradle/Maven support
   - Detection for `build.gradle.kts` with `*.kt` files

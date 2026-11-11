@@ -131,6 +131,8 @@ The gate refuses a rules file with a field it does not know. A misspelt field wo
 - One question per rule. Give both criteria, `true` and `false`, in plain words.
 - Let code narrow the cases first. A question that is asked on every change is a path rule you have not written yet.
 - A threshold means nothing until it is measured. Label a sample of past pull requests by hand, run the question on them, and set the threshold from the result.
+- Expect to move the starter thresholds. In a trial on 15 merged pull requests, with a small model as the judge, the security question at 0.3 asked for a review on six changes. Two of those were warranted, with answers of 0.80 and 0.95. The other four answered between 0.30 and 0.60. The journey question at 0.4 missed a renamed button that broke an end-to-end test, with an answer of 0.25.
+- A question is only asked on the paths its rule names. The starter `stored-data` rule names migration files and a few file names. Code that merges, repairs or backfills stored records when it runs changes stored data too, so add the folders where yours lives.
 
 ## The judge protocol
 
