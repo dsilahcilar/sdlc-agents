@@ -68,11 +68,17 @@ ASK_KEYS = {"about", "paths", "question", "true", "false", "threshold"}
 Judge = Callable[[dict], Optional[float]]
 # The longest reason of a judge that is shown in the block.
 MAX_REASON_CHARS = 160
+# What a byte that is not UTF-8 becomes when git's output is read (errors="replace").
+NOT_DECODED = "\ufffd"
 
 
 class NoAnswer(Exception):
     """Raised by a judge that cannot answer, with the reason in a few words. The item counts as owed, and the
     reason is shown beside it, so a rejected key can be told from an outage."""
+
+
+class Unreadable(Exception):
+    """The diff of a changed file cannot be put to the judge. The message says why, for the block."""
 
 
 class RulesError(ValueError):
@@ -84,7 +90,10 @@ class RulesError(ValueError):
 
 
 def glob_to_regex(pattern: str) -> "re.Pattern[str]":
-    """`**` crosses directories, `*` and `?` stay inside one path segment. `**/x` also matches `x` at the root."""
+    """`**` crosses directories, `*` and `?` stay inside one path segment. `**/x` also matches `x` at the root.
+
+    A file name may hold any character but NUL, a line break included, so `.` matches those too and the end is
+    the end of the string. Otherwise a folder named with a line break would hide its files from every rule."""
     out, i = [], 0
     while i < len(pattern):
         if pattern.startswith("**/", i):
@@ -102,7 +111,7 @@ def glob_to_regex(pattern: str) -> "re.Pattern[str]":
         else:
             out.append(re.escape(pattern[i]))
             i += 1
-    return re.compile("^" + "".join(out) + "$")
+    return re.compile("^" + "".join(out) + r"\Z", re.DOTALL)
 
 
 class PathSet:
@@ -358,8 +367,13 @@ def _one_line(text: str) -> str:
     return last if len(last) <= MAX_REASON_CHARS else last[:MAX_REASON_CHARS - 1].rstrip() + "…"
 
 
+def _shown(path: str) -> str:
+    """A path on one line: a line break or another control character in a name is written as its escape."""
+    return "".join(ch if ch.isprintable() else ch.encode("unicode_escape").decode("ascii") for ch in path)
+
+
 def _first(paths: Sequence[str]) -> str:
-    return paths[0] + (f" (+{len(paths) - 1} more)" if len(paths) > 1 else "")
+    return _shown(paths[0]) + (f" (+{len(paths) - 1} more)" if len(paths) > 1 else "")
 
 
 class _Asker:
@@ -420,6 +434,8 @@ def _owed(item: Item, changes: Sequence[Change], diff_for: Callable[[List[str]],
             if ask.about == "brief":
                 return "yes", f"too large to ask the judge ({size} characters), so it counts as owed", None
             return _owed_in_parts(item, candidates, diff_for, asker, max_chars, size)
+    except Unreadable as e:
+        return "yes", f"{e}, so it counts as owed", None
     except (OSError, subprocess.CalledProcessError):
         # A question that cannot be put is a question without an answer.
         return "yes", "the diff could not be read to ask the judge, so it counts as owed", None
@@ -432,7 +448,16 @@ def _owed(item: Item, changes: Sequence[Change], diff_for: Callable[[List[str]],
 
 
 def _diff_payload(paths: Sequence[str], diff_for: Callable[[List[str]], str]) -> dict:
-    return {"changed_files": "\n".join(paths), "diff": diff_for(list(paths))}
+    """What the judge reads about these files. A file whose change cannot be shown is not left out quietly:
+    the judge would answer about the rest and the item would pass on a diff nobody read."""
+    odd = [p for p in paths if NOT_DECODED in p]
+    if odd:
+        # Its bytes were replaced when the name was read, so git cannot be asked for it by that name.
+        raise Unreadable(f"the name of a changed file is not UTF-8 ({_first(odd)}), and its diff cannot be read")
+    diff = diff_for(list(paths))
+    if not diff.strip():
+        raise Unreadable(f"git gave no diff for a changed file ({_first(list(paths))})")
+    return {"changed_files": "\n".join(_shown(p) for p in paths), "diff": diff}
 
 
 def _size(payload: dict) -> int:
@@ -671,7 +696,11 @@ def main(argv: Optional[List[str]] = None) -> int:
             print(f"handover gate: git could not compare {args.base} and {args.head}: {why}", file=sys.stderr)
             return 2
         # Literal: a file may be named like a pathspec with magic, such as ":x.sql", and still has to be found.
-        diff_for = lambda paths: _git(repo, "--literal-pathspecs", "diff", "-M", span, "--", *paths)
+        # --text: a NUL byte in a source file, or a "-diff" line in .gitattributes, makes git print "Binary files
+        # differ" in place of the change, and the judge would be asked about a diff it cannot see.
+        # No textconv and no external diff: the judge reads what is in the commit, not what a filter makes of it.
+        diff_for = lambda paths: _git(repo, "--literal-pathspecs", "diff", "--text", "--no-textconv", "--no-ext-diff",
+                                      "-M", span, "--", *paths)
 
     judge = command_judge(args.judge_cmd, args.judge_timeout) if args.judge_cmd else None
     decision = decide(rules, args.handover, changes, diff_for, judge, brief, waivers, args.max_questions, runs)

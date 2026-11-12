@@ -8,7 +8,7 @@ Its purpose is narrow. **The agent that did the work must not be the one that de
 
 1. **Code decides what it can decide exactly.** Changed paths, a new file, a migration, a contract file. If a path rule says an item is owed, it is owed, and nothing is asked.
 2. **A judge decides the unclear rest.** For the changes that paths cannot settle, the rule carries one factual yes/no question. It goes to a judge, which returns a probability. At or above the rule's threshold, the item is owed.
-3. **No answer means the stricter route.** If the judge is down, slow, over its budget, or the diff is too large to send, the item counts as owed. A failed call never lowers the scrutiny.
+3. **No answer means the stricter route.** If the judge is down, slow, over its budget, or the diff is too large to send or cannot be read, the item counts as owed. A failed call never lowers the scrutiny.
 4. **No judge means path rules only.** The gate then reports the question as "not decided" and moves on. This is the right way to start.
 
 ## What "owed" means
@@ -87,7 +87,7 @@ Security has three levels, and most changes stop at the first:
 }
 ```
 
-`ignore` lists files that never make anything owed. Keep the gate, the rules and the lessons out of it: a change to them is exactly what a person should see. `max_input_chars` caps what one question sends to the judge. A larger diff is asked about in parts: the files in path order, in groups that each fit, with the same question for each group. The item is owed as soon as one part says so. If it would take more than four parts, or one file alone does not fit, the item counts as owed without asking. A brief that is too large counts as owed too.
+`ignore` lists files that never make anything owed. Keep the gate, the rules, the lessons and the files that instruct your agents (`CLAUDE.md`, `.claude/`) out of it: a change to them is exactly what a person should see. The starter list ignores every `.md` file and then takes those back out. `max_input_chars` caps what one question sends to the judge. A larger diff is asked about in parts: the files in path order, in groups that each fit, with the same question for each group. The item is owed as soon as one part says so. If it would take more than four parts, or one file alone does not fit, the item counts as owed without asking. A brief that is too large counts as owed too.
 
 One item:
 
@@ -127,7 +127,7 @@ One item:
 | `reviewer` | `review` only: who is added to the route. A rule that names `reviewer` decides who gets the standard reviewer. |
 | `note` | Free text for whoever edits the rules. |
 
-Path patterns: `**` crosses directories, `*` and `?` stay inside one path segment, and a pattern that starts with `!` takes paths out again.
+Path patterns: `**` crosses directories, `*` and `?` stay inside one path segment, and a pattern that starts with `!` takes paths out again, from the whole list. So `!**/*.test.*` at the end of a list also takes out a workflow named `deploy.test.yml`. Where a list mixes source folders with files that must never drop out, write the exclusion with its folder: `!src/**/*.test.*`.
 
 The gate refuses a rules file with a field it does not know. A misspelt field would otherwise switch a rule off without a word.
 
@@ -138,6 +138,7 @@ The gate refuses a rules file with a field it does not know. A misspelt field wo
 - Let code narrow the cases first. A question that is asked on every change is a path rule you have not written yet.
 - A threshold means nothing until it is measured. Label a sample of past pull requests by hand, run the question on them, and set the threshold from the result.
 - Expect to move the starter thresholds. In a trial on 15 merged pull requests, with a small model as the judge, the security question at 0.3 asked for a review on six changes. Two of those were warranted, with answers of 0.80 and 0.95. The other four answered between 0.30 and 0.60. The journey question at 0.4 missed a renamed button that broke an end-to-end test, with an answer of 0.25.
+- Name source files in `paths`, not whole folders, where a folder also holds pictures or other binary files. Every file under `paths` is sent as text, so a large binary file pushes the diff over the size limit and the item counts as owed.
 - A question is only asked on the paths its rule names. The starter `stored-data` rule names migration files and a few file names. Code that merges, repairs or backfills stored records when it runs changes stored data too, so add the folders where yours lives.
 
 ## The judge protocol
@@ -175,7 +176,7 @@ handover_gate.py --base <ref> [--head HEAD] [--rules .sdlc/rules.json] [--repo .
 handover_gate.py --handover brief-to-code --brief-from FILE [--judge-cmd "<command>"]
 ```
 
-It compares `--head` with the point where it branched off `--base`. File names are read exactly as git stores them, so a name with a space, a quote or an accent is matched like any other. `--pull-request-from` names a file with the pull request text, which the gate reads for `Waive` and `Ran` lines (`--waivers-from` is the older name for the same flag). It exits 0 whatever it decides, because the decision is the output. `--fail-on-missing` makes missing evidence exit 1, for teams that want a red check. A rules file it cannot use exits 2.
+It compares `--head` with the point where it branched off `--base`. File names are read exactly as git stores them, so a name with a space, a quote, an accent or a line break is matched like any other. The judge gets every changed file as text, also one that git would call binary because of a stray NUL byte or a line in `.gitattributes`. Where a changed file has no diff to show, or a name that is not UTF-8, the item counts as owed without asking. `--pull-request-from` names a file with the pull request text, which the gate reads for `Waive` and `Ran` lines (`--waivers-from` is the older name for the same flag). It exits 0 whatever it decides, because the decision is the output. `--fail-on-missing` makes missing evidence exit 1, for teams that want a red check. A rules file it cannot use exits 2.
 
 `--format json` gives the same decision for scripts: `next` (`back-to-author`, `review`, `ready` or `code`), `reviewers`, `needs_human`, `notes`, and one entry per item with its `state`, `reason`, `probability` and `evidence`. The states are `not-owed`, `not-asked`, `present`, `ran`, `missing`, `waived` and `owed`.
 
@@ -185,4 +186,6 @@ It compares `--head` with the point where it branched off `--base`. File names a
 - **It can add checking and never remove a human approval.** Whatever a person must approve today stays theirs.
 - **Missing evidence holds back the reviewer, not the merge.** The person who merges can always overrule it.
 - **Shadow first.** Print the route on pull requests for a while before anything acts on it.
-- **The rules are reviewed like code.** Do not change `rules.json` in the same pull request as a change it would judge. Two things back that up. In CI the workflow runs the gate and the rules of the base branch, so a pull request cannot loosen the rules that judge it. And the starter rules ask for a person's approval when the gate, the rules, the lessons or the fixes file change.
+- **The rules are reviewed like code.** Do not change `rules.json` in the same pull request as a change it would judge. Two things back that up. In CI the workflow runs the gate and the rules from the tip of the base branch, so a pull request cannot loosen the rules that judge it. And the starter rules ask for a person's approval when the gate, the rules, the lessons, the fixes file or the files that instruct the agents change.
+- **A pull request that edits the gate's workflow prints its own answer.** GitHub runs a workflow file as the pull request has it. So the line above holds only while that file is untouched. Put your workflow folder on the `security-review` path list, and do not trust the block of a pull request that changes that workflow. Once the gate enforces, run it as a required workflow from a repository ruleset, which a pull request cannot edit.
+- **The judge can be talked to.** It reads text the author wrote. Where a miss would be expensive, use a path rule: it cannot be argued with.

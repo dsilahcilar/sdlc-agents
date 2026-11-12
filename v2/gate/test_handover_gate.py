@@ -1,5 +1,6 @@
 """Tests for the handover gate. Run: python3 -m unittest discover -s v2/gate -p 'test_*.py'"""
 import json
+import os
 import pathlib
 import subprocess
 import sys
@@ -80,6 +81,13 @@ class Globs(unittest.TestCase):
     def test_other_characters_are_literal(self):
         self.assertTrue(gate.glob_to_regex(".gitleaks.toml").match(".gitleaks.toml"))
         self.assertFalse(gate.glob_to_regex(".gitleaks.toml").match("xgitleaksxtoml"))
+
+    def test_a_line_break_in_a_name_does_not_hide_the_file(self):
+        # A file name may hold any character but NUL. "." and "$" stop at a line break unless told otherwise.
+        self.assertTrue(gate.glob_to_regex("src/auth/**").match("src/auth/x\ny/route.ts"))
+        self.assertTrue(gate.glob_to_regex("**/*.ts").match("src/x\ny/route.ts"))
+        self.assertTrue(gate.glob_to_regex(".github/workflows/**").match(".github/workflows/a\nb.yml"))
+        self.assertFalse(gate.glob_to_regex("src/a.ts").match("src/a.ts\n"))
 
     def test_a_bang_pattern_takes_paths_out_again(self):
         paths = gate.PathSet(["src/**", "!**/*.test.ts"])
@@ -305,6 +313,34 @@ class UnreadableDiff(unittest.TestCase):
         self.assertEqual(item.state, "owed")
         self.assertEqual(item.reason, "the diff could not be read to ask the judge, so it counts as owed")
 
+    def test_a_changed_file_with_no_diff_counts_as_owed(self):
+        # The judge would answer 0.0 about nothing at all, and the item would pass on a diff nobody read.
+        d = gate.decide(rules(review()), "code-to-review", changes("M src/orders/total.ts"), lambda paths: "\n",
+                        lambda q: 0.0)
+        item = state(d, "security-review")
+        self.assertEqual(item.state, "owed")
+        self.assertEqual(item.reason, "git gave no diff for a changed file (src/orders/total.ts), so it counts as owed")
+
+    def test_a_file_whose_name_is_not_utf8_counts_as_owed(self):
+        # Its odd bytes were replaced when the name was read, so git finds no file of that name and gives no diff
+        # for it. Beside a readable file the missing part would not show.
+        asked = []
+        d = run(rules(review()), changes("M src/orders/total.ts", "A src/orders/caf\ufffd.ts"),
+                judge=lambda q: asked.append(q) or 0.0)
+        item = state(d, "security-review")
+        self.assertEqual(item.state, "owed")
+        self.assertIn("the name of a changed file is not UTF-8 (src/orders/caf\ufffd.ts)", item.reason)
+        self.assertEqual(asked, [])
+
+    def test_a_part_that_cannot_be_read_counts_as_owed_too(self):
+        # Together the two files are too large for one question, so each is read on its own.
+        big = lambda paths: "" if paths == ["src/b.ts"] else "x" * 300 * len(paths)
+        d = gate.decide(rules(review(), max_input_chars=400), "code-to-review",
+                        changes("M src/a.ts", "M src/b.ts"), big, lambda q: 0.0)
+        item = state(d, "security-review")
+        self.assertEqual(item.state, "owed")
+        self.assertIn("git gave no diff for a changed file (src/b.ts)", item.reason)
+
 
 class Routes(unittest.TestCase):
     def test_an_approval_item_asks_for_a_person_and_does_not_stop_the_review(self):
@@ -487,11 +523,12 @@ class RulesFile(unittest.TestCase):
     def test_the_starter_rules_ask_for_a_person_when_the_gate_or_its_rules_change(self):
         starter = gate.load_rules(HERE.parent / "templates" / "rules.json")
         for path in (".sdlc/rules.json", ".sdlc/gate/handover_gate.py", ".sdlc/lessons/reviewer.md",
-                     ".sdlc/retro/fixes.json"):
+                     ".sdlc/retro/fixes.json", ".claude/settings.json", ".claude/agents/reviewer.md", "CLAUDE.md",
+                     "AGENTS.md"):
             d = run(starter, changes("M " + path))
             self.assertEqual(state(d, "rules-change").state, "owed", path)
             self.assertTrue(d.needs_human, path)
-        for path in (".sdlc/templates/brief.md", ".sdlc/VERSION", "docs/notes.md"):
+        for path in (".sdlc/templates/brief.md", ".sdlc/VERSION", "docs/notes.md", "README.md", "docs/CLAUDE.md"):
             self.assertFalse(run(starter, changes("M " + path)).needs_human, path)
 
 
@@ -673,6 +710,46 @@ class CommandLine(unittest.TestCase):
         """)
         out = self.gate("--judge-cmd", judge).stdout
         self.assertIn("- Security review: owed. Judge: p=0.90, at or above 0.3.", out)
+
+    def test_a_file_in_a_folder_named_with_a_line_break_owes_what_its_folder_owes(self):
+        self.commit("src/auth/x\ny/route.ts", "export const r = 1;\n")
+        d = json.loads(self.gate("--format", "json").stdout)
+        self.assertEqual(state_of(d, "security-review")["state"], "owed")
+        self.assertEqual(state_of(d, "unit-test")["state"], "missing")
+        # The block keeps one line per item: the line break in the name is written as its escape.
+        block = self.gate().stdout
+        self.assertIn("- Security review: owed. Path rule: src/auth/x\\ny/route.ts.", block)
+
+    def test_a_source_file_that_git_takes_for_binary_still_reaches_the_judge(self):
+        # One NUL byte makes git print "Binary files differ" in place of the change, and so does a "-diff" line
+        # in .gitattributes. Either way the judge has to see what was written.
+        (self.repo / "rules.json").write_text(json.dumps({"items": [review(owed_when={"ask": dict(ASK)})]}))
+        (self.repo / "src" / "nul.ts").write_bytes(b'export const first = "grant-all";\0\n')
+        (self.repo / ".gitattributes").write_text("src/marked.ts -diff\n")
+        self.commit("src/marked.ts", 'export const second = "skip-check";\n')
+        judge = self.judge("""
+            import json, sys
+            diff = json.load(sys.stdin)["input"]["diff"]
+            print(json.dumps({"probability": 0.9 if "grant-all" in diff and "skip-check" in diff else 0.0}))
+        """)
+        out = self.gate("--judge-cmd", judge).stdout
+        self.assertIn("- Security review: owed. Judge: p=0.90, at or above 0.3.", out)
+
+    def test_a_file_whose_name_is_not_utf8_counts_as_owed_and_is_not_asked_about(self):
+        (self.repo / "rules.json").write_text(json.dumps({"items": [review(owed_when={"ask": dict(ASK)})]}))
+        try:
+            with open(os.path.join(os.fsencode(self.repo), b"src", b"caf\xe9.ts"), "wb") as f:
+                f.write(b"export const c = 1;\n")
+        except OSError:
+            self.skipTest("this file system takes only UTF-8 names")
+        self.commit("src/b.ts", "export const b = 1;\n")
+        judge = self.judge("""
+            import json, sys
+            json.load(sys.stdin)
+            print(json.dumps({"probability": 0.0}))
+        """)
+        out = self.gate("--judge-cmd", judge).stdout
+        self.assertIn("- Security review: owed. The name of a changed file is not UTF-8", out)
 
     def test_a_file_that_is_not_utf8_does_not_stop_the_gate(self):
         target = self.repo / "src" / "latin1.ts"
