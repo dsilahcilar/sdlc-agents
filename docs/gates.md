@@ -72,6 +72,8 @@ By default the gate exits 0 whatever it decides, because the decision is the out
 
 "Needs human approval" does not change the exit code. A script cannot give that approval, so it stays a line for the person who merges.
 
+When it holds a change, the gate says why on standard error. If an item is owed only because its question got no answer, it says that too. A judge that is down makes every question count as owed, and the right answer to an outage is to run the gate again, not to add tests and reviews the change never owed.
+
 The workflow in `ci/handover-gate.yml` runs the gate this way on every pull request. Three things about it:
 
 - **It runs again when the pull request text is edited**, so a `Waive`, `Ran` or `Verdict` line turns the job green without a new commit.

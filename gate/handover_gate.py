@@ -54,6 +54,10 @@ DEFAULT_MAX_INPUT_CHARS = 40_000
 DEFAULT_MAX_QUESTIONS = 8
 # The reviewer that reads every change unless a review item names it. Then that item decides.
 STANDARD_REVIEWER = "reviewer"
+# How the reason of an item ends when its question got no answer: the judge was down, or the diff could not be put
+# to it. The block shows the whole reason. An enforced run uses the ending to say that this is why it holds.
+UNANSWERED = "so it counts as owed"
+
 # A diff too large for one question is asked about in parts, up to this many. Past it the item counts as owed.
 MAX_PARTS = 4
 # Spaces and tabs only between the parts: \s would run on into the next line and take it for the reason.
@@ -753,15 +757,23 @@ def main(argv: Optional[List[str]] = None) -> int:
         print(json.dumps(decision.to_json(), indent=2))
     else:
         print(render_markdown(decision), end="")
+    held = ""
     if decision.next == "back-to-author" and (args.enforce or args.fail_on_missing):
-        ids = ", ".join(r.id for r in decision.items if r.state == "missing")
-        print(f"handover gate: held back, owed evidence is missing ({ids})", file=sys.stderr)
-        return 1
-    if decision.next == "review" and args.enforce:
-        print(f"handover gate: held back, no verdict in the pull request text for {', '.join(decision.waiting)}",
-              file=sys.stderr)
-        return 1
-    return 0
+        held = "owed evidence is missing (" + ", ".join(r.id for r in decision.items if r.state == "missing") + ")"
+    elif decision.next == "review" and args.enforce:
+        held = "no verdict in the pull request text for " + ", ".join(decision.waiting)
+    if not held:
+        return 0
+    print(f"handover gate: held back, {held}", file=sys.stderr)
+    # An outage of the judge makes every question it was asked count as owed. Say so, or the author answers an
+    # outage with tests and reviews the change never owed.
+    unanswered = [r.id for r in decision.items if r.kind != "approval" and r.state in ("missing", "owed")
+                  and r.reason.endswith(UNANSWERED)]
+    if unanswered:
+        print(f"handover gate: {', '.join(unanswered)} got no answer to the question and so "
+              f"{'count' if len(unanswered) > 1 else 'counts'} as owed. If the judge was down, run the gate again "
+              "before you act on that.", file=sys.stderr)
+    return 1
 
 
 if __name__ == "__main__":

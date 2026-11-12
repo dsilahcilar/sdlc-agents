@@ -754,6 +754,39 @@ class CommandLine(unittest.TestCase):
         self.assertIn("**Next: ready.** Each review that was owed has a verdict in the pull request: reviewer (approve).",
                       done.stdout)
 
+    def test_enforced_says_when_an_item_is_owed_only_because_its_question_got_no_answer(self):
+        self.commit("src/a.ts", "export const a = 2;\n")
+        self.commit("src/a.test.ts", "test('a', () => {});\n")
+        text = self.repo / "pull-request.md"
+        text.write_text("Verdict reviewer: approve\n")
+        down = self.judge("""
+            import sys
+            print("the service is down (HTTP 503)", file=sys.stderr)
+            sys.exit(1)
+        """)
+        held = self.gate("--enforce", "--pull-request-from", str(text), "--judge-cmd", down)
+        self.assertEqual(held.returncode, 1)
+        self.assertIn("held back, no verdict in the pull request text for security-review", held.stderr)
+        self.assertIn("security-review got no answer to the question and so counts as owed. If the judge was down, "
+                      "run the gate again", held.stderr)
+        up = self.judge("""
+            print('{"probability": 0.9}')
+        """)
+        answered = self.gate("--enforce", "--pull-request-from", str(text), "--judge-cmd", up)
+        self.assertEqual(answered.returncode, 1)
+        self.assertNotIn("got no answer", answered.stderr)
+        self.assertIn("held back, no verdict in the pull request text for security-review", answered.stderr)
+
+    def test_every_reason_for_an_unanswered_question_ends_the_same_way(self):
+        # The enforced run tells an outage from a real answer by this ending.
+        for bad in (lambda q: None, lambda q: 1 / 0):
+            d = run(rules(review()), changes("M src/orders/export.ts"), judge=bad)
+            self.assertTrue(state(d, "security-review").reason.endswith(gate.UNANSWERED))
+        big = run(rules(review(), max_input_chars=5), changes("M src/orders/export.ts"), judge=lambda q: 0.0)
+        self.assertTrue(state(big, "security-review").reason.endswith(gate.UNANSWERED), state(big, "security-review"))
+        asked = run(rules(review()), changes("M src/orders/export.ts"), judge=lambda q: 0.9)
+        self.assertFalse(state(asked, "security-review").reason.endswith(gate.UNANSWERED))
+
     def test_enforced_a_change_that_owes_nothing_passes(self):
         (self.repo / "rules.json").write_text(json.dumps({"items": [evidence(), code_review()]}))
         self.commit("src/a.ts", "export const a = 2;\n")
