@@ -6,8 +6,8 @@
 #
 # Usage: v2/install.sh --target /path/to/repository [--force]
 #
-#   --force   overwrite the files this installer owns (roles, gate, templates) when they differ.
-#             Your rules and lessons are never overwritten.
+#   --force   overwrite the files this installer owns (roles, gate, risk report, templates) when they
+#             differ. Your rules, lessons and fixes file are never overwritten.
 
 set -eu
 
@@ -66,12 +66,15 @@ echo "sdlc-agents version 2 -> $TARGET"
 
 owned roles/reviewer.md .claude/agents/reviewer.md
 owned roles/architect.md .claude/agents/architect.md
+owned roles/retro.md .claude/agents/retro.md
 owned gate/handover_gate.py .sdlc/gate/handover_gate.py
+owned retro/risk_report.py .sdlc/retro/risk_report.py
 owned templates/brief.md .sdlc/templates/brief.md
 owned templates/pull_request_template.md .sdlc/templates/pull_request_template.md
 owned templates/CLAUDE.snippet.md .sdlc/templates/CLAUDE.snippet.md
 owned ci/handover-gate.yml .sdlc/templates/handover-gate.yml
 yours templates/rules.json .sdlc/rules.json
+yours templates/fixes.json .sdlc/retro/fixes.json
 yours templates/lessons/reviewer.md .sdlc/lessons/reviewer.md
 yours templates/lessons/architect.md .sdlc/lessons/architect.md
 yours templates/lessons/security.md .sdlc/lessons/security.md
@@ -100,4 +103,6 @@ Next:
   3. Try it: python3 .sdlc/gate/handover_gate.py --base origin/main
   4. Optional: copy .sdlc/templates/handover-gate.yml to .github/workflows/ to print the result on every
      pull request. It blocks nothing.
+  5. Later, with some merged history: python3 .sdlc/retro/risk_report.py shows where changes went wrong,
+     and whether the reviewer needs to read every change. See docs/risk.md in sdlc-agents.
 EOF

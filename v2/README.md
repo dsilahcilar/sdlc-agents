@@ -22,6 +22,7 @@ flowchart TD
     G2 -- something owed is missing --> C
     G2 -- all there --> R[Reviewer, fresh context]
     G2 -- when owed --> S[Security review]
+    G2 -- no reviewer owed --> M
     R -- changes requested, at most twice --> C
     R -- approved --> M[A person merges]
     S --> M
@@ -42,18 +43,22 @@ The gate at "code to review" prints a block like this into the pull request:
 
 Not every change needs every kind of test, and few need a security review. The rules say which change owes what. Where a rule allows it, a run the author reports counts as the evidence, and the reviewer judges it. See [docs/gates.md](./docs/gates.md).
 
+Not every change needs a reviewer either. It reads every change until a rule of yours names the places where it should, and a retro keeps that list honest against the merged history. See [docs/risk.md](./docs/risk.md).
+
 The reviewer blocks only on what it can show and what matters now: a wrong result for a user, lost data, a failure in production, or an owed check that cannot catch its break. Smaller real defects travel with the approval as `worth_fixing`.
 
 ## What is in here
 
 | Path | What it is |
 |---|---|
-| `roles/reviewer.md`, `roles/architect.md` | The two agent files. Each is at most 40 lines. |
+| `roles/reviewer.md`, `roles/architect.md`, `roles/retro.md` | The three agent files. Each is at most 40 lines. |
 | `gate/handover_gate.py` | The gate. Python 3.8+, standard library only, with its tests beside it. |
+| `retro/risk_report.py` | The risk report: where merged changes later needed a fix, against the rule that says what the reviewer reads. Same requirements, tests beside it. |
 | `templates/rules.json` | Starter rules: what is owed, decided by which paths, and which question goes to the judge. |
 | `templates/brief.md`, `templates/pull_request_template.md` | The brief, and a pull request template that holds the brief, the gate's block and the verdicts. |
 | `templates/CLAUDE.snippet.md` | The delivery contract: about a dozen lines for your `CLAUDE.md`. |
 | `templates/lessons/` | One short, dated lessons file per role. See [docs/learnings.md](./docs/learnings.md). |
+| `templates/fixes.json` | The file of confirmed fixes that the risk report counts from. It starts empty. |
 | `ci/handover-gate.yml` | A workflow that prints the gate's block on every pull request and blocks nothing. |
 | `install.sh` | Copies all of the above into a repository. |
 
@@ -90,4 +95,5 @@ Version 1 is still in this repository, unchanged, in `agents/`, `tools/` and the
 
 ```bash
 python3 -m unittest discover -s v2/gate -p 'test_*.py'
+python3 -m unittest discover -s v2/retro -p 'test_*.py'
 ```

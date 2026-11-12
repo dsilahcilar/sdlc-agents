@@ -57,7 +57,9 @@ Not after every change. A retro runs on a signal:
 - an incident in production,
 - a bug that a review approved.
 
-Its output is one step on the ladder: a check, a gate rule, or one entry in one role's file. A retro that produces only prose has not finished. There is no retro agent in version 2. Whoever fixes the bug runs it, with this page as the contract.
+Its output is one step on the ladder: a check, a gate rule, or one entry in one role's file. A retro that produces only prose has not finished. Whoever fixes the bug runs it, with this page as the contract.
+
+There is a second kind of retro, and it has a role of its own. Every few weeks the `retro` role reads the merged history, finds the changes that later needed a fix, and proposes what follows from them: which places the reviewer should read, which lesson is missing, which bug class deserves a check. It works from a script that counts and from a file of confirmed fixes, and it proposes in a pull request that a person merges. See [risk.md](./risk.md).
 
 It helps to keep a short ledger of bug classes: one section per class, one row per fix. The second row is the signal. A class is settled when an enforced rule exists, and a later fix of a settled class means the rule has a hole.
 

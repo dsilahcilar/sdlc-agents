@@ -10,7 +10,7 @@ Version 1 stays in this repository, unchanged: `agents/`, `tools/`, `docs/` and 
 | Architect agent on every feature | `roles/architect.md`, started only when the gate names it | Most changes do not touch stored data, a contract or a new pattern. |
 | Coding agent | Nothing. The session that wrote the brief writes the code. | Its rules (one task, read no other file, stop when unsure) now cost more than they prevent. |
 | Code Review agent, with its checklist and report template | `roles/reviewer.md`: a fresh context, no edit tools, a JSON verdict | A checklist makes a reviewer tick boxes. Independence is what the role is for. |
-| Retro agent | A retro on a signal, whose output is a check or a rule. See [learnings.md](./learnings.md). | A retro after every feature produced prose nobody read twice. |
+| Retro agent | A retro on a signal, whose output is a check or a rule, and a `retro` role that reads the merged history every few weeks and proposes which places the reviewer reads. See [learnings.md](./learnings.md) and [risk.md](./risk.md). | A retro after every feature produced prose nobody read twice. |
 | Curator agent, shared playbook, `extensions/<agent>/` folders | `.sdlc/lessons/<role>.md`: short, dated, expiring | See [learnings.md](./learnings.md). |
 | Initializer agent | `v2/install.sh` and ten minutes with `rules.json` | A one-time job. |
 | Stack and pattern skills, `#skill` directives, resolve scripts | Nothing | They restate what the model knows or can read in the repository. Keep a skill only for a choice the model would not guess. |

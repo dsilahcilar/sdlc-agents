@@ -15,6 +15,10 @@ makes that decision instead, from rules kept as data (rules.json). For every ite
 The output is the list "Owed by this change" and the next step: back to the author while evidence is missing,
 otherwise on to the reviewers the list names, plus a human approval when a rule asks for one.
 
+The standard reviewer reads every change, until a rule of yours names it. From then on that rule decides which
+changes it reads, like any other review item, and a change that no reviewer is owed goes on as ready. A waiver
+or a reported run still brings the reviewer in, because someone other than the author has to judge that line.
+
 The gate routes. It does not judge quality, and it can add checking but never remove a human approval.
 See ../docs/gates.md for the design, the rules reference and the judge protocol.
 
@@ -44,6 +48,8 @@ ABOUT = ("diff", "brief")
 DEFAULT_THRESHOLD = 0.5
 DEFAULT_MAX_INPUT_CHARS = 40_000
 DEFAULT_MAX_QUESTIONS = 8
+# The reviewer that reads every change unless a review item names it. Then that item decides.
+STANDARD_REVIEWER = "reviewer"
 # A diff too large for one question is asked about in parts, up to this many. Past it the item counts as owed.
 MAX_PARTS = 4
 # Spaces and tabs only between the parts: \s would run on into the next line and take it for the reason.
@@ -305,11 +311,13 @@ class ItemResult:
 @dataclasses.dataclass
 class Decision:
     handover: str
-    # back-to-author | review | code
+    # back-to-author | review | ready | code
     next: str
     reviewers: List[str]
     needs_human: bool
     items: List[ItemResult]
+    # Why the route is what it is, where the items alone do not say it.
+    notes: List[str] = dataclasses.field(default_factory=list)
 
     def to_json(self) -> dict:
         return {
@@ -317,6 +325,7 @@ class Decision:
             "next": self.next,
             "reviewers": self.reviewers,
             "needs_human": self.needs_human,
+            "notes": self.notes,
             "items": [dataclasses.asdict(i) for i in self.items],
         }
 
@@ -485,10 +494,23 @@ def decide(rules: Rules, handover: str, changes: Sequence[Change], diff_for: Cal
         if r.kind == "review" and r.state == "owed" and r.reviewer not in extra:
             extra.append(r.reviewer)
     needs_human = any(r.kind == "approval" and r.state == "owed" for r in results)
-    if handover == "code-to-review":
-        return Decision(handover, "back-to-author" if missing else "review", ["reviewer"] + extra, needs_human, results)
-    step = "back-to-author" if missing else ("review" if extra else "code")
-    return Decision(handover, step, extra, needs_human, results)
+    if handover != "code-to-review":
+        step = "back-to-author" if missing else ("review" if extra else "code")
+        return Decision(handover, step, extra, needs_human, results)
+    notes: List[str] = []
+    by_rule = any(i.handover == handover and i.kind == "review" and i.reviewer == STANDARD_REVIEWER for i in rules.items)
+    others = [r for r in extra if r != STANDARD_REVIEWER]
+    claims = [r.id for r in results if r.state in ("waived", "ran")]
+    if not by_rule or STANDARD_REVIEWER in extra:
+        reviewers = [STANDARD_REVIEWER] + others
+    elif claims:
+        # The author answered an owed item with a sentence. Someone other than the author has to judge it.
+        reviewers = [STANDARD_REVIEWER] + others
+        notes.append(f"The reviewer is on the route to judge what the author wrote for {', '.join(claims)}.")
+    else:
+        reviewers = others
+    step = "back-to-author" if missing else ("review" if reviewers else "ready")
+    return Decision(handover, step, reviewers, needs_human, results, notes)
 
 
 # ---------------------------------------------------------------------------------------------------------
@@ -534,8 +556,11 @@ def render_markdown(d: Decision) -> str:
                      f"`Waive <item>: <reason>` in the pull request.{run_hint} No reviewer starts yet.")
     elif d.next == "review":
         lines.append(f"**Next: review by** {', '.join(d.reviewers)}.")
+    elif d.next == "ready":
+        lines.append("**Next: ready.** No reviewer is owed. The checks and the person who merges decide.")
     else:
         lines.append("**Next: write the code.**")
+    lines.extend(d.notes)
     if d.needs_human:
         lines.append("**Needs human approval** before it is merged or released, whatever the reviewers say.")
     return "\n".join(lines) + "\n"

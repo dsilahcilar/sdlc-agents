@@ -18,10 +18,14 @@ A change **owes** something when it has to be there before the change moves on. 
 | Kind | Owed means | If it is not there |
 |---|---|---|
 | `evidence` | A kind of test, a contract file, a runnable check in the brief | Back to the author. No reviewer starts. |
-| `review` | An extra reviewer looks at it: `security-review`, `architect` | That reviewer is added to the route. |
+| `review` | A reviewer looks at it: `security-review`, `architect`, or the standard `reviewer` | That reviewer is added to the route. |
 | `approval` | A person decides: a paid model run, a change to payment or personal data | The block says "Needs human approval". |
 
 For an `evidence` item the gate looks in the diff for a changed file where such evidence lives (`satisfied_by`). It does not judge whether the test is any good. That stays with the reviewer, who reads each owed test and asks whether it would fail if the behaviour broke.
+
+### Who gets the standard reviewer
+
+The standard reviewer reads every change until a rule names it (`"reviewer": "reviewer"`). From then on that rule decides which changes it reads, like any other review item, and a change that owes no reviewer ends in "Next: ready". A waiver or a reported run still brings the reviewer in, because someone other than the author has to judge that line. [risk.md](./risk.md) says how to choose the places and how to keep the list current.
 
 ### Waivers
 
@@ -57,6 +61,7 @@ The starter rules in `templates/rules.json` cover:
 | User journey test | adds a page, or changes steps a user takes | paths for a new page, then the judge |
 | Run of a changed script (a run counts) | touches a deploy or operations script | paths |
 | Language check | changes text in the base language | paths |
+| Code review | touches a place your rule lists. Without such a rule: every change | paths ([risk.md](./risk.md)) |
 | Security review | touches sign-in, access, limits, webhooks or scan settings, or changes who can reach what | paths, then the judge |
 | Architect review | alters or deletes data that is already stored | the judge, asked only when a migration changed |
 | Live model run | changes a prompt | paths. A person decides, because a run costs money. |
@@ -118,7 +123,7 @@ One item:
 | `threshold` | Owed at or above this probability. Default 0.5. Set it low where a miss costs more than an extra look. |
 | `satisfied_by` | `evidence` only: where the evidence lives. Leave it out when nothing in the diff can satisfy the item, as for a brief. |
 | `run_counts` | `evidence` only, `true` or `false` (the default): whether a `Ran <item>: ...` line in the pull request answers the item when no such file changed. |
-| `reviewer` | `review` only: who is added to the route. |
+| `reviewer` | `review` only: who is added to the route. A rule that names `reviewer` decides who gets the standard reviewer. |
 | `note` | Free text for whoever edits the rules. |
 
 Path patterns: `**` crosses directories, `*` and `?` stay inside one path segment, and a pattern that starts with `!` takes paths out again.
@@ -171,7 +176,7 @@ handover_gate.py --handover brief-to-code --brief-from FILE [--judge-cmd "<comma
 
 It compares `--head` with the point where it branched off `--base`. `--pull-request-from` names a file with the pull request text, which the gate reads for `Waive` and `Ran` lines (`--waivers-from` is the older name for the same flag). It exits 0 whatever it decides, because the decision is the output. `--fail-on-missing` makes missing evidence exit 1, for teams that want a red check. A rules file it cannot use exits 2.
 
-`--format json` gives the same decision for scripts: `next` (`back-to-author`, `review` or `code`), `reviewers`, `needs_human`, and one entry per item with its `state`, `reason`, `probability` and `evidence`. The states are `not-owed`, `not-asked`, `present`, `ran`, `missing`, `waived` and `owed`.
+`--format json` gives the same decision for scripts: `next` (`back-to-author`, `review`, `ready` or `code`), `reviewers`, `needs_human`, `notes`, and one entry per item with its `state`, `reason`, `probability` and `evidence`. The states are `not-owed`, `not-asked`, `present`, `ran`, `missing`, `waived` and `owed`.
 
 ## Limits worth holding to
 

@@ -309,6 +309,92 @@ class Routes(unittest.TestCase):
         self.assertEqual([i.id for i in d.items], ["unit-test"])
 
 
+def code_review(**over):
+    """The rule that names the standard reviewer: with it in the rules, it decides which changes the reviewer reads."""
+    item = {
+        "id": "code-review",
+        "title": "Code review",
+        "kind": "review",
+        "reviewer": "reviewer",
+        "owed_when": {"changed": ["src/billing/**", "migrations/**", "!**/*.test.ts"]},
+    }
+    item.update(over)
+    return item
+
+
+class ReviewerByRule(unittest.TestCase):
+    def test_without_a_rule_for_it_the_reviewer_reads_every_change(self):
+        d = run(rules(evidence()), changes("M src/a.ts", "M src/a.test.ts"))
+        self.assertEqual((d.next, d.reviewers), ("review", ["reviewer"]))
+
+    def test_its_rule_sends_a_change_in_a_listed_place_to_the_reviewer(self):
+        d = run(rules(evidence(), code_review()), changes("M src/billing/invoice.ts", "M src/billing/invoice.test.ts"))
+        self.assertEqual((d.next, d.reviewers), ("review", ["reviewer"]))
+        self.assertIn("- Code review: owed. Path rule: src/billing/invoice.ts.", gate.render_markdown(d))
+
+    def test_a_change_outside_the_listed_places_goes_on_as_ready(self):
+        d = run(rules(evidence(), code_review()), changes("M src/ui/button.ts", "M src/ui/button.test.ts"))
+        self.assertEqual((d.next, d.reviewers, d.notes), ("ready", [], []))
+        text = gate.render_markdown(d)
+        self.assertIn("- Not owed: Code review", text)
+        self.assertIn("**Next: ready.** No reviewer is owed.", text)
+        self.assertNotIn("review by", text)
+
+    def test_another_reviewer_can_be_owed_without_the_standard_one(self):
+        d = run(rules(code_review(), review()), changes("M src/auth/login.ts"))
+        self.assertEqual((d.next, d.reviewers), ("review", ["security-review"]))
+
+    def test_the_standard_reviewer_is_named_first(self):
+        d = run(rules(review(), code_review(owed_when={"changed": ["src/**"]})), changes("M src/auth/login.ts"))
+        self.assertEqual(d.reviewers, ["reviewer", "security-review"])
+
+    def test_a_waiver_brings_the_reviewer_in_to_judge_it(self):
+        d = run(rules(evidence(), code_review()), changes("M src/ui/button.ts"), waivers={"unit-test": "a rename"})
+        self.assertEqual((d.next, d.reviewers), ("review", ["reviewer"]))
+        self.assertEqual(d.notes, ["The reviewer is on the route to judge what the author wrote for unit-test."])
+        self.assertIn("The reviewer is on the route to judge what the author wrote for unit-test.",
+                      gate.render_markdown(d))
+
+    def test_a_reported_run_brings_the_reviewer_in_too(self):
+        script = evidence(id="script-run", title="Run of a changed script", owed_when={"changed": ["deploy/**"]},
+                          run_counts=True)
+        d = run(rules(script, code_review()), changes("M deploy/backup.sh"), runs={"script-run": "dry run"})
+        self.assertEqual((d.next, d.reviewers), ("review", ["reviewer"]))
+        self.assertIn("script-run", d.notes[0])
+
+    def test_missing_evidence_still_goes_back_to_the_author(self):
+        d = run(rules(evidence(), code_review()), changes("M src/ui/button.ts"))
+        self.assertEqual((d.next, d.reviewers), ("back-to-author", []))
+
+    def test_a_person_can_still_be_asked_for_when_no_reviewer_is(self):
+        approval = {"id": "model-run", "title": "Live model run", "kind": "approval",
+                    "owed_when": {"changed": ["prompts/**"]}}
+        d = run(rules(approval, code_review()), changes("M prompts/summary.md"))
+        self.assertEqual((d.next, d.needs_human), ("ready", True))
+        self.assertIn("**Needs human approval**", gate.render_markdown(d))
+
+    def test_a_rule_for_the_brief_handover_does_not_decide_the_code_review(self):
+        brief_item = {"id": "plan-read", "title": "A read of the plan", "kind": "review", "reviewer": "reviewer",
+                      "handover": "brief-to-code",
+                      "owed_when": {"ask": {"about": "brief", "question": "q", "true": "t", "false": "f"}}}
+        d = run(rules(evidence(), brief_item), changes("M src/a.ts", "M src/a.test.ts"))
+        self.assertEqual(d.reviewers, ["reviewer"])
+
+    def test_the_judge_can_decide_the_unclear_rest_for_the_reviewer(self):
+        ask = dict(ASK, threshold=0.5)
+        item = code_review(owed_when={"changed": ["src/billing/**"], "ask": ask})
+        yes = run(rules(item), changes("M src/orders/total.ts"), judge=lambda q: 0.7)
+        no = run(rules(item), changes("M src/orders/total.ts"), judge=lambda q: 0.2)
+        down = run(rules(item), changes("M src/orders/total.ts"), judge=lambda q: None)
+        self.assertEqual([d.next for d in (yes, no, down)], ["review", "ready", "review"])
+
+    def test_json_names_the_route_and_its_notes(self):
+        d = run(rules(evidence(), code_review()), changes("M src/ui/button.ts"), waivers={"unit-test": "a rename"})
+        data = json.loads(json.dumps(d.to_json()))
+        self.assertEqual((data["next"], data["reviewers"]), ("review", ["reviewer"]))
+        self.assertEqual(len(data["notes"]), 1)
+
+
 class Brief(unittest.TestCase):
     ITEMS = [
         {"id": "brief-testable", "title": "A check that can be run", "kind": "evidence", "handover": "brief-to-code",
