@@ -32,6 +32,9 @@ done
 SOURCE=$(cd "$(dirname "$0")" && pwd)
 TARGET=$(cd "$TARGET" && pwd)
 
+# How many owned files were left as they are although they differ from this version.
+KEPT=0
+
 # A file this installer owns: copied when missing, replaced only with --force when it differs.
 owned() {
     src="$SOURCE/$1"; dst="$TARGET/$2"
@@ -44,6 +47,7 @@ owned() {
         cp "$src" "$dst"; echo "  replaced $2"
     else
         echo "  kept     $2 (differs; run again with --force to replace it)"
+        KEPT=$((KEPT + 1))
     fi
 }
 
@@ -72,10 +76,15 @@ yours templates/lessons/reviewer.md .sdlc/lessons/reviewer.md
 yours templates/lessons/architect.md .sdlc/lessons/architect.md
 yours templates/lessons/security.md .sdlc/lessons/security.md
 
-# Which commit this install came from, so an upgrade can be told from a local edit.
+# Which commit this install came from, so an upgrade can be told from a local edit. Written only when every
+# owned file is at this version: with files kept as they were, the install is not at this commit.
 COMMIT=$(git -C "$SOURCE" rev-parse --short HEAD 2>/dev/null || echo unknown)
-printf 'sdlc-agents v2 %s\n' "$COMMIT" > "$TARGET/.sdlc/VERSION"
-echo "  wrote    .sdlc/VERSION ($COMMIT)"
+if [ "$KEPT" -eq 0 ]; then
+    printf 'sdlc-agents v2 %s\n' "$COMMIT" > "$TARGET/.sdlc/VERSION"
+    echo "  wrote    .sdlc/VERSION ($COMMIT)"
+else
+    echo "  kept     .sdlc/VERSION ($KEPT of the files above differ from $COMMIT, so this install is not at it)"
+fi
 
 if [ -e "$TARGET/.sdlc-agents" ] || [ -L "$TARGET/.sdlc-agents" ]; then
     echo ""
