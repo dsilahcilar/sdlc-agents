@@ -107,7 +107,8 @@ class FixesError(ValueError):
 
 
 def _git(repo: pathlib.Path, *args: str) -> str:
-    return subprocess.run(["git", "-C", str(repo), *args], capture_output=True, text=True, check=True).stdout
+    return subprocess.run(["git", "-C", str(repo), *args], capture_output=True, encoding="utf-8", errors="replace",
+                          check=True).stdout
 
 
 def pull_request_number(subject: str) -> Optional[int]:
@@ -138,13 +139,14 @@ def read_history(repo: pathlib.Path, branch: str, since: str, texts: Optional[Di
         if skip and skip.search(title):
             continue
         try:
-            stat = _git(repo, "diff", "--numstat", "--no-renames", f"{sha}^1", sha)
+            # -z: without it git quotes and escapes a path that holds a quote or a byte outside ASCII.
+            stat = _git(repo, "diff", "--numstat", "-z", "--no-renames", f"{sha}^1", sha)
             said = _git(repo, "log", "--format=%B", f"{sha}^1..{sha}") if is_merge else f"{subject}\n{body}"
         except subprocess.CalledProcessError:
             continue   # the first commit of the repository has nothing to compare with
         files = []
-        for line in stat.splitlines():
-            parts = line.split("\t")
+        for line in stat.split("\0"):
+            parts = line.split("\t", 2)
             if len(parts) == 3:
                 added, deleted = (0 if p == "-" else int(p) for p in parts[:2])
                 files.append(File(parts[2], added + deleted))
@@ -510,16 +512,16 @@ def main(argv: Optional[List[str]] = None) -> int:
         return 2
     try:
         merged, unnumbered = read_history(repo, args.branch, args.since, texts, args.skip_titles)
-        counted = _git(repo, "grep", "-I", "-c", "", args.branch, "--")
+        counted = _git(repo, "grep", "-I", "-c", "-z", "", args.branch, "--")
     except subprocess.CalledProcessError as e:
         print(f"risk report: git could not read {args.branch}: {e.stderr.strip()}", file=sys.stderr)
         return 2
-    # One line per text file on the branch: "<branch>:<path>:<lines>".
+    # One record per text file on the branch: "<branch>:<path>", a NUL, "<lines>", a line break.
     sizes = {}
-    for line in counted.splitlines():
-        path, _, count = line[len(args.branch) + 1:].rpartition(":")
+    for record in counted.split("\n"):
+        name, _, count = record.partition("\0")
         if count.isdigit():
-            sizes[path] = int(count)
+            sizes[name[len(args.branch) + 1:]] = int(count)
     line_count = lambda path: sizes.get(path, 0)
 
     report = analyse(merged, fixes, not_fixes, scope_from_rules(rules), line_count, args.min_changes, args.factor)

@@ -313,6 +313,14 @@ class CommandLine(unittest.TestCase):
         self.assertEqual(r["hotspots"][0], {"file": "src/billing/invoice.ts", "changes": 2, "lines": 4, "failed": 0,
                                            "on_the_list": "all"})
 
+    def test_a_file_with_an_accent_in_its_name_is_counted_under_its_real_path(self):
+        self.merge(4, "Add a caf\u00e9 invoice", {"src/billing/caf\u00e9.ts": "a\nb\n"})
+        _, out, _ = self.run_report("--format", "json")
+        r = json.loads(out)
+        self.assertEqual(r["current_rule"]["reviewed"], 3)
+        self.assertIn({"file": "src/billing/caf\u00e9.ts", "changes": 1, "lines": 2, "failed": 0, "on_the_list": "all"},
+                      r["hotspots"])
+
     def test_a_confirmed_fix_moves_from_the_reading_list_into_the_counts(self):
         self.write(".sdlc/retro/fixes.json", json.dumps({"fixes": [{"fix": 3, "repairs": 1, "kind": "wrong-in-use"}]}))
         code, out, _ = self.run_report()

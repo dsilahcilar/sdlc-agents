@@ -61,6 +61,10 @@ def state(decision, item_id):
     return next(i for i in decision.items if i.id == item_id)
 
 
+def state_of(decision_json, item_id):
+    return next(i for i in decision_json["items"] if i["id"] == item_id)
+
+
 class Globs(unittest.TestCase):
     def test_double_star_crosses_directories_and_matches_the_root(self):
         self.assertTrue(gate.glob_to_regex("**/page.tsx").match("page.tsx"))
@@ -91,6 +95,14 @@ class Globs(unittest.TestCase):
     def test_a_copy_is_reported_under_its_new_path_only(self):
         parsed = gate.parse_name_status("C075\tsrc/a.ts\tsrc/b.ts\n")
         self.assertEqual([(c.status, c.path) for c in parsed], [("C", "src/b.ts")])
+
+    def test_the_nul_form_keeps_every_path_as_it_is(self):
+        parsed = gate.parse_name_status('A\0src/auth/tok\u00e9n.ts\0R087\0src/old "a".ts\0src/new\\b.ts\0'
+                                        "C075\0src/a.ts\0src/b\tc.ts\0D\0src/gone.ts\0")
+        self.assertEqual([(c.status, c.path) for c in parsed],
+                         [("A", "src/auth/tok\u00e9n.ts"), ("D", 'src/old "a".ts'), ("R", "src/new\\b.ts"),
+                          ("C", "src/b\tc.ts"), ("D", "src/gone.ts")])
+        self.assertEqual(gate.parse_name_status(""), [])
 
 
 class Evidence(unittest.TestCase):
@@ -284,6 +296,16 @@ class Judge(unittest.TestCase):
         self.assertEqual(state(d, "second").state, "owed")
 
 
+class UnreadableDiff(unittest.TestCase):
+    def test_a_diff_that_cannot_be_read_counts_as_owed(self):
+        def broken(paths):
+            raise subprocess.CalledProcessError(128, ["git", "diff"])
+        d = gate.decide(rules(review()), "code-to-review", changes("M src/orders/total.ts"), broken, lambda q: 0.0)
+        item = state(d, "security-review")
+        self.assertEqual(item.state, "owed")
+        self.assertEqual(item.reason, "the diff could not be read to ask the judge, so it counts as owed")
+
+
 class Routes(unittest.TestCase):
     def test_an_approval_item_asks_for_a_person_and_does_not_stop_the_review(self):
         item = {"id": "model-run", "title": "Live model run", "kind": "approval",
@@ -462,6 +484,16 @@ class RulesFile(unittest.TestCase):
         self.assertGreaterEqual(len(starter.items), 8)
         self.assertEqual({i.handover for i in starter.items}, set(gate.HANDOVERS))
 
+    def test_the_starter_rules_ask_for_a_person_when_the_gate_or_its_rules_change(self):
+        starter = gate.load_rules(HERE.parent / "templates" / "rules.json")
+        for path in (".sdlc/rules.json", ".sdlc/gate/handover_gate.py", ".sdlc/lessons/reviewer.md",
+                     ".sdlc/retro/fixes.json"):
+            d = run(starter, changes("M " + path))
+            self.assertEqual(state(d, "rules-change").state, "owed", path)
+            self.assertTrue(d.needs_human, path)
+        for path in (".sdlc/templates/brief.md", ".sdlc/VERSION", "docs/notes.md"):
+            self.assertFalse(run(starter, changes("M " + path)).needs_human, path)
+
 
 class Waivers(unittest.TestCase):
     def test_lines_are_read_with_or_without_a_bullet(self):
@@ -621,6 +653,40 @@ class CommandLine(unittest.TestCase):
         review_item = next(i for i in data["items"] if i["id"] == "security-review")
         self.assertEqual((review_item["state"], review_item["reason"]), ("owed", "path rule: src/auth/login.ts"))
         self.assertEqual(data["reviewers"], ["reviewer", "security-review"])
+
+    def test_a_file_with_an_accent_or_a_quote_in_its_name_owes_what_its_folder_owes(self):
+        # git prints such a path in quotes and escaped unless asked not to, and no pattern matches that.
+        self.commit("src/auth/tok\u00e9n.ts", "export const t = 1;\n")
+        self.commit('src/auth/to"ken.ts', "export const t = 2;\n")
+        d = json.loads(self.gate("--format", "json").stdout)
+        self.assertEqual(state_of(d, "security-review")["state"], "owed")
+        self.assertIn("src/auth/to", state_of(d, "security-review")["reason"])
+        self.assertEqual(state_of(d, "unit-test")["state"], "missing")
+
+    def test_a_file_named_like_a_pathspec_still_reaches_the_judge_with_its_diff(self):
+        (self.repo / "rules.json").write_text(json.dumps({"items": [review(owed_when={"ask": dict(ASK, paths=["**/*.sql"])})]}))
+        self.commit(":wipe.sql", "delete from orders;\n")
+        judge = self.judge("""
+            import json, sys
+            q = json.load(sys.stdin)
+            print(json.dumps({"probability": 0.9 if "delete from orders" in q["input"]["diff"] else 0.0}))
+        """)
+        out = self.gate("--judge-cmd", judge).stdout
+        self.assertIn("- Security review: owed. Judge: p=0.90, at or above 0.3.", out)
+
+    def test_a_file_that_is_not_utf8_does_not_stop_the_gate(self):
+        target = self.repo / "src" / "latin1.ts"
+        target.write_bytes("export const caf\u00e9 = 1;\n".encode("latin-1"))
+        self.git("add", ".")
+        self.git("commit", "-q", "-m", "latin1")
+        judge = self.judge("""
+            import json, sys
+            json.load(sys.stdin)
+            print(json.dumps({"probability": 0.9}))
+        """)
+        result = self.gate("--judge-cmd", judge)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("- Security review: owed. Judge: p=0.90", result.stdout)
 
     def test_waivers_are_read_from_the_pull_request_text(self):
         self.commit("src/a.ts", "export const a = 2;\n")

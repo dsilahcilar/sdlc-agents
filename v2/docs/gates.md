@@ -66,6 +66,7 @@ The starter rules in `templates/rules.json` cover:
 | Architect review | alters or deletes data that is already stored | the judge, asked only when a migration changed |
 | Live model run | changes a prompt | paths. A person decides, because a run costs money. |
 | Approval of a sensitive change | touches payment code | paths |
+| Approval of a change to the gate | touches the gate, its rules, the lessons or the fixes file | paths |
 
 Security has three levels, and most changes stop at the first:
 
@@ -86,7 +87,7 @@ Security has three levels, and most changes stop at the first:
 }
 ```
 
-`ignore` lists files that never make anything owed. `max_input_chars` caps what one question sends to the judge. A larger diff is asked about in parts: the files in path order, in groups that each fit, with the same question for each group. The item is owed as soon as one part says so. If it would take more than four parts, or one file alone does not fit, the item counts as owed without asking. A brief that is too large counts as owed too.
+`ignore` lists files that never make anything owed. Keep the gate, the rules and the lessons out of it: a change to them is exactly what a person should see. `max_input_chars` caps what one question sends to the judge. A larger diff is asked about in parts: the files in path order, in groups that each fit, with the same question for each group. The item is owed as soon as one part says so. If it would take more than four parts, or one file alone does not fit, the item counts as owed without asking. A brief that is too large counts as owed too.
 
 One item:
 
@@ -174,7 +175,7 @@ handover_gate.py --base <ref> [--head HEAD] [--rules .sdlc/rules.json] [--repo .
 handover_gate.py --handover brief-to-code --brief-from FILE [--judge-cmd "<command>"]
 ```
 
-It compares `--head` with the point where it branched off `--base`. `--pull-request-from` names a file with the pull request text, which the gate reads for `Waive` and `Ran` lines (`--waivers-from` is the older name for the same flag). It exits 0 whatever it decides, because the decision is the output. `--fail-on-missing` makes missing evidence exit 1, for teams that want a red check. A rules file it cannot use exits 2.
+It compares `--head` with the point where it branched off `--base`. File names are read exactly as git stores them, so a name with a space, a quote or an accent is matched like any other. `--pull-request-from` names a file with the pull request text, which the gate reads for `Waive` and `Ran` lines (`--waivers-from` is the older name for the same flag). It exits 0 whatever it decides, because the decision is the output. `--fail-on-missing` makes missing evidence exit 1, for teams that want a red check. A rules file it cannot use exits 2.
 
 `--format json` gives the same decision for scripts: `next` (`back-to-author`, `review`, `ready` or `code`), `reviewers`, `needs_human`, `notes`, and one entry per item with its `state`, `reason`, `probability` and `evidence`. The states are `not-owed`, `not-asked`, `present`, `ran`, `missing`, `waived` and `owed`.
 
@@ -184,4 +185,4 @@ It compares `--head` with the point where it branched off `--base`. `--pull-requ
 - **It can add checking and never remove a human approval.** Whatever a person must approve today stays theirs.
 - **Missing evidence holds back the reviewer, not the merge.** The person who merges can always overrule it.
 - **Shadow first.** Print the route on pull requests for a while before anything acts on it.
-- **The rules are reviewed like code.** Do not change `rules.json` in the same pull request as a change it would judge.
+- **The rules are reviewed like code.** Do not change `rules.json` in the same pull request as a change it would judge. Two things back that up. In CI the workflow runs the gate and the rules of the base branch, so a pull request cannot loosen the rules that judge it. And the starter rules ask for a person's approval when the gate, the rules, the lessons or the fixes file change.

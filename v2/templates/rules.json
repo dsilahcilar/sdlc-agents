@@ -1,7 +1,7 @@
 {
   "version": 1,
   "note": "Starter rules. The path patterns are guesses at a common layout: change them to where things live in your repository before you trust any answer. Reference: docs/gates.md.",
-  "ignore": ["docs/**", "**/*.md", ".sdlc/**"],
+  "ignore": ["docs/**", "**/*.md", ".sdlc/templates/**", ".sdlc/VERSION", "!.sdlc/lessons/**"],
   "items": [
     {
       "id": "brief-testable",
@@ -170,6 +170,15 @@
       "note": "A live run costs money, so the gate only says it is owed. A person decides whether to run it.",
       "owed_when": {
         "changed": ["**/prompts/**", "**/*.prompt.*", "**/*.jinja", "**/*.j2"]
+      }
+    },
+    {
+      "id": "rules-change",
+      "title": "Approval of a change to the gate, its rules or its lessons",
+      "kind": "approval",
+      "note": "These files decide how much checking every later change gets, so a change to them is a person's to approve. In CI the gate and the rules are read from the base branch (see ci/handover-gate.yml), so a pull request cannot loosen the rules that judge it.",
+      "owed_when": {
+        "changed": [".sdlc/rules.json", ".sdlc/gate/**", ".sdlc/lessons/**", ".sdlc/retro/**"]
       }
     },
     {

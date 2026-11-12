@@ -130,12 +130,33 @@ class Change:
 
 
 def parse_name_status(text: str) -> List[Change]:
-    """The output of `git diff --name-status`.
+    """The output of `git diff --name-status -z`: a status, then one path, or two for a rename or a copy, each
+    ended by a NUL.
+
+    Without -z git puts a path that holds a quote, a backslash or a byte outside ASCII in quotes and escapes it,
+    and no pattern would match the result: a file with an accent in its name would owe nothing. The line form
+    (status, tab, path) is still read, for callers that have it.
 
     A rename is two changes: its old path as deleted and its new path as renamed. Reported under the new path
     alone, a file moved out of a folder that a rule watches would owe nothing. A copy leaves its source as it
     was, so it is reported under its new path only."""
     changes = []
+    if "\0" in text:
+        fields = text.split("\0")
+        i = 0
+        while i < len(fields) and fields[i]:
+            status = fields[i][0]
+            if status in "RC" and i + 2 < len(fields):
+                if status == "R":
+                    changes.append(Change("D", fields[i + 1]))
+                changes.append(Change(status, fields[i + 2]))
+                i += 3
+            elif i + 1 < len(fields):
+                changes.append(Change(status, fields[i + 1]))
+                i += 2
+            else:
+                break
+        return changes
     for line in text.splitlines():
         parts = line.split("\t")
         if len(parts) < 2 or not parts[0]:
@@ -391,13 +412,17 @@ def _owed(item: Item, changes: Sequence[Change], diff_for: Callable[[List[str]],
         subject, payload = _first(candidates), None
     if asker.judge is None:
         return "not-asked", f"no judge configured, so only the path rules apply ({subject})", None
-    if payload is None:
-        payload = _diff_payload(candidates, diff_for)
-    size = _size(payload)
-    if size > max_chars:
-        if ask.about == "brief":
-            return "yes", f"too large to ask the judge ({size} characters), so it counts as owed", None
-        return _owed_in_parts(item, candidates, diff_for, asker, max_chars, size)
+    try:
+        if payload is None:
+            payload = _diff_payload(candidates, diff_for)
+        size = _size(payload)
+        if size > max_chars:
+            if ask.about == "brief":
+                return "yes", f"too large to ask the judge ({size} characters), so it counts as owed", None
+            return _owed_in_parts(item, candidates, diff_for, asker, max_chars, size)
+    except (OSError, subprocess.CalledProcessError):
+        # A question that cannot be put is a question without an answer.
+        return "yes", "the diff could not be read to ask the judge, so it counts as owed", None
     p, why = asker.ask(item, payload)
     if p is None:
         return "yes", f"{why}, so it counts as owed", None
@@ -595,7 +620,9 @@ def command_judge(command: str, timeout: float = 60.0) -> Judge:
 
 
 def _git(repo: pathlib.Path, *args: str) -> str:
-    return subprocess.run(["git", "-C", str(repo), *args], capture_output=True, text=True, check=True).stdout
+    # A file in another encoding is still a changed file: its odd bytes are replaced, not fatal.
+    return subprocess.run(["git", "-C", str(repo), *args], capture_output=True, encoding="utf-8", errors="replace",
+                          check=True).stdout
 
 
 def main(argv: Optional[List[str]] = None) -> int:
@@ -638,12 +665,13 @@ def main(argv: Optional[List[str]] = None) -> int:
             ap.error("--base is required at code-to-review")
         try:
             span = f"{_git(repo, 'merge-base', args.base, args.head).strip()}..{args.head}"
-            changes = parse_name_status(_git(repo, "diff", "--name-status", "-M", span))
+            changes = parse_name_status(_git(repo, "diff", "--name-status", "-z", "-M", span))
         except subprocess.CalledProcessError as e:
             why = e.stderr.strip() or "no common commit found (a shallow clone needs more history)"
             print(f"handover gate: git could not compare {args.base} and {args.head}: {why}", file=sys.stderr)
             return 2
-        diff_for = lambda paths: _git(repo, "diff", "-M", span, "--", *paths)
+        # Literal: a file may be named like a pathspec with magic, such as ":x.sql", and still has to be found.
+        diff_for = lambda paths: _git(repo, "--literal-pathspecs", "diff", "-M", span, "--", *paths)
 
     judge = command_judge(args.judge_cmd, args.judge_timeout) if args.judge_cmd else None
     decision = decide(rules, args.handover, changes, diff_for, judge, brief, waivers, args.max_questions, runs)
