@@ -12,6 +12,14 @@
 
 ---
 
+## Two versions
+
+**[Version 2](./v2/README.md) is the current direction: keep the gates, drop the scripts.** A one-page brief before code, an independent reviewer before "ready", and a handover gate that works out which tests and reviews each change owes, so the author never picks its own checks. Two short agent files replace the seven below. It lives in [`v2/`](./v2/) and installs with `v2/install.sh`.
+
+**Version 1** is everything else on this page: seven agents, each with its own prompt, task files and a skill loader. It is unchanged and still installs with `./install.sh`. [Coming from version 1](./v2/docs/migrating-from-v1.md) maps each piece to what replaces it and why.
+
+---
+
 ## The Problem
 
 LLMs write code fast—but they also generate **hidden costs**:

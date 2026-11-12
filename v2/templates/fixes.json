@@ -1,0 +1,5 @@
+{
+  "note": "Pull requests that repaired an earlier merged one, confirmed by a person or the retro role. kind: wrong-in-use (a user or a job in production got a wrong result or a failure), red-main (the main branch was left with a failing check) or other. not_fixes: pairs that were read and are not a fix. Reference: docs/risk.md.",
+  "fixes": [],
+  "not_fixes": []
+}

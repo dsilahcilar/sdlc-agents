@@ -21,6 +21,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **Version 2** in `v2/`, beside version 1 and without changing how version 1 installs. See `v2/README.md`.
+  - `v2/gate/handover_gate.py`: a handover gate that works out what a change owes (which kinds of test, a security review, an architect pass, a human approval) and where it goes next. Path rules decide what they can, an optional judge answers one yes/no question for the rest, and a judge that gives no answer takes the stricter route. Rules are data in `rules.json`. Standard library only, with tests.
+  - `v2/roles/reviewer.md` and `v2/roles/architect.md`: two short agent files in place of the seven.
+  - `v2/templates/`: the brief, a pull request template, the delivery contract for `CLAUDE.md`, starter rules, and one short lessons file per reviewing role.
+  - `v2/install.sh`: copies files into a repository and links nothing.
+  - `v2/docs/`: the gate design and rules reference, how learnings are kept, and a map from version 1.
+  - After a trial on past pull requests: the reviewer has a bar for what blocks and a `worth_fixing` list for the rest, and reports findings that rest on code it cannot read as questions. An evidence rule can let a reported run count (`run_counts`, answered by a `Ran <item>: ...` line). The starter rules gain `script-run` for deploy and operations scripts. A diff too large for one question is asked about in up to four parts before it counts as owed. `--pull-request-from` replaces `--waivers-from`, which still works.
+  - After the trial on 20 merged pull requests: the reviewer's bar counts a wrong value or wrong text on a screen, and the fixed bug left standing in sibling code. `docs/learnings.md` says to start the reviewer's lessons file with entries on day one, with the trial's numbers. The starter `stored-data` rule also asks about backfill and repair code, and `docs/gates.md` reports how the starter thresholds behaved.
+  - After the first install in two repositories: a renamed file counts under its old path and its new one, the block says why a judge gave no answer, and the reviewing roles can be handed a file with the pull request text.
+  - A rule decides who gets the reviewer: the standard reviewer reads every change until a review item names it, and from then on a change that owes no reviewer ends in "Next: ready". `v2/retro/risk_report.py` reads the merged history and says where changes later needed a fix, and `v2/roles/retro.md` proposes changes to the rule from it. See `v2/docs/risk.md`.
+  - After two security reviews of the installs: file names are read as git stores them (an accent, a quote or a line break no longer hides a file from the rules), the judge gets every changed file as text and an item counts as owed when a diff cannot be read, the workflow template runs the gate and the rules of the base branch, and the starter rules ask for a person's approval when the gate, the rules, the lessons or the files that instruct the agents change.
+
 - **Kotlin support**: Added `agents/skills/stacks/kotlin.md` with full Gradle/Maven support
   - Detection for `build.gradle.kts` with `*.kt` files
   - Support for Ktlint, Detekt, Kover, ArchUnit, Konsist
@@ -34,6 +46,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Harness specification**: Added `agents/skills/harness-spec.md` defining output contract for generated scripts
 
 - **Migration guide**: Added `docs/MIGRATION_GUIDE.md` for projects migrating from old templates
+
+### Removed
+
+- A lesson from one project that had ended up in the shared templates `agents/templates/extensions/planning-agent/learned-patterns.md` and `agents/templates/extensions/architect-agent/learned-patterns.md`. The templates are back to placeholders.
 
 ### Improved
 
