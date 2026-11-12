@@ -1,6 +1,6 @@
 # Which changes the reviewer reads
 
-A reviewer on every change is the safe start, and it is what version 2 does until you say otherwise. It is also the largest running cost of the workflow: every review is a fresh context that reads the diff and the code around it and runs checks.
+A reviewer on every change is the safe start, and it is what the gate does until you say otherwise. It is also the largest running cost of the workflow: every review is a fresh context that reads the diff and the code around it and runs checks.
 
 Most changes do not need it. Which ones do is a question the merged history can answer, and this page is about asking it.
 

@@ -1,199 +1,109 @@
 #!/bin/sh
 #
-# SDLC Agents Master Install Script
-# Installs SDLC Agents for one or more AI coding assistants
+# Installs sdlc-agents into a repository by copying files.
+# Nothing is linked back to this checkout, so the install works the same on a laptop, in CI and in a
+# cloud session.
 #
-# Usage:
-#   ./install.sh --ghcp --target /path/to/project
-#   ./install.sh --claude --target /path/to/project
-#   ./install.sh --cursor --target /path/to/project
-#   ./install.sh --windsurf --target /path/to/project
-#   ./install.sh --aider --target /path/to/project
-#   ./install.sh --all --target /path/to/project
+# Usage: install.sh --target /path/to/repository [--force]
 #
+#   --force   overwrite the files this installer owns (roles, gate, risk report, templates) when they
+#             differ. Your rules, lessons and fixes file are never overwritten.
 
-set -e
-
-# Colors
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-CYAN='\033[0;36m'
-NC='\033[0m'
-
-log_info() { printf "${GREEN}[INFO]${NC} %s\n" "$1"; }
-log_warn() { printf "${YELLOW}[WARN]${NC} %s\n" "$1"; }
-log_error() { printf "${RED}[ERROR]${NC} %s\n" "$1"; }
-log_header() { printf "\n${CYAN}%s${NC}\n" "$1"; }
+set -eu
 
 usage() {
-    echo ""
-    echo "SDLC Agents - Multi-Assistant Installer"
-    echo ""
-    echo "Usage: $0 <tool-flags> --target <project-path> [options]"
-    echo ""
-    echo "Tool Flags (at least one required):"
-    echo "  --ghcp            Install for GitHub Copilot"
-    echo "  --claude          Install for Claude Code"
-    echo "  --cursor          Install for Cursor"
-    echo "  --windsurf        Install for Windsurf"
-    echo "  --aider           Install for Aider"
-    echo "  --all             Install for all tools"
-    echo ""
-    echo "Required:"
-    echo "  --target <path>   Target project directory"
-    echo ""
-    echo "Options:"
-    echo "  --copy            Copy agents instead of symlinking"
-    echo "  -h, --help        Show this help"
-    echo ""
-    echo "Examples:"
-    echo "  $0 --ghcp --target ./my-project"
-    echo "  $0 --claude --cursor --target ./my-project"
-    echo "  $0 --all --target ./my-project --copy"
-    echo ""
-    exit 1
+    sed -n '3,11p' "$0" | sed 's/^# \{0,1\}//'
+    exit "${1:-1}"
 }
 
-# Resolve script directory
-SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
-
-# Parse arguments
 TARGET=""
-COPY_FLAG=""
-INSTALL_GHCP=false
-INSTALL_CLAUDE=false
-INSTALL_CURSOR=false
-INSTALL_WINDSURF=false
-INSTALL_AIDER=false
-
+FORCE=false
 while [ $# -gt 0 ]; do
     case "$1" in
-        --target) TARGET="$2"; shift 2 ;;
-        --copy) COPY_FLAG="--copy"; shift ;;
-        --ghcp) INSTALL_GHCP=true; shift ;;
-        --claude) INSTALL_CLAUDE=true; shift ;;
-        --cursor) INSTALL_CURSOR=true; shift ;;
-        --windsurf) INSTALL_WINDSURF=true; shift ;;
-        --aider) INSTALL_AIDER=true; shift ;;
-        --all)
-            INSTALL_GHCP=true
-            INSTALL_CLAUDE=true
-            INSTALL_CURSOR=true
-            INSTALL_WINDSURF=true
-            INSTALL_AIDER=true
-            shift
-            ;;
-        -h|--help) usage ;;
-        *) log_error "Unknown option: $1"; usage ;;
+        --target) [ $# -ge 2 ] || usage; TARGET="$2"; shift 2 ;;
+        --force) FORCE=true; shift ;;
+        -h|--help) usage 0 ;;
+        *) echo "Unknown option: $1" >&2; usage ;;
     esac
 done
+[ -n "$TARGET" ] || usage
+[ -d "$TARGET" ] || { echo "Target directory does not exist: $TARGET" >&2; exit 1; }
 
-# Validate arguments
-if [ -z "$TARGET" ]; then
-    log_error "Missing required --target argument"
-    usage
-fi
-
-# Check at least one tool selected
-if [ "$INSTALL_GHCP" = false ] && \
-   [ "$INSTALL_CLAUDE" = false ] && \
-   [ "$INSTALL_CURSOR" = false ] && \
-   [ "$INSTALL_WINDSURF" = false ] && \
-   [ "$INSTALL_AIDER" = false ]; then
-    log_error "No tool selected. Use --ghcp, --claude, --cursor, --windsurf, --aider, or --all"
-    usage
-fi
-
-# Validate target exists
-if [ ! -d "$TARGET" ]; then
-    log_error "Target directory does not exist: $TARGET"
-    exit 1
-fi
-
+SOURCE=$(cd "$(dirname "$0")" && pwd)
 TARGET=$(cd "$TARGET" && pwd)
 
-echo ""
-echo "╔═══════════════════════════════════════════╗"
-echo "║     SDLC Agents - Multi-Tool Install      ║"
-echo "╠═══════════════════════════════════════════╣"
-echo "║  Target: $(printf '%-32s' "$TARGET")║"
-echo "║  Mode:   $(printf '%-32s' "$([ -n "$COPY_FLAG" ] && echo 'copy' || echo 'symlink')")║"
-echo "╚═══════════════════════════════════════════╝"
+# How many owned files were left as they are although they differ from this version.
+KEPT=0
 
-# Track results
-INSTALLED=""
-FAILED=""
-
-# GitHub Copilot
-if [ "$INSTALL_GHCP" = true ]; then
-    log_header "Installing for GitHub Copilot..."
-    if "$SCRIPT_DIR/tools/github-copilot/install.sh" --target "$TARGET" $COPY_FLAG; then
-        INSTALLED="$INSTALLED ghcp"
+# A file this installer owns: copied when missing, replaced only with --force when it differs.
+owned() {
+    src="$SOURCE/$1"; dst="$TARGET/$2"
+    mkdir -p "$(dirname "$dst")"
+    if [ ! -e "$dst" ]; then
+        cp "$src" "$dst"; echo "  added    $2"
+    elif cmp -s "$src" "$dst"; then
+        echo "  same     $2"
+    elif [ "$FORCE" = true ]; then
+        cp "$src" "$dst"; echo "  replaced $2"
     else
-        FAILED="$FAILED ghcp"
+        echo "  kept     $2 (differs; run again with --force to replace it)"
+        KEPT=$((KEPT + 1))
     fi
-fi
+}
 
-# Claude
-if [ "$INSTALL_CLAUDE" = true ]; then
-    log_header "Installing for Claude Code..."
-    if "$SCRIPT_DIR/tools/claude/install.sh" --target "$TARGET" $COPY_FLAG; then
-        INSTALLED="$INSTALLED claude"
+# A file the repository owns once it exists: copied only when missing.
+yours() {
+    src="$SOURCE/$1"; dst="$TARGET/$2"
+    mkdir -p "$(dirname "$dst")"
+    if [ -e "$dst" ]; then
+        echo "  kept     $2 (yours)"
     else
-        FAILED="$FAILED claude"
+        cp "$src" "$dst"; echo "  added    $2"
     fi
+}
+
+echo "sdlc-agents -> $TARGET"
+
+owned roles/reviewer.md .claude/agents/reviewer.md
+owned roles/architect.md .claude/agents/architect.md
+owned roles/retro.md .claude/agents/retro.md
+owned gate/handover_gate.py .sdlc/gate/handover_gate.py
+owned retro/risk_report.py .sdlc/retro/risk_report.py
+owned templates/brief.md .sdlc/templates/brief.md
+owned templates/pull_request_template.md .sdlc/templates/pull_request_template.md
+owned templates/CLAUDE.snippet.md .sdlc/templates/CLAUDE.snippet.md
+owned ci/handover-gate.yml .sdlc/templates/handover-gate.yml
+yours templates/rules.json .sdlc/rules.json
+yours templates/fixes.json .sdlc/retro/fixes.json
+yours templates/lessons/reviewer.md .sdlc/lessons/reviewer.md
+yours templates/lessons/architect.md .sdlc/lessons/architect.md
+yours templates/lessons/security.md .sdlc/lessons/security.md
+
+# Which commit this install came from, so an upgrade can be told from a local edit. Written only when every
+# owned file is at this version: with files kept as they were, the install is not at this commit.
+COMMIT=$(git -C "$SOURCE" rev-parse --short HEAD 2>/dev/null || echo unknown)
+if [ "$KEPT" -eq 0 ]; then
+    printf 'sdlc-agents %s\n' "$COMMIT" > "$TARGET/.sdlc/VERSION"
+    echo "  wrote    .sdlc/VERSION ($COMMIT)"
+else
+    echo "  kept     .sdlc/VERSION ($KEPT of the files above differ from $COMMIT, so this install is not at it)"
 fi
 
-# Cursor
-if [ "$INSTALL_CURSOR" = true ]; then
-    log_header "Installing for Cursor..."
-    if "$SCRIPT_DIR/tools/cursor/install.sh" --target "$TARGET" $COPY_FLAG; then
-        INSTALLED="$INSTALLED cursor"
-    else
-        FAILED="$FAILED cursor"
-    fi
+if [ -e "$TARGET/.sdlc-agents" ] || [ -L "$TARGET/.sdlc-agents" ]; then
+    echo ""
+    echo "Note: this repository still has the earlier seven-agent pipeline installed (.sdlc-agents and its"
+    echo "agent files in .claude/agents/). Nothing was removed. See docs/migrating.md in sdlc-agents."
 fi
 
-# Windsurf
-if [ "$INSTALL_WINDSURF" = true ]; then
-    log_header "Installing for Windsurf..."
-    if "$SCRIPT_DIR/tools/windsurf/install.sh" --target "$TARGET" $COPY_FLAG; then
-        INSTALLED="$INSTALLED windsurf"
-    else
-        FAILED="$FAILED windsurf"
-    fi
-fi
+cat <<'EOF'
 
-# Aider
-if [ "$INSTALL_AIDER" = true ]; then
-    log_header "Installing for Aider..."
-    if "$SCRIPT_DIR/tools/aider/install.sh" --target "$TARGET" $COPY_FLAG; then
-        INSTALLED="$INSTALLED aider"
-    else
-        FAILED="$FAILED aider"
-    fi
-fi
-
-# Summary
-echo ""
-echo "╔═══════════════════════════════════════════╗"
-echo "║              Install Summary              ║"
-echo "╠═══════════════════════════════════════════╣"
-if [ -n "$INSTALLED" ]; then
-    printf "║  ${GREEN}✓ Installed:${NC}%-28s║\n" "$INSTALLED"
-fi
-if [ -n "$FAILED" ]; then
-    printf "║  ${RED}✗ Failed:${NC}%-31s║\n" "$FAILED"
-fi
-echo "╚═══════════════════════════════════════════╝"
-echo ""
-
-if [ -n "$FAILED" ]; then
-    exit 1
-fi
-
-log_info "Installation complete!"
-echo ""
-echo "See the tool-specific 'Next steps' above for how to get started."
-echo ""
+Next:
+  1. Edit .sdlc/rules.json: the path patterns are guesses, point them at where things live here.
+  2. Paste .sdlc/templates/CLAUDE.snippet.md into your CLAUDE.md.
+  3. Try it: python3 .sdlc/gate/handover_gate.py --base origin/main
+  4. Copy .sdlc/templates/handover-gate.yml to .github/workflows/. The job prints the result on every pull
+     request and is red while something the change owes is not there. Require the check before a merge to
+     make it binding. To only report for a while, set ENFORCE to "false" in that file.
+  5. Later, with some merged history: python3 .sdlc/retro/risk_report.py shows where changes went wrong,
+     and whether the reviewer needs to read every change. See docs/risk.md in sdlc-agents.
+EOF

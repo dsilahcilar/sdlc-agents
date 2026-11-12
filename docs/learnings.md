@@ -1,12 +1,12 @@
 # Learnings
 
-A team that repeats a mistake has not learned from it. Version 1 answered that with a shared playbook, a Retro agent that appended to it, and a Curator agent that sorted lessons into a file per role. The idea of a lesson per role was right. The storage did not hold up:
+A team that repeats a mistake has not learned from it. The earlier pipeline of this project answered that with a shared playbook, a Retro agent that appended to it, and a Curator agent that sorted lessons into a file per role. The idea of a lesson per role was right. The storage did not hold up:
 
 - The files only grew. Every role read more text on every run, and old cautions started to read as absolute rules.
 - The lessons that mattered turned into tests and lint rules over time, and the prose copy stayed behind.
 - Lessons went to the roles that write instructions. The reviewer, the role that catches mistakes, got none.
 
-Version 2 keeps lessons per role and changes their form.
+So lessons are still kept per role, in a different form.
 
 ## The ladder
 
@@ -67,4 +67,4 @@ It helps to keep a short ledger of bug classes: one section per class, one row p
 
 Claude Code can give a subagent its own memory folder: `memory: project` in the agent file creates `.claude/agent-memory/<name>/` and loads the start of its `MEMORY.md` into the agent. That would replace the lessons files with one line of configuration.
 
-Version 2 does not use it yet, for one reason: turning it on also gives the agent write access to that folder, and the reviewer is meant to change nothing. A lessons file that the role only reads, and that changes through pull requests, keeps the reviewer read-only and works the same in every tool. If you try the built-in memory, keep the rules above: short, dated, expiring, and reviewed.
+The roles here do not use it, for one reason: turning it on also gives the agent write access to that folder, and the reviewer is meant to change nothing. A lessons file that the role only reads, and that changes through pull requests, keeps the reviewer read-only and works the same in every tool. If you try the built-in memory, keep the rules above: short, dated, expiring, and reviewed.

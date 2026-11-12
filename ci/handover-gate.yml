@@ -1,0 +1,79 @@
+# Prints what each pull request owes and where it goes next, and holds the pull request while something it
+# owes is not there: missing evidence, or an owed review with no verdict in the pull request text.
+# Copy to .github/workflows/handover-gate.yml. To make it binding, also require this check before a merge
+# (branch protection or a ruleset): a red check that is not required can still be merged past.
+name: Handover gate
+
+on:
+  pull_request:
+    # "edited" too: a Waive, Ran or Verdict line in the pull request text changes the answer.
+    types: [opened, synchronize, reopened, edited]
+
+permissions:
+  contents: read
+
+jobs:
+  owed:
+    name: What this change owes
+    runs-on: ubuntu-latest
+    env:
+      # "true": the job fails while something owed is not there. "false": it only prints the block. Use
+      # "false" to read what the rules ask for on real pull requests before they hold anything.
+      ENFORCE: "true"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The gate compares against the branch point, so it needs the history.
+          fetch-depth: 0
+      - name: Run the gate
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          BASE_REF: ${{ github.base_ref }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          # Passed through the environment, never pasted into the script: the text is written by the author.
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          set -o pipefail
+          printf '%s' "$PR_BODY" > "$RUNNER_TEMP/pull-request.md"
+          # The gate and the rules come from the base branch when it has them, so a pull request cannot loosen
+          # the rules that judge it. A pull request that brings the gate is judged by its own copy.
+          # Two limits. GitHub runs this file as the pull request has it, so a pull request that edits this
+          # workflow can print what it likes: the starter rules ask for a person's approval of such a change.
+          # And the tip of the base branch is used, not the commit the pull request started from, which can
+          # be weeks old.
+          RULES_AT=$(git rev-parse -q --verify "refs/remotes/origin/$BASE_REF^{commit}" || echo "$BASE_SHA")
+          FROM=.
+          if git cat-file -e "$RULES_AT:.sdlc/gate/handover_gate.py" 2>/dev/null \
+              && git cat-file -e "$RULES_AT:.sdlc/rules.json" 2>/dev/null; then
+            git worktree prune
+            git worktree add --force --detach "$RUNNER_TEMP/gate-base" "$RULES_AT" > /dev/null
+            FROM="$RUNNER_TEMP/gate-base"
+          fi
+          # A branch that left the base branch before the gate was installed is reported and not held: its
+          # author never had the contract. That covers the pull request that brings the gate, too. Merging the
+          # base branch into such a branch brings it under the gate.
+          MODE=""
+          if [ "$ENFORCE" = true ]; then
+            BRANCH_POINT=$(git merge-base "$BASE_SHA" "$HEAD_SHA" || true)
+            if [ -z "$BRANCH_POINT" ] || git cat-file -e "$BRANCH_POINT:.sdlc/rules.json" 2>/dev/null; then
+              MODE=--enforce
+            fi
+          fi
+          # Exit code 1: something owed is not there (only with --enforce). Exit code 2: the gate could not
+          # run, for example on a broken rules file. That fails this job in either mode.
+          status=0
+          python3 "$FROM/.sdlc/gate/handover_gate.py" --rules "$FROM/.sdlc/rules.json" \
+            --base "$BASE_SHA" --head "$HEAD_SHA" \
+            --pull-request-from "$RUNNER_TEMP/pull-request.md" $MODE | tee -a "$GITHUB_STEP_SUMMARY" || status=$?
+          # With a judge (see docs/gates.md), add for example:
+          #   --judge-cmd "python3 $FROM/.sdlc/gate/my_judge.py"
+          # and pass its key as a secret in `env`. Without a judge only the path rules apply.
+          if [ "$FROM" != . ]; then git worktree remove --force "$FROM"; fi
+          if [ "$ENFORCE" = true ] && [ -z "$MODE" ]; then
+            echo "This branch left the base branch before the gate was installed, so it is reported and not held." \
+              | tee -a "$GITHUB_STEP_SUMMARY"
+          fi
+          if [ "$status" = 1 ]; then
+            echo "::error title=Handover gate::This pull request owes something that is not there yet. The job summary says what."
+          fi
+          exit "$status"

@@ -1,194 +1,107 @@
 # SDLC Agents
 
-**Build software that stays maintainable.**
+**Whoever wrote the change does not decide how much checking it gets.**
 
-[![Multi-Agent](https://img.shields.io/badge/Architecture-Multi--Agent-green)](./docs/AGENT_ARCHITECTURE.md)
-[![GitHub Copilot](https://img.shields.io/badge/GitHub%20Copilot-✓-blue?logo=github)](./tools/github-copilot/README.md)
-[![Claude](https://img.shields.io/badge/Claude-✓-orange)](./tools/claude/README.md)
-[![Cursor](https://img.shields.io/badge/Cursor-✓-purple)](./tools/cursor/README.md)
-[![Windsurf](https://img.shields.io/badge/Windsurf-✓-teal)](./tools/windsurf/README.md)
-[![Aider](https://img.shields.io/badge/Aider-✓-yellow)](./tools/aider/README.md)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+Current models plan and write code well without being told how to think. What a better model does not fix is who checks whom. An author, human or model, is a poor judge of its own work, and should not be the one to decide how much checking that work gets. This project installs the few parts that settle that, and nothing else:
 
----
+- **A brief before code.** One page at the top of the pull request: the goal, what is out of scope, checks that can be run, and the blast radius.
+- **An independent reviewer before "ready".** A fresh context that sees the diff and the brief, not the author's reasoning, and cannot edit.
+- **Gates that code enforces.** A script works out what each change owes and where it goes next, and a job on the pull request stays red until that is there. The author never picks its own checks.
 
-## Two versions
+[docs/architecture.md](./docs/architecture.md) explains how the parts fit together.
 
-**[Version 2](./v2/README.md) is the current direction: keep the gates, drop the scripts.** A one-page brief before code, an independent reviewer before "ready", and a handover gate that works out which tests and reviews each change owes, so the author never picks its own checks. Two short agent files replace the seven below. It lives in [`v2/`](./v2/) and installs with `v2/install.sh`.
-
-**Version 1** is everything else on this page: seven agents, each with its own prompt, task files and a skill loader. It is unchanged and still installs with `./install.sh`. [Coming from version 1](./v2/docs/migrating-from-v1.md) maps each piece to what replaces it and why.
-
----
-
-## The Problem
-
-LLMs write code fast—but they also generate **hidden costs**:
-
-| 🚨 Problem | What Happens |
-|-----------|--------------|
-| **Structural Debt** | Code violates architectural boundaries. Coupling creeps in unnoticed. |
-| **Generative Debt** | Quick fixes today become expensive rewrites tomorrow. |
-| **Amnesia** | The same mistakes repeat across tasks—agents don't learn. |
-| **Context Management** | Naive prompt stuffing wastes tokens and dilutes attention. |
-
-**Result**: Your codebase degrades faster than you can refactor.
-
----
-
-## The Solution
-
-**SDLC Agents** bring engineering discipline to AI-assisted development through **advanced context engineering**:
-
-```
-Planning → Architect → Coding → Code Review → Retro
-```
-
-> 💡 **Token Efficiency**: By loading only relevant context per task, SDLC Agents significantly reduce token consumption while improving model focus and output quality.
-
-Each phase has a **specialized agent** that does one thing well:
-
-| Agent | What It Does |
-|-------|--------------|
-| 🏗️ [Initializer](./docs/agents/initializer-agent.md) | Sets up project structure and discovers existing architecture |
-| 📋 [Planning](./docs/agents/planning-agent.md) | Converts requirements into structured, implementable plans |
-| 🧭 [Architect](./docs/agents/architect-agent.md) | Validates plans against architectural rules *before* coding |
-| 💻 [Coding](./docs/agents/coding-agent.md) | Implements incrementally, following the approved plan |
-| 🔍 [Code Review](./docs/agents/codereview-agent.md) | Catches debt, security issues, and architectural violations |
-| 📖 [Retro](./docs/agents/retro-agent.md) | Extracts lessons to prevent future mistakes |
-| 🗃️ [Curator](./docs/agents/curator-agent.md) | Maintains knowledge quality over time |
-
-### Key Principles
-
-- **Architecture-First**: Structure is validated *before* code is written
-- **Continual Learning**: Lessons from past work inform future decisions
-- **Progressive Disclosure**: Agents load only what they need, staying focused
-- **Automated Guardrails**: Rules are enforced, not just documented
-
----
-
-## Core Capabilities
-
-What makes SDLC Agents different from other AI coding assistants:
-
-| Capability | What It Means | Token Impact |
-|------------|---------------|---------------|
-| 🎯 **Progressive Disclosure** | Agents load only contextually relevant knowledge—no bloated prompts | **↓ 60-80% fewer tokens** vs. full-context |
-| 🧠 **Self-Learning** | Retro agent captures lessons; knowledge accumulates across tasks | Reuses learnings without re-explaining |
-| 🔌 **Extension Support** | Add custom skills without modifying core agent files | Load extensions only when relevant |
-| ⚡ **Dynamic Skill Selection** | Use `#SkillName` to include, `!SkillName` to exclude skills | **On-demand loading** saves tokens |
-| 🏗️ **Architecture-First** | Structure is validated before implementation begins | Prevents costly rework iterations |
-| 🤝 **Multi-Agent Orchestration** | Specialized agents with clear handoffs and responsibilities | Each agent loads minimal context |
-
-### How Skills Work
+## How a change moves
 
 ```mermaid
-flowchart LR
-    A[User Request] --> B{Planning Agent}
-    B --> C[Detect Stack]
-    B --> D[Parse #skill Directives]
-    C --> E[Load Only Needed Skills]
-    D --> E
-    E --> F[Embed in Feature/Task]
-    F --> G[Downstream Agents]
+flowchart TD
+    A[Brief in the pull request] --> G1{Gate: brief to code}
+    G1 -- heavy change --> AR[Architect reviews the brief] --> H1[A person approves it] --> C
+    G1 -- otherwise --> C[The author writes the code]
+    C --> K[Checks run: tests, linters, hooks, CI]
+    K --> G2{Gate: code to review}
+    G2 -- something owed is missing --> C
+    G2 -- a review is owed --> R[Reviewer or security review, fresh context]
+    R -- changes requested, at most twice --> C
+    R -- verdict recorded in the pull request --> G2
+    G2 -- nothing is waited for --> M[Ready: a person merges]
 ```
 
-### Example: Dynamic Skill Selection
+The gate at "code to review" prints a block like this into the pull request:
 
-```bash
-# Use TDD pattern for this implementation
-"Implement user authentication #TDD"
+```text
+### Owed by this change
 
-# Use spec-driven development with Java stack
-"Add order processing API #spec-driven #java"
+- Unit test: present (src/orders/total.test.ts). Path rule: src/orders/total.ts.
+- User journey test: **MISSING**. Path rule: src/app/checkout/page.tsx.
+- Security review: owed. Judge: p=0.81, at or above 0.3.
+- Not owed: Database or integration test, API contract, Language check, Live model run
 
-# Exclude a skill you don't need
-"Add event processing !Kafka"
+**Next: back to the author** (journey-test). Add what is missing, or write `Waive <item>: <reason>` in the pull request. No reviewer starts yet.
 ```
 
-See [Skills Documentation](./docs/skills/README.md) for the full skill system.
+Not every change needs every kind of test, and few need a security review. The rules say which change owes what. Where a rule allows it, a run the author reports counts as the evidence, and the reviewer judges it. See [docs/gates.md](./docs/gates.md).
 
----
+Not every change needs a reviewer either. It reads every change until a rule of yours names the places where it should, and a retro keeps that list honest against the merged history. See [docs/risk.md](./docs/risk.md).
 
-## Quick Start
+The reviewer blocks only on what it can show and what matters now: a wrong result for a user, lost data, a failure in production, or an owed check that cannot catch its break. Smaller real defects travel with the approval as `worth_fixing`.
 
-**1.** Clone or download SDLC Agents:
+## What is in here
+
+| Path | What it is |
+|---|---|
+| `roles/reviewer.md`, `roles/architect.md`, `roles/retro.md` | The three agent files. Each is at most 40 lines. |
+| `gate/handover_gate.py` | The gate. Python 3.8+, standard library only, with its tests beside it. |
+| `retro/risk_report.py` | The risk report: where merged changes later needed a fix, against the rule that says what the reviewer reads. Same requirements, tests beside it. |
+| `templates/rules.json` | Starter rules: what is owed, decided by which paths, and which question goes to the judge. |
+| `templates/brief.md`, `templates/pull_request_template.md` | The brief, and a pull request template that holds the brief, the gate's block and the verdicts. |
+| `templates/CLAUDE.snippet.md` | The delivery contract: about a dozen lines for your `CLAUDE.md`. |
+| `templates/lessons/` | One short, dated lessons file per role. See [docs/learnings.md](./docs/learnings.md). |
+| `templates/fixes.json` | The file of confirmed fixes that the risk report counts from. It starts empty. |
+| `ci/handover-gate.yml` | A workflow that runs the gate on every pull request, prints its block, and fails while something owed is not there. |
+| `install.sh` | Copies all of the above into a repository. |
+| `legacy/` | The earlier seven-agent pipeline, kept as it was. See below. |
+
+## Install
+
 ```bash
 git clone https://github.com/dsilahcilar/sdlc-agents.git
+sdlc-agents/install.sh --target /path/to/your/repository
 ```
 
-**2.** Run the installer for your AI tool:
+The installer copies files. It links nothing back to the checkout, so the install works the same on a laptop, in CI and in a cloud session. It writes the commit it came from to `.sdlc/VERSION`.
+
+Then:
+
+1. Edit `.sdlc/rules.json`. The path patterns are guesses at a common layout. Point them at where things live in your repository.
+2. Paste `.sdlc/templates/CLAUDE.snippet.md` into your `CLAUDE.md`.
+3. Try it on a branch: `python3 .sdlc/gate/handover_gate.py --base origin/main`.
+4. Copy `.sdlc/templates/handover-gate.yml` to `.github/workflows/`, and make its check required before a merge.
+
+The agent files use the subagent format of Claude Code. The gate, the rules and the templates are plain files and work with any tool.
+
+## Enforced by default
+
+The contract in `CLAUDE.md` tells the author to follow the gate, and the workflow holds the pull request to it. The job is red while owed evidence is missing, or while an owed review has no verdict in the pull request. The author records a review that ran with one line above its verdict:
+
+```text
+Verdict reviewer: approve, two notes fixed here
+```
+
+"Needs human approval" does not turn the job red. It is a note for the person who merges. A branch that started before the gate was installed is reported and not held.
+
+To read what your rules would ask for on real pull requests before they hold anything, set `ENFORCE` to `"false"` in the workflow. A rule that has not been checked against real changes means little yet, and the starter patterns are guesses.
+
+## The judge is optional
+
+Path rules decide everything they can decide exactly. A rule may also carry one factual yes/no question for the cases paths cannot settle, such as "does this diff change who can read which user's data?". That question goes to a judge: any program that returns a probability. If the judge fails to answer, the item counts as owed. With no judge configured, only the path rules apply. The protocol is in [docs/gates.md](./docs/gates.md).
+
+## The earlier pipeline
+
+This project started as seven agents, one per phase of the work, each with its own prompt, task files and a skill loader. That pipeline is in [`legacy/`](./legacy/README.md), unchanged, and still installs with `legacy/install.sh`. It is no longer developed. [docs/migrating.md](./docs/migrating.md) maps each of its pieces to what replaces it and why.
+
+## Tests
+
 ```bash
-./install.sh --ghcp --target /path/to/your/project    # GitHub Copilot
-./install.sh --claude --target /path/to/your/project  # Claude Code
-./install.sh --cursor --target /path/to/your/project  # Cursor
-./install.sh --all --target /path/to/your/project     # All tools
+python3 -m unittest discover -s gate -p 'test_*.py'
+python3 -m unittest discover -s retro -p 'test_*.py'
 ```
-
-**3.** Run the **Initializer Agent** to set up your project structure.
-
-**4.** Start with the **Planning Agent** for your first task.
-
-See [Multi-Assistant Support](./docs/MULTI_ASSISTANT_SUPPORT.md) for detailed setup guides.
-
----
-
-## Custom Extensibility
-
-Extend agent behavior **without modifying core agent files**.
-
-After initialization, your project includes an `extensions/` folder:
-
-```
-agent-context/extensions/
-├── _all-agents/        # Rules applied to ALL agents
-│   └── *.md
-├── coding-agent/       # Rules for Coding Agent only
-│   └── *.md
-├── architect-agent/    # Rules for Architect Agent only
-│   └── *.md
-├── skills/             # Custom project skills
-│   ├── domain/         # Domain-specific knowledge
-│   └── patterns/       # Architecture patterns
-└── ...                 # (one folder per agent)
-```
-
-### How It Works
-
-1. Drop a `.md` file into the appropriate folder
-2. Agents automatically read and apply these instructions
-3. Custom rules **take precedence** over core behavior on conflict
-
-### Example Use Cases
-
-| Extension File | Purpose |
-|----------------|---------|
-| `_all-agents/security-policy.md` | Enforce security rules across all agents |
-| `coding-agent/style-guide.md` | Team coding conventions |
-| `architect-agent/company-standards.md` | Company-wide architecture decisions |
-
-See [`extensions/README.md`](./agents/templates/extensions/README.md) for detailed examples.
-
----
-
-## Documentation
-
-| 📄 Document | Description |
-|------------|-------------|
-| [Multi-Assistant Support](./docs/MULTI_ASSISTANT_SUPPORT.md) | Setup for Copilot, Claude, Cursor, Windsurf, Aider |
-| [Skills System](./docs/skills/README.md) | Progressive disclosure, skill directives, custom skills |
-| [Agent Architecture](./docs/AGENT_ARCHITECTURE.md) | System design, file lifecycle, data flow |
-| [Agent Responsibilities](./docs/AGENT_RESPONSIBILITY_ALLOCATION.md) | Context providers vs. consumers |
-| [Individual Agents](./docs/agents/README.md) | Detailed specs for each agent |
-| [Comparison with Spec-Kit](./docs/COMPARISON_WITH_SPEC_KIT.md) | When to use SDLC Agents vs. Spec-Kit |
-
----
-
-<p align="center">
-  <i>Works with GitHub Copilot, Claude, Cursor, Windsurf, and Aider</i>
-</p>
-
----
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

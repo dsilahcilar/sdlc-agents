@@ -1,4 +1,4 @@
-"""Tests for the risk report. Run: python3 -m unittest discover -s v2/retro -p 'test_*.py'"""
+"""Tests for the risk report. Run: python3 -m unittest discover -s retro -p 'test_*.py'"""
 import json
 import pathlib
 import subprocess

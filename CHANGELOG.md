@@ -10,6 +10,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Breaking Changes
 
+- **The handover gate workflow is what this repository installs.** It lives at the root: `gate/`, `retro/`, `roles/`, `templates/`, `ci/`, `docs/` and `install.sh`. The earlier seven-agent pipeline moved to `legacy/` as it was, so its `agents/`, `tools/`, `docs/` and `install.sh` are now under `legacy/`, and it installs with `legacy/install.sh`. It is no longer developed.
+  - A linked install of the earlier pipeline stops working when its clone is updated past this change, because the link points at the old `agents/` folder. Delete the `.sdlc-agents` link and run `legacy/install.sh` again.
+  - The entries below about the earlier pipeline name its paths as they were when written.
+- **The workflow template enforces by default.** `ci/handover-gate.yml` runs the gate with `--enforce`, so the job is red while something the change owes is not there. A branch that started before the gate was installed is reported and not held. Set `ENFORCE` to `"false"` in the workflow to only report.
+- **`.sdlc/VERSION` reads `sdlc-agents <commit>`.**
+
 - **Stack files refactored**: All `agents/skills/stacks/*.md` files changed from verbose guides to concise specification format
   - Removed: Tool installation instructions, detailed examples, best practices  
   - Kept: Detection rules, command tables, minimal rule templates
@@ -21,17 +27,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- **Version 2** in `v2/`, beside version 1 and without changing how version 1 installs. See `v2/README.md`.
-  - `v2/gate/handover_gate.py`: a handover gate that works out what a change owes (which kinds of test, a security review, an architect pass, a human approval) and where it goes next. Path rules decide what they can, an optional judge answers one yes/no question for the rest, and a judge that gives no answer takes the stricter route. Rules are data in `rules.json`. Standard library only, with tests.
-  - `v2/roles/reviewer.md` and `v2/roles/architect.md`: two short agent files in place of the seven.
-  - `v2/templates/`: the brief, a pull request template, the delivery contract for `CLAUDE.md`, starter rules, and one short lessons file per reviewing role.
-  - `v2/install.sh`: copies files into a repository and links nothing.
-  - `v2/docs/`: the gate design and rules reference, how learnings are kept, and a map from version 1.
+- **The handover gate workflow**. See `README.md` and `docs/architecture.md`.
+  - `gate/handover_gate.py`: a handover gate that works out what a change owes (which kinds of test, a security review, an architect pass, a human approval) and where it goes next. Path rules decide what they can, an optional judge answers one yes/no question for the rest, and a judge that gives no answer takes the stricter route. Rules are data in `rules.json`. Standard library only, with tests.
+  - `roles/reviewer.md`, `roles/architect.md` and `roles/retro.md`: three short agent files in place of the seven.
+  - `templates/`: the brief, a pull request template, the delivery contract for `CLAUDE.md`, starter rules, and one short lessons file per reviewing role.
+  - `install.sh`: copies files into a repository and links nothing.
+  - `docs/`: how the parts fit together, the gate design and rules reference, which changes the reviewer reads, how learnings are kept, and a map from the earlier pipeline.
   - After a trial on past pull requests: the reviewer has a bar for what blocks and a `worth_fixing` list for the rest, and reports findings that rest on code it cannot read as questions. An evidence rule can let a reported run count (`run_counts`, answered by a `Ran <item>: ...` line). The starter rules gain `script-run` for deploy and operations scripts. A diff too large for one question is asked about in up to four parts before it counts as owed. `--pull-request-from` replaces `--waivers-from`, which still works.
   - After the trial on 20 merged pull requests: the reviewer's bar counts a wrong value or wrong text on a screen, and the fixed bug left standing in sibling code. `docs/learnings.md` says to start the reviewer's lessons file with entries on day one, with the trial's numbers. The starter `stored-data` rule also asks about backfill and repair code, and `docs/gates.md` reports how the starter thresholds behaved.
   - After the first install in two repositories: a renamed file counts under its old path and its new one, the block says why a judge gave no answer, and the reviewing roles can be handed a file with the pull request text.
-  - A rule decides who gets the reviewer: the standard reviewer reads every change until a review item names it, and from then on a change that owes no reviewer ends in "Next: ready". `v2/retro/risk_report.py` reads the merged history and says where changes later needed a fix, and `v2/roles/retro.md` proposes changes to the rule from it. See `v2/docs/risk.md`.
+  - A rule decides who gets the reviewer: the standard reviewer reads every change until a review item names it, and from then on a change that owes no reviewer ends in "Next: ready". `retro/risk_report.py` reads the merged history and says where changes later needed a fix, and `roles/retro.md` proposes changes to the rule from it. See `docs/risk.md`.
   - After two security reviews of the installs: file names are read as git stores them (an accent, a quote or a line break no longer hides a file from the rules), the judge gets every changed file as text and an item counts as owed when a diff cannot be read, the workflow template runs the gate and the rules of the base branch, and the starter rules ask for a person's approval when the gate, the rules, the lessons or the files that instruct the agents change.
+  - The gate holds a pull request. A review that ran is recorded in the pull request with a `Verdict <reviewer>: ...` line, and a reviewer with such a line is no longer waited for. `--enforce` makes the gate exit 1 while owed evidence is missing or an owed review has no verdict. The JSON output gains `waiting` and `verdicts`. The starter rules also ask for a person's approval when the gate's own workflow file changes.
 
 - **Kotlin support**: Added `agents/skills/stacks/kotlin.md` with full Gradle/Maven support
   - Detection for `build.gradle.kts` with `*.kt` files

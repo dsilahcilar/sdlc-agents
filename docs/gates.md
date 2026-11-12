@@ -18,7 +18,7 @@ A change **owes** something when it has to be there before the change moves on. 
 | Kind | Owed means | If it is not there |
 |---|---|---|
 | `evidence` | A kind of test, a contract file, a runnable check in the brief | Back to the author. No reviewer starts. |
-| `review` | A reviewer looks at it: `security-review`, `architect`, or the standard `reviewer` | That reviewer is added to the route. |
+| `review` | A reviewer looks at it: `security-review`, `architect`, or the standard `reviewer` | That reviewer is on the route until its verdict is in the pull request. |
 | `approval` | A person decides: a paid model run, a change to payment or personal data | The block says "Needs human approval". |
 
 For an `evidence` item the gate looks in the diff for a changed file where such evidence lives (`satisfied_by`). It does not judge whether the test is any good. That stays with the reviewer, who reads each owed test and asks whether it would fail if the behaviour broke.
@@ -47,6 +47,39 @@ Ran integration-test: the start-up suite, 212 passed, and it loads the changed w
 
 The gate shows the item as "a run stands in for a changed test" and passes the line to the reviewer, who judges whether that run would fail if the behaviour broke. A changed test file still wins over a reported run. Without `run_counts`, a `Ran` line is ignored and only a changed file or a waiver answers the item.
 
+### Verdicts
+
+The gate cannot see a review happen. So the author records each one that ran with one line in the pull request, above the verdict as the reviewer returned it:
+
+```text
+Verdict reviewer: approve, two notes fixed here
+Verdict security-review: no finding above low
+```
+
+The name is the reviewer's, as the "Next" line shows it. A reviewer with such a line is no longer waited for, and the "Next" line names only the ones that are left. When none is left, the change is "ready".
+
+Write the line when the review is settled: the reviewer approved, or a person decided what stays open. A line for a reviewer the change does not owe changes nothing, and a verdict never stands in for missing evidence.
+
+## Enforcing
+
+By default the gate exits 0 whatever it decides, because the decision is the output. With `--enforce` it exits 1 while something owed is not there:
+
+| "Next" line | Exit code with `--enforce` |
+|---|---|
+| back to the author: owed evidence is missing, with no waiver | 1 |
+| review by ...: an owed review has no `Verdict` line yet | 1 |
+| ready, or "write the code" at the brief handover | 0 |
+
+"Needs human approval" does not change the exit code. A script cannot give that approval, so it stays a line for the person who merges.
+
+The workflow in `ci/handover-gate.yml` runs the gate this way on every pull request. Three things about it:
+
+- **It runs again when the pull request text is edited**, so a `Waive`, `Ran` or `Verdict` line turns the job green without a new commit.
+- **A branch that left the base branch before the gate was installed is reported and not held.** Its author never had the contract. Merging the base branch into it brings it under the gate.
+- **`ENFORCE: "false"` makes it report only.** Use that to read what new rules ask for on real pull requests before they hold anything.
+
+A red job holds a merge only where the check is required. Set that in branch protection or a ruleset.
+
 ## Testing and security: who needs what
 
 Two questions are easy to mix up. Which existing tests must **run** is a cost question, and CI answers it. Which tests a change must **add** is a coverage question, and this gate answers it.
@@ -66,7 +99,7 @@ The starter rules in `templates/rules.json` cover:
 | Architect review | alters or deletes data that is already stored | the judge, asked only when a migration changed |
 | Live model run | changes a prompt | paths. A person decides, because a run costs money. |
 | Approval of a sensitive change | touches payment code | paths |
-| Approval of a change to the gate | touches the gate, its rules, the lessons or the fixes file | paths |
+| Approval of a change to the gate | touches the gate, its rules, its workflow, the lessons, the fixes file or the files that instruct the agents | paths |
 
 Security has three levels, and most changes stop at the first:
 
@@ -172,20 +205,23 @@ Any model that gives a calibrated probability for a yes/no question will do: a s
 
 ```text
 handover_gate.py --base <ref> [--head HEAD] [--rules .sdlc/rules.json] [--repo .]
-                 [--pull-request-from FILE] [--judge-cmd "<command>"] [--format markdown|json]
-handover_gate.py --handover brief-to-code --brief-from FILE [--judge-cmd "<command>"]
+                 [--pull-request-from FILE] [--judge-cmd "<command>"] [--format markdown|json] [--enforce]
+handover_gate.py --handover brief-to-code --brief-from FILE [--pull-request-from FILE]
+                 [--judge-cmd "<command>"] [--enforce]
 ```
 
-It compares `--head` with the point where it branched off `--base`. File names are read exactly as git stores them, so a name with a space, a quote, an accent or a line break is matched like any other. The judge gets every changed file as text, also one that git would call binary because of a stray NUL byte or a line in `.gitattributes`. Where a changed file has no diff to show, or a name that is not UTF-8, the item counts as owed without asking. `--pull-request-from` names a file with the pull request text, which the gate reads for `Waive` and `Ran` lines (`--waivers-from` is the older name for the same flag). It exits 0 whatever it decides, because the decision is the output. `--fail-on-missing` makes missing evidence exit 1, for teams that want a red check. A rules file it cannot use exits 2.
+It compares `--head` with the point where it branched off `--base`. File names are read exactly as git stores them, so a name with a space, a quote, an accent or a line break is matched like any other. The judge gets every changed file as text, also one that git would call binary because of a stray NUL byte or a line in `.gitattributes`. Where a changed file has no diff to show, or a name that is not UTF-8, the item counts as owed without asking. `--pull-request-from` names a file with the pull request text, which the gate reads for `Waive`, `Ran` and `Verdict` lines (`--waivers-from` is the older name for the same flag). At the brief handover the brief itself is read for them too. It exits 0 whatever it decides, unless `--enforce` is given (see [Enforcing](#enforcing)). `--fail-on-missing` is the narrower, older switch: only missing evidence exits 1. A rules file it cannot use, or a git error, exits 2 in every mode.
 
-`--format json` gives the same decision for scripts: `next` (`back-to-author`, `review`, `ready` or `code`), `reviewers`, `needs_human`, `notes`, and one entry per item with its `state`, `reason`, `probability` and `evidence`. The states are `not-owed`, `not-asked`, `present`, `ran`, `missing`, `waived` and `owed`.
+`--format json` gives the same decision for scripts: `next` (`back-to-author`, `review`, `ready` or `code`), `reviewers` (every reviewer the change owes), `waiting` (the ones with no verdict yet), `verdicts`, `needs_human`, `notes`, and one entry per item with its `state`, `reason`, `probability` and `evidence`. The states are `not-owed`, `not-asked`, `present`, `ran`, `missing`, `waived` and `owed`.
 
 ## Limits worth holding to
 
 - **The gate routes, it does not judge.** "Is this plan good?" stays with a reviewer.
 - **It can add checking and never remove a human approval.** Whatever a person must approve today stays theirs.
-- **Missing evidence holds back the reviewer, not the merge.** The person who merges can always overrule it.
-- **Shadow first.** Print the route on pull requests for a while before anything acts on it.
-- **The rules are reviewed like code.** Do not change `rules.json` in the same pull request as a change it would judge. Two things back that up. In CI the workflow runs the gate and the rules from the tip of the base branch, so a pull request cannot loosen the rules that judge it. And the starter rules ask for a person's approval when the gate, the rules, the lessons, the fixes file or the files that instruct the agents change.
-- **A pull request that edits the gate's workflow prints its own answer.** GitHub runs a workflow file as the pull request has it. So the line above holds only while that file is untouched. Put your workflow folder on the `security-review` path list, and do not trust the block of a pull request that changes that workflow. Once the gate enforces, run it as a required workflow from a repository ruleset, which a pull request cannot edit.
+- **Missing evidence holds back the reviewer first.** A review of a change that lacks its tests is a review to repeat.
+- **A person can always overrule it.** A `Waive` line, with a reason the reviewer judges, is the way through for an item that does not fit the change. The person who merges has the last word.
+- **A `Verdict` line is the author's record.** The gate checks that it is there, not that a review ran. The verdict pasted under it, and the person who merges, are the check on that.
+- **Measure a rule before you lean on it.** The starter patterns and thresholds are guesses. Read what they ask for on a few real pull requests, with `ENFORCE: "false"` if you want nothing held meanwhile.
+- **The rules are reviewed like code.** Do not change `rules.json` in the same pull request as a change it would judge. Two things back that up. In CI the workflow runs the gate and the rules from the tip of the base branch, so a pull request cannot loosen the rules that judge it. And the starter rules ask for a person's approval when the gate, the rules, the gate's workflow, the lessons, the fixes file or the files that instruct the agents change.
+- **A pull request that edits the gate's workflow runs its own copy.** GitHub runs a workflow file as the pull request has it. So the line above holds only while that file is untouched. The starter rules ask for a person's approval of such a change, and that person should not trust the job's result on it. Put the rest of your workflow folder on the `security-review` path list. To close the gap fully, run the gate as a required workflow from a repository ruleset, which a pull request cannot edit.
 - **The judge can be talked to.** It reads text the author wrote. Where a miss would be expensive, use a path rule: it cannot be argued with.
