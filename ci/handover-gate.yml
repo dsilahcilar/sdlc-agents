@@ -49,13 +49,21 @@ jobs:
             git worktree add --force --detach "$RUNNER_TEMP/gate-base" "$RULES_AT" > /dev/null
             FROM="$RUNNER_TEMP/gate-base"
           fi
-          # A branch that left the base branch before the gate was installed is reported and not held: its
-          # author never had the contract. That covers the pull request that brings the gate, too. Merging the
-          # base branch into such a branch brings it under the gate.
+          # Two kinds of pull request are reported and not held.
+          # A branch that left the base branch before the gate was installed: its author never had the
+          # contract. That covers the pull request that brings the gate, too. Merging the base branch into such
+          # a branch brings it under the gate. Once no such branch is left, this exemption can go.
+          # And a pull request judged by a gate on the base branch that is older than this workflow and does
+          # not know --enforce, which is the pull request that upgrades the gate.
           MODE=""
+          NOT_HELD=""
           if [ "$ENFORCE" = true ]; then
             BRANCH_POINT=$(git merge-base "$BASE_SHA" "$HEAD_SHA" || true)
-            if [ -z "$BRANCH_POINT" ] || git cat-file -e "$BRANCH_POINT:.sdlc/rules.json" 2>/dev/null; then
+            if [ -n "$BRANCH_POINT" ] && ! git cat-file -e "$BRANCH_POINT:.sdlc/rules.json" 2>/dev/null; then
+              NOT_HELD="This branch left the base branch before the gate was installed"
+            elif ! grep -q -e '"--enforce"' "$FROM/.sdlc/gate/handover_gate.py"; then
+              NOT_HELD="The gate on the base branch is older than this workflow and cannot hold a change yet"
+            else
               MODE=--enforce
             fi
           fi
@@ -69,9 +77,8 @@ jobs:
           #   --judge-cmd "python3 $FROM/.sdlc/gate/my_judge.py"
           # and pass its key as a secret in `env`. Without a judge only the path rules apply.
           if [ "$FROM" != . ]; then git worktree remove --force "$FROM"; fi
-          if [ "$ENFORCE" = true ] && [ -z "$MODE" ]; then
-            echo "This branch left the base branch before the gate was installed, so it is reported and not held." \
-              | tee -a "$GITHUB_STEP_SUMMARY"
+          if [ -n "$NOT_HELD" ]; then
+            echo "$NOT_HELD, so this pull request is reported and not held." | tee -a "$GITHUB_STEP_SUMMARY"
           fi
           if [ "$status" = 1 ]; then
             echo "::error title=Handover gate::This pull request owes something that is not there yet. The job summary says what."

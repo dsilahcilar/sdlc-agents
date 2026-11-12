@@ -74,10 +74,11 @@ By default the gate exits 0 whatever it decides, because the decision is the out
 
 When it holds a change, the gate says why on standard error. If an item is owed only because its question got no answer, it says that too. A judge that is down makes every question count as owed, and the right answer to an outage is to run the gate again, not to add tests and reviews the change never owed.
 
-The workflow in `ci/handover-gate.yml` runs the gate this way on every pull request. Three things about it:
+The workflow in `ci/handover-gate.yml` runs the gate this way on every pull request. Four things about it:
 
 - **It runs again when the pull request text is edited**, so a `Waive`, `Ran` or `Verdict` line turns the job green without a new commit.
-- **A branch that left the base branch before the gate was installed is reported and not held.** Its author never had the contract. Merging the base branch into it brings it under the gate.
+- **A branch that left the base branch before the gate was installed is reported and not held.** Its author never had the contract. Merging the base branch into it brings it under the gate. Once no such branch is left, take the exemption out of the workflow: until then a branch started from an old commit is not held.
+- **A pull request that upgrades the gate is reported and not held** when the gate on the base branch is too old to know `--enforce`.
 - **`ENFORCE: "false"` makes it report only.** Use that to read what new rules ask for on real pull requests before they hold anything.
 
 A red job holds a merge only where the check is required. Set that in branch protection or a ruleset.

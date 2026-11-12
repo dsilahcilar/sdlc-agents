@@ -132,6 +132,7 @@ The gate is enforced in two places.
 | "Needs human approval" | Green. It is a note for the person who merges, and a job cannot give that approval |
 | The gate cannot run, for example on a broken rules file | Red, in either mode |
 | The branch left the base branch before the gate was installed | Green, with the block and a line that says it is reported and not held |
+| The gate on the base branch is older than the workflow and does not know `--enforce` | Green, with the same kind of line. This is the pull request that upgrades the gate |
 
 Editing the pull request text runs the job again, so a `Waive`, `Ran` or `Verdict` line turns it green without a new commit.
 
