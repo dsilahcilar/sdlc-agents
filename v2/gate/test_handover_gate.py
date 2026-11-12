@@ -83,10 +83,14 @@ class Globs(unittest.TestCase):
         self.assertFalse(paths.matches("src/a.test.ts"))
         self.assertFalse(gate.PathSet(["!src/**"]).matches("src/a.ts"))
 
-    def test_a_rename_is_reported_under_its_new_path(self):
+    def test_a_rename_is_reported_under_both_its_paths(self):
         parsed = gate.parse_name_status("A\tsrc/new.ts\nR087\tsrc/old.ts\tsrc/moved.ts\nD\tsrc/gone.ts\n")
         self.assertEqual([(c.status, c.path) for c in parsed],
-                         [("A", "src/new.ts"), ("R", "src/moved.ts"), ("D", "src/gone.ts")])
+                         [("A", "src/new.ts"), ("D", "src/old.ts"), ("R", "src/moved.ts"), ("D", "src/gone.ts")])
+
+    def test_a_copy_is_reported_under_its_new_path_only(self):
+        parsed = gate.parse_name_status("C075\tsrc/a.ts\tsrc/b.ts\n")
+        self.assertEqual([(c.status, c.path) for c in parsed], [("C", "src/b.ts")])
 
 
 class Evidence(unittest.TestCase):
@@ -195,6 +199,25 @@ class Judge(unittest.TestCase):
             d = run(rules(review()), changes("M src/orders/export.ts"), judge=bad)
             self.assertEqual(state(d, "security-review").state, "owed")
             self.assertIn("counts as owed", state(d, "security-review").reason)
+
+    def test_a_judge_can_say_why_it_has_no_answer(self):
+        def judge(q):
+            raise gate.NoAnswer("the key was rejected (HTTP 401)")
+
+        d = run(rules(review()), changes("M src/orders/export.ts"), judge=judge)
+        item = state(d, "security-review")
+        self.assertEqual(item.state, "owed")
+        self.assertEqual(item.reason, "judge gave no answer (the key was rejected (HTTP 401)), so it counts as owed")
+        self.assertIn("Judge gave no answer (the key was rejected (HTTP 401))", gate.render_markdown(d))
+
+    def test_a_long_reason_is_cut_to_its_last_line(self):
+        def judge(q):
+            raise gate.NoAnswer("Traceback (most recent call last):\n  File x\nboom " + "y" * 400)
+
+        reason = state(run(rules(review()), changes("M src/orders/export.ts"), judge=judge), "security-review").reason
+        self.assertNotIn("Traceback", reason)
+        self.assertIn("(boom yyy", reason)
+        self.assertLess(len(reason), gate.MAX_REASON_CHARS + 60)
 
     def test_without_a_judge_only_the_path_rules_apply(self):
         d = run(rules(review()), changes("M src/orders/export.ts"))
@@ -479,6 +502,39 @@ class CommandLine(unittest.TestCase):
         for body in ("import sys; sys.exit(3)", "print('not json')", "print('{\"probability\": \"high\"}')"):
             data = json.loads(self.gate("--format", "json", "--judge-cmd", self.judge(body)).stdout)
             self.assertEqual(data["reviewers"], ["reviewer", "security-review"], body)
+
+    def test_what_a_failing_judge_program_says_reaches_the_block(self):
+        self.commit("src/a.ts", "export const a = 2;\n")
+        said = "import sys; print('starting', file=sys.stderr); print('the key was rejected', file=sys.stderr); sys.exit(1)"
+        cases = (
+            (said, [], "Judge gave no answer (the key was rejected)"),
+            ("import sys; sys.exit(3)", [], "Judge gave no answer (exit code 3)"),
+            ("print('not json')", [], "Judge gave no answer (its output was not JSON with a probability)"),
+            ("import time; time.sleep(5)", ["--judge-timeout", "0.2"], "Judge gave no answer (no reply within 0.2 seconds)"),
+        )
+        for body, extra, expected in cases:
+            done = self.gate("--judge-cmd", self.judge(body), *extra)
+            self.assertEqual(done.returncode, 0, done.stderr)
+            self.assertIn(f"- Security review: owed. {expected}, so it counts as owed.", done.stdout, body)
+
+    def test_a_judge_program_that_cannot_start_is_reported_too(self):
+        self.commit("src/a.ts", "export const a = 2;\n")
+        done = self.gate("--judge-cmd", str(self.repo / "no-such-judge"))
+        self.assertEqual(done.returncode, 0, done.stderr)
+        self.assertIn("Judge gave no answer (could not start: ", done.stdout)
+
+    def test_a_file_moved_out_of_a_watched_folder_still_owes_the_review(self):
+        self.commit("src/auth/login.ts", "export const login = 1;\nexport const logout = 2;\nexport const who = 3;\n")
+        self.git("checkout", "-q", "main")
+        self.git("merge", "-q", "change")
+        self.git("checkout", "-q", "change")
+        (self.repo / "lib").mkdir()
+        self.git("mv", "src/auth/login.ts", "lib/login.ts")
+        self.git("commit", "-q", "-m", "move")
+        data = json.loads(self.gate("--format", "json").stdout)
+        review_item = next(i for i in data["items"] if i["id"] == "security-review")
+        self.assertEqual((review_item["state"], review_item["reason"]), ("owed", "path rule: src/auth/login.ts"))
+        self.assertEqual(data["reviewers"], ["reviewer", "security-review"])
 
     def test_waivers_are_read_from_the_pull_request_text(self):
         self.commit("src/a.ts", "export const a = 2;\n")

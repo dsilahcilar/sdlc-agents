@@ -1,6 +1,6 @@
 ---
 name: architect
-description: Reviews a brief before code is written, or a change to stored data, when the handover gate names it. Start it with the pull request number or the path of the brief, and nothing else.
+description: Reviews a brief before code is written, or a change to stored data, when the handover gate names it. Start it with the pull request number or the path of a file with the brief or the pull request text, and nothing else.
 tools: Read, Grep, Glob, Bash
 ---
 

@@ -112,7 +112,7 @@ One item:
 | `id`, `title` | The id is what a `Waive` or `Ran` line names. The title is what the block shows. |
 | `kind` | `evidence`, `review` or `approval`. |
 | `handover` | `code-to-review` (the default) or `brief-to-code`. |
-| `owed_when.changed` | Owed for certain when any changed file matches. |
+| `owed_when.changed` | Owed for certain when any changed file matches. A deleted file counts, and a renamed file counts under its old path and its new one, so a file moved out of a watched folder still owes what the folder owes. |
 | `owed_when.added` | Owed for certain when any new file matches. |
 | `owed_when.ask` | The question for the rest. `paths` says which changed files it is about: the question is asked only when one of them changed, and their diff is what the judge reads. With `"about": "brief"` the judge reads the brief instead, and `paths` is left out. |
 | `threshold` | Owed at or above this probability. Default 0.5. Set it low where a miss costs more than an extra look. |
@@ -153,7 +153,7 @@ It answers on standard output:
 {"probability": 0.81}
 ```
 
-A non-zero exit, a timeout or any other output means "no answer", and the item counts as owed. The gate asks at most eight questions per run (`--max-questions`), and each part of a large diff is one question. Past that, the remaining items count as owed. Keep caching, spend limits and keys inside your judge.
+A non-zero exit, a timeout or any other output means "no answer", and the item counts as owed. The block then shows why: the last line the program wrote to standard error, cut to 160 characters, or the exit code. So write one plain line there, such as "the key was rejected (HTTP 401)", and keep keys out of it. The gate asks at most eight questions per run (`--max-questions`), and each part of a large diff is one question. Past that, the remaining items count as owed. Keep caching, spend limits and keys inside your judge.
 
 ```bash
 python3 .sdlc/gate/handover_gate.py --base origin/main --judge-cmd "python3 tools/my_judge.py"

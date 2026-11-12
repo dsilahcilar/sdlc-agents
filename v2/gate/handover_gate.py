@@ -58,8 +58,15 @@ OWED_KEYS = {"changed", "added", "ask"}
 ASK_KEYS = {"about", "paths", "question", "true", "false", "threshold"}
 
 # A judge takes {"id", "question", "criteria": {"true", "false"}, "input": {...}} and returns the probability
-# that the answer is yes, or None when it cannot answer.
+# that the answer is yes, or None when it cannot answer. To say why it cannot, it raises NoAnswer.
 Judge = Callable[[dict], Optional[float]]
+# The longest reason of a judge that is shown in the block.
+MAX_REASON_CHARS = 160
+
+
+class NoAnswer(Exception):
+    """Raised by a judge that cannot answer, with the reason in a few words. The item counts as owed, and the
+    reason is shown beside it, so a rejected key can be told from an outage."""
 
 
 class RulesError(ValueError):
@@ -112,18 +119,25 @@ class PathSet:
 
 @dataclasses.dataclass(frozen=True)
 class Change:
-    status: str  # A added, M modified, D deleted, R renamed (path is the new name)
+    status: str  # A added, M modified, D deleted, R renamed (path is the new name), C copied
     path: str
 
 
 def parse_name_status(text: str) -> List[Change]:
-    """The output of `git diff --name-status`. A rename or copy is reported under its new path."""
+    """The output of `git diff --name-status`.
+
+    A rename is two changes: its old path as deleted and its new path as renamed. Reported under the new path
+    alone, a file moved out of a folder that a rule watches would owe nothing. A copy leaves its source as it
+    was, so it is reported under its new path only."""
     changes = []
     for line in text.splitlines():
         parts = line.split("\t")
         if len(parts) < 2 or not parts[0]:
             continue
-        changes.append(Change(parts[0][0], parts[-1]))
+        status = parts[0][0]
+        if status == "R" and len(parts) >= 3:
+            changes.append(Change("D", parts[1]))
+        changes.append(Change(status, parts[-1]))
     return changes
 
 
@@ -307,6 +321,13 @@ class Decision:
         }
 
 
+def _one_line(text: str) -> str:
+    """The last line of what a judge said, short enough for one line of the block."""
+    lines = [" ".join(line.split()) for line in text.splitlines() if line.strip()]
+    last = lines[-1] if lines else ""
+    return last if len(last) <= MAX_REASON_CHARS else last[:MAX_REASON_CHARS - 1].rstrip() + "…"
+
+
 def _first(paths: Sequence[str]) -> str:
     return paths[0] + (f" (+{len(paths) - 1} more)" if len(paths) > 1 else "")
 
@@ -330,6 +351,9 @@ class _Asker:
                 "criteria": {"true": item.ask.true, "false": item.ask.false},
                 "input": payload_input,
             })
+        except NoAnswer as e:
+            why = _one_line(str(e))
+            return None, f"judge gave no answer ({why})" if why else "judge gave no answer"
         except Exception as e:  # a judge that throws has not answered; the stricter route applies
             return None, f"judge failed ({type(e).__name__})"
         if p is None or isinstance(p, bool) or not isinstance(p, (int, float)) or not 0 <= p <= 1:
@@ -523,20 +547,23 @@ def render_markdown(d: Decision) -> str:
 
 def command_judge(command: str, timeout: float = 60.0) -> Judge:
     """A judge that is a program: the question goes in as JSON on stdin, {"probability": 0.0-1.0} comes back
-    on stdout. Anything else (a non-zero exit, a timeout, other output) means it gave no answer."""
+    on stdout. Anything else (a non-zero exit, a timeout, other output) means it gave no answer. The last line
+    a failing program writes to standard error is the reason shown in the block."""
     argv = shlex.split(command)
 
     def judge(payload: dict) -> Optional[float]:
         try:
             done = subprocess.run(argv, input=json.dumps(payload), capture_output=True, text=True, timeout=timeout)
-        except (OSError, subprocess.TimeoutExpired):
-            return None
+        except subprocess.TimeoutExpired:
+            raise NoAnswer(f"no reply within {timeout:g} seconds")
+        except OSError as e:
+            raise NoAnswer(f"could not start: {e.strerror or type(e).__name__}")
         if done.returncode != 0:
-            return None
+            raise NoAnswer(_one_line(done.stderr) or f"exit code {done.returncode}")
         try:
             p = json.loads(done.stdout).get("probability")
         except (ValueError, AttributeError):
-            return None
+            raise NoAnswer("its output was not JSON with a probability")
         return p if isinstance(p, (int, float)) and not isinstance(p, bool) else None
 
     return judge
