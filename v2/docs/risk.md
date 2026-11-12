@@ -12,6 +12,7 @@ A trial on one project read about 1,000 merged pull requests from five weeks, 70
 - **Small changes went wrong less often, and size alone was still a poor rule.** The small changes that went wrong were deploy scripts and configuration. A path rule catches those and a size rule lets them through.
 - **Hotspots helped less than folders.** Ranking files by how often they change times how large they are, the hottest half of the changes held 63% of the failures. The folder list held 85% for about the same number of reviews.
 - **The web app was a different case.** 4 of 328 changes went wrong in use, and no folder, size or hotspot rule set them apart. All but one of its later fixes repaired something a check in code catches: a failing test, a type error, a broken page. There the reviewer was taken off by default.
+- **The first count was too low.** Those figures come from pairs found by hand. The report's reading list, described below, then found eight more backend changes that had gone wrong and one more in the web app, mostly fixes that named the earlier pull request in other words than "fix". On the fuller count of 40, a list chosen from the earlier half by the report's fixed rule sent 58% of the later half's changes to the reviewer and had 19 of the 27 that went wrong among them: 9.4% inside and 5.5% outside. The lift is real and smaller than a first look suggests.
 
 Your history will say something else. Measure it before you cut.
 
