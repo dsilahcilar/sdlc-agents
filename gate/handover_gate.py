@@ -19,15 +19,19 @@ The standard reviewer reads every change, until a rule of yours names it. From t
 changes it reads, like any other review item, and a change that no reviewer is owed goes on as ready. A waiver
 or a reported run still brings the reviewer in, because someone other than the author has to judge that line.
 
+A review that ran is recorded by the author in the pull request, in one line: `Verdict <reviewer>: <what it
+said>`. A reviewer with such a line is no longer waited for, and when none is left the change goes on as ready.
+
 The gate routes. It does not judge quality, and it can add checking but never remove a human approval.
-See ../docs/gates.md for the design, the rules reference and the judge protocol.
+See docs/gates.md in sdlc-agents for the design, the rules reference and the judge protocol.
 
 Usage:
   handover_gate.py --base <ref> --head <ref> [--rules .sdlc/rules.json] [--judge-cmd "<command>"]
-                   [--pull-request-from FILE] [--format markdown|json]
+                   [--pull-request-from FILE] [--format markdown|json] [--enforce]
   handover_gate.py --handover brief-to-code --brief-from FILE [--judge-cmd "<command>"]
 
-Exits 0 whatever it decides: the decision is the output. --fail-on-missing makes missing evidence exit 1.
+Exits 0 whatever it decides: the decision is the output. --enforce makes it exit 1 while something owed is not
+there (missing evidence, or a review with no verdict line). --fail-on-missing does so for missing evidence alone.
 Python 3.8+, standard library only.
 """
 from __future__ import annotations
@@ -50,6 +54,10 @@ DEFAULT_MAX_INPUT_CHARS = 40_000
 DEFAULT_MAX_QUESTIONS = 8
 # The reviewer that reads every change unless a review item names it. Then that item decides.
 STANDARD_REVIEWER = "reviewer"
+# How the reason of an item ends when its question got no answer: the judge was down, or the diff could not be put
+# to it. The block shows the whole reason. An enforced run uses the ending to say that this is why it holds.
+UNANSWERED = "so it counts as owed"
+
 # A diff too large for one question is asked about in parts, up to this many. Past it the item counts as owed.
 MAX_PARTS = 4
 # Spaces and tabs only between the parts: \s would run on into the next line and take it for the reason.
@@ -58,6 +66,10 @@ WAIVER_RE = re.compile(r"^[ \t]*(?:[-*][ \t]*)?waive[ \t]+([A-Za-z0-9_.-]+)[ \t]
 
 RAN_RE = re.compile(r"^[ \t]*(?:[-*][ \t]*)?ran[ \t]+([A-Za-z0-9_.-]+)[ \t]*:[ \t]*(\S.*)$",
                     re.IGNORECASE | re.MULTILINE)
+
+# The author's record that a review ran, and what it said. The name is the reviewer's, not an item's.
+VERDICT_RE = re.compile(r"^[ \t]*(?:[-*][ \t]*)?verdict[ \t]+([A-Za-z0-9_.-]+)[ \t]*:[ \t]*(\S.*)$",
+                        re.IGNORECASE | re.MULTILINE)
 
 ITEM_KEYS = {"id", "title", "kind", "handover", "owed_when", "satisfied_by", "run_counts", "reviewer", "note"}
 OWED_KEYS = {"changed", "added", "ask"}
@@ -316,6 +328,12 @@ def parse_runs(text: str) -> Dict[str, str]:
     return {m.group(1): m.group(2).strip() for m in RAN_RE.finditer(text or "")}
 
 
+def parse_verdicts(text: str) -> Dict[str, str]:
+    """Lines of the form `Verdict <reviewer>: <what it said>`. The author writes one when a review has run and
+    its blocking findings are answered. The verdict itself, as it came back, belongs under it."""
+    return {m.group(1): m.group(2).strip() for m in VERDICT_RE.finditer(text or "")}
+
+
 # ---------------------------------------------------------------------------------------------------------
 # Deciding
 
@@ -348,12 +366,21 @@ class Decision:
     items: List[ItemResult]
     # Why the route is what it is, where the items alone do not say it.
     notes: List[str] = dataclasses.field(default_factory=list)
+    # What the pull request says each of those reviewers found, for the ones that have run.
+    verdicts: Dict[str, str] = dataclasses.field(default_factory=dict)
+
+    @property
+    def waiting(self) -> List[str]:
+        """The reviewers that are owed and have no verdict in the pull request yet."""
+        return [r for r in self.reviewers if r not in self.verdicts]
 
     def to_json(self) -> dict:
         return {
             "handover": self.handover,
             "next": self.next,
             "reviewers": self.reviewers,
+            "waiting": self.waiting,
+            "verdicts": self.verdicts,
             "needs_human": self.needs_human,
             "notes": self.notes,
             "items": [dataclasses.asdict(i) for i in self.items],
@@ -506,11 +533,13 @@ def _owed_in_parts(item: Item, candidates: Sequence[str], diff_for: Callable[[Li
 
 def decide(rules: Rules, handover: str, changes: Sequence[Change], diff_for: Callable[[List[str]], str],
            judge: Optional[Judge] = None, brief: Optional[str] = None, waivers: Optional[Dict[str, str]] = None,
-           max_questions: int = DEFAULT_MAX_QUESTIONS, runs: Optional[Dict[str, str]] = None) -> Decision:
+           max_questions: int = DEFAULT_MAX_QUESTIONS, runs: Optional[Dict[str, str]] = None,
+           verdicts: Optional[Dict[str, str]] = None) -> Decision:
     """changes: the changed files. diff_for(paths) -> the unified diff of those files. judge: None when none is set up.
-    waivers and runs: what the author wrote in the pull request, by item id."""
+    waivers and runs: what the author wrote in the pull request, by item id. verdicts: the same, by reviewer."""
     waivers = waivers or {}
     runs = runs or {}
+    verdicts = verdicts or {}
     changes = [c for c in changes if not rules.ignore.matches(c.path)]
     paths = [c.path for c in changes if c.status != "D"]
     asker = _Asker(judge, max_questions)
@@ -545,8 +574,9 @@ def decide(rules: Rules, handover: str, changes: Sequence[Change], diff_for: Cal
             extra.append(r.reviewer)
     needs_human = any(r.kind == "approval" and r.state == "owed" for r in results)
     if handover != "code-to-review":
-        step = "back-to-author" if missing else ("review" if extra else "code")
-        return Decision(handover, step, extra, needs_human, results)
+        said = {r: verdicts[r] for r in extra if r in verdicts}
+        step = "back-to-author" if missing else ("review" if len(said) < len(extra) else "code")
+        return Decision(handover, step, extra, needs_human, results, verdicts=said)
     notes: List[str] = []
     by_rule = any(i.handover == handover and i.kind == "review" and i.reviewer == STANDARD_REVIEWER for i in rules.items)
     others = [r for r in extra if r != STANDARD_REVIEWER]
@@ -559,8 +589,10 @@ def decide(rules: Rules, handover: str, changes: Sequence[Change], diff_for: Cal
         notes.append(f"The reviewer is on the route to judge what the author wrote for {', '.join(claims)}.")
     else:
         reviewers = others
-    step = "back-to-author" if missing else ("review" if reviewers else "ready")
-    return Decision(handover, step, reviewers, needs_human, results, notes)
+    # A review that ran is not asked for again: the author's line says what it found, and its text is under it.
+    said = {r: verdicts[r] for r in reviewers if r in verdicts}
+    step = "back-to-author" if missing else ("review" if len(said) < len(reviewers) else "ready")
+    return Decision(handover, step, reviewers, needs_human, results, notes, said)
 
 
 # ---------------------------------------------------------------------------------------------------------
@@ -570,6 +602,11 @@ def decide(rules: Rules, handover: str, changes: Sequence[Change], diff_for: Cal
 def _sentence(text: str) -> str:
     text = text[:1].upper() + text[1:]
     return text if text.endswith((".", "?", "!")) else text + "."
+
+
+def _verdicts(d: Decision) -> str:
+    """The reviewers that have run and what the author says each found, in the order they were owed."""
+    return ", ".join(f"{r} ({_one_line(d.verdicts[r]).rstrip('.')})" for r in d.reviewers if r in d.verdicts)
 
 
 def render_markdown(d: Decision) -> str:
@@ -605,11 +642,19 @@ def render_markdown(d: Decision) -> str:
         lines.append(f"**Next: back to the author** ({ids}). Add what is missing, or write "
                      f"`Waive <item>: <reason>` in the pull request.{run_hint} No reviewer starts yet.")
     elif d.next == "review":
-        lines.append(f"**Next: review by** {', '.join(d.reviewers)}.")
+        lines.append(f"**Next: review by** {', '.join(d.waiting)}. When one has run, write "
+                     f"`Verdict <reviewer>: <what it said>` in the pull request, with its verdict under it.")
+        if d.verdicts:
+            lines.append(f"Verdict in the pull request: {_verdicts(d)}.")
+    elif d.next == "ready" and d.reviewers:
+        lines.append(f"**Next: ready.** Each review that was owed has a verdict in the pull request: {_verdicts(d)}. "
+                     f"The checks and the person who merges decide.")
     elif d.next == "ready":
         lines.append("**Next: ready.** No reviewer is owed. The checks and the person who merges decide.")
     else:
         lines.append("**Next: write the code.**")
+        if d.verdicts:
+            lines.append(f"Verdict in the pull request: {_verdicts(d)}.")
     lines.extend(d.notes)
     if d.needs_human:
         lines.append("**Needs human approval** before it is merged or released, whatever the reviewers say.")
@@ -659,13 +704,16 @@ def main(argv: Optional[List[str]] = None) -> int:
     ap.add_argument("--head", default="HEAD", help="the ref with the change (default: HEAD)")
     ap.add_argument("--brief-from", help="a file with the brief, for rules that ask about it")
     ap.add_argument("--pull-request-from", "--waivers-from", dest="pull_request_from",
-                    help="a file with the pull request text, read for 'Waive <item>: <reason>' and "
-                         "'Ran <item>: <what was run>' lines")
+                    help="a file with the pull request text, read for 'Waive <item>: <reason>', "
+                         "'Ran <item>: <what was run>' and 'Verdict <reviewer>: <what it said>' lines")
     ap.add_argument("--judge-cmd", help="a program that answers one question: JSON in on stdin, {\"probability\": p} out")
     ap.add_argument("--judge-timeout", type=float, default=60.0)
     ap.add_argument("--max-questions", type=int, default=DEFAULT_MAX_QUESTIONS)
     ap.add_argument("--format", choices=("markdown", "json"), default="markdown")
     ap.add_argument("--fail-on-missing", action="store_true", help="exit 1 when owed evidence is missing")
+    ap.add_argument("--enforce", action="store_true",
+                    help="exit 1 while something owed is not there: missing evidence, or a review with no "
+                         "'Verdict <reviewer>: ...' line in the pull request text")
     args = ap.parse_args(argv)
 
     repo = pathlib.Path(args.repo)
@@ -681,7 +729,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         print(f"handover gate: {e}", file=sys.stderr)
         return 2
     author_text = pr_text + "\n" + (brief or "")
-    waivers, runs = parse_waivers(author_text), parse_runs(author_text)
+    waivers, runs, verdicts = parse_waivers(author_text), parse_runs(author_text), parse_verdicts(author_text)
 
     changes: List[Change] = []
     diff_for: Callable[[List[str]], str] = lambda paths: ""
@@ -703,12 +751,29 @@ def main(argv: Optional[List[str]] = None) -> int:
                                       "-M", span, "--", *paths)
 
     judge = command_judge(args.judge_cmd, args.judge_timeout) if args.judge_cmd else None
-    decision = decide(rules, args.handover, changes, diff_for, judge, brief, waivers, args.max_questions, runs)
+    decision = decide(rules, args.handover, changes, diff_for, judge, brief, waivers, args.max_questions, runs,
+                      verdicts)
     if args.format == "json":
         print(json.dumps(decision.to_json(), indent=2))
     else:
         print(render_markdown(decision), end="")
-    return 1 if args.fail_on_missing and decision.next == "back-to-author" else 0
+    held = ""
+    if decision.next == "back-to-author" and (args.enforce or args.fail_on_missing):
+        held = "owed evidence is missing (" + ", ".join(r.id for r in decision.items if r.state == "missing") + ")"
+    elif decision.next == "review" and args.enforce:
+        held = "no verdict in the pull request text for " + ", ".join(decision.waiting)
+    if not held:
+        return 0
+    print(f"handover gate: held back, {held}", file=sys.stderr)
+    # An outage of the judge makes every question it was asked count as owed. Say so, or the author answers an
+    # outage with tests and reviews the change never owed.
+    unanswered = [r.id for r in decision.items if r.kind != "approval" and r.state in ("missing", "owed")
+                  and r.reason.endswith(UNANSWERED)]
+    if unanswered:
+        print(f"handover gate: {', '.join(unanswered)} got no answer to the question and so "
+              f"{'count' if len(unanswered) > 1 else 'counts'} as owed. If the judge was down, run the gate again "
+              "before you act on that.", file=sys.stderr)
+    return 1
 
 
 if __name__ == "__main__":

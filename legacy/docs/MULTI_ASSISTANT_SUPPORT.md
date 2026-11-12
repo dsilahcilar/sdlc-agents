@@ -17,7 +17,7 @@ SDLC Agents works with multiple AI coding assistants. This guide explains how to
 ```bash
 # Clone sdlc-agents
 git clone https://github.com/dsilahcilar/sdlc-agents.git
-cd sdlc-agents
+cd sdlc-agents/legacy
 
 # Install for your tool (replace --ghcp with your tool)
 ./install.sh --ghcp --target /path/to/your/project

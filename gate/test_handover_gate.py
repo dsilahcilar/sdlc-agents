@@ -1,4 +1,4 @@
-"""Tests for the handover gate. Run: python3 -m unittest discover -s v2/gate -p 'test_*.py'"""
+"""Tests for the handover gate. Run: python3 -m unittest discover -s gate -p 'test_*.py'"""
 import json
 import os
 import pathlib
@@ -524,12 +524,102 @@ class RulesFile(unittest.TestCase):
         starter = gate.load_rules(HERE.parent / "templates" / "rules.json")
         for path in (".sdlc/rules.json", ".sdlc/gate/handover_gate.py", ".sdlc/lessons/reviewer.md",
                      ".sdlc/retro/fixes.json", ".claude/settings.json", ".claude/agents/reviewer.md", "CLAUDE.md",
-                     "AGENTS.md"):
+                     "AGENTS.md", ".github/workflows/handover-gate.yml"):
             d = run(starter, changes("M " + path))
             self.assertEqual(state(d, "rules-change").state, "owed", path)
             self.assertTrue(d.needs_human, path)
-        for path in (".sdlc/templates/brief.md", ".sdlc/VERSION", "docs/notes.md", "README.md", "docs/CLAUDE.md"):
+        for path in (".sdlc/templates/brief.md", ".sdlc/VERSION", "docs/notes.md", "README.md", "docs/CLAUDE.md",
+                     ".github/workflows/deploy.yml"):
             self.assertFalse(run(starter, changes("M " + path)).needs_human, path)
+
+    def test_the_templates_name_no_item_and_no_reviewer(self):
+        # Their hints show the form of a Waive, Ran and Verdict line. A pull request opened from the template and
+        # left as it is must not read as one that waived something or recorded a review.
+        for name in ("pull_request_template.md", "brief.md", "CLAUDE.snippet.md"):
+            text = (HERE.parent / "templates" / name).read_text(encoding="utf-8")
+            self.assertEqual(gate.parse_waivers(text), {}, name)
+            self.assertEqual(gate.parse_runs(text), {}, name)
+            self.assertEqual(gate.parse_verdicts(text), {}, name)
+
+
+class Verdicts(unittest.TestCase):
+    """A review that ran is recorded in the pull request, and a reviewer with a verdict is not waited for."""
+
+    def test_lines_are_read_like_waivers_by_the_name_of_the_reviewer(self):
+        text = ("## Review verdict\n- Verdict reviewer: approve, two notes\n"
+                "verdict security-review:   no high-severity finding  \nVerdict architect:\n")
+        self.assertEqual(gate.parse_verdicts(text),
+                         {"reviewer": "approve, two notes", "security-review": "no high-severity finding"})
+
+    def test_a_verdict_the_reviewer_wrote_itself_is_not_such_a_line(self):
+        pasted = '{\n  "verdict": "approve",\n  "blocking_findings": []\n}\nVerdict: no finding.\n'
+        self.assertEqual(gate.parse_verdicts(pasted), {})
+
+    def test_a_reviewer_with_a_verdict_is_not_waited_for(self):
+        r = rules(code_review(owed_when={"changed": ["src/**"]}), review())
+        open_ = run(r, changes("M src/auth/login.ts"))
+        half = run(r, changes("M src/auth/login.ts"), verdicts={"reviewer": "approve"})
+        self.assertEqual((open_.next, open_.waiting), ("review", ["reviewer", "security-review"]))
+        self.assertEqual((half.next, half.reviewers, half.waiting),
+                         ("review", ["reviewer", "security-review"], ["security-review"]))
+        text = gate.render_markdown(half)
+        self.assertIn("**Next: review by** security-review. When one has run, write "
+                      "`Verdict <reviewer>: <what it said>` in the pull request", text)
+        self.assertIn("Verdict in the pull request: reviewer (approve).", text)
+
+    def test_when_every_owed_review_has_a_verdict_the_change_is_ready(self):
+        r = rules(code_review(owed_when={"changed": ["src/**"]}), review())
+        d = run(r, changes("M src/auth/login.ts"),
+                verdicts={"security-review": "no high-severity finding.", "reviewer": "request changes, fixed in 1a2b3c4"})
+        self.assertEqual((d.next, d.waiting), ("ready", []))
+        self.assertIn("**Next: ready.** Each review that was owed has a verdict in the pull request: "
+                      "reviewer (request changes, fixed in 1a2b3c4), security-review (no high-severity finding). "
+                      "The checks and the person who merges decide.", gate.render_markdown(d))
+
+    def test_a_verdict_for_a_reviewer_that_is_not_owed_changes_nothing(self):
+        d = run(rules(code_review(), review()), changes("M src/auth/login.ts"), verdicts={"reviewer": "approve"})
+        self.assertEqual((d.next, d.waiting, d.verdicts), ("review", ["security-review"], {}))
+
+    def test_a_verdict_does_not_stand_in_for_missing_evidence(self):
+        d = run(rules(evidence(), code_review(owed_when={"changed": ["src/**"]})), changes("M src/a.ts"),
+                verdicts={"reviewer": "approve"})
+        self.assertEqual(d.next, "back-to-author")
+        self.assertIn("No reviewer starts yet.", gate.render_markdown(d))
+
+    def test_the_reviewer_that_judges_a_waiver_is_waited_for_until_it_has_a_verdict(self):
+        r = rules(evidence(), code_review())
+        waived = run(r, changes("M src/ui/button.ts"), waivers={"unit-test": "a rename"})
+        judged = run(r, changes("M src/ui/button.ts"), waivers={"unit-test": "a rename"},
+                     verdicts={"reviewer": "approve, the waiver holds"})
+        self.assertEqual((waived.next, judged.next), ("review", "ready"))
+
+    def test_a_person_is_still_asked_for_when_every_review_has_a_verdict(self):
+        approval = {"id": "billing", "title": "Approval of a sensitive change", "kind": "approval",
+                    "owed_when": {"changed": ["src/billing/**"]}}
+        d = run(rules(approval, code_review()), changes("M src/billing/invoice.ts"), verdicts={"reviewer": "approve"})
+        self.assertEqual((d.next, d.needs_human), ("ready", True))
+        self.assertIn("**Needs human approval**", gate.render_markdown(d))
+
+    def test_a_review_of_the_brief_is_recorded_the_same_way(self):
+        open_ = run(rules(*Brief.ITEMS), [], judge=lambda q: 0.9 if "stored" in q["question"] else 0.0,
+                    handover="brief-to-code", brief="Goal: x")
+        done = run(rules(*Brief.ITEMS), [], judge=lambda q: 0.9 if "stored" in q["question"] else 0.0,
+                   handover="brief-to-code", brief="Goal: x", verdicts={"architect": "approve"})
+        self.assertEqual((open_.next, open_.waiting), ("review", ["architect"]))
+        self.assertEqual((done.next, done.waiting), ("code", []))
+        self.assertIn("Verdict in the pull request: architect (approve).", gate.render_markdown(done))
+
+    def test_a_long_verdict_is_cut_to_one_short_line(self):
+        d = run(rules(code_review(owed_when={"changed": ["src/**"]})), changes("M src/a.ts"),
+                verdicts={"reviewer": "approve " + "x" * 400})
+        line = [l for l in gate.render_markdown(d).splitlines() if l.startswith("**Next: ready.**")][0]
+        self.assertLess(len(line), 400)
+
+    def test_json_names_who_is_still_waited_for(self):
+        r = rules(code_review(owed_when={"changed": ["src/**"]}), review())
+        data = json.loads(json.dumps(run(r, changes("M src/auth/login.ts"), verdicts={"reviewer": "approve"}).to_json()))
+        self.assertEqual((data["next"], data["waiting"], data["verdicts"]),
+                         ("review", ["security-review"], {"reviewer": "approve"}))
 
 
 class Waivers(unittest.TestCase):
@@ -640,6 +730,91 @@ class CommandLine(unittest.TestCase):
         self.commit("src/a.ts", "export const a = 2;\n")
         self.assertEqual(self.gate().returncode, 0)
         self.assertEqual(self.gate("--fail-on-missing").returncode, 1)
+
+    def test_enforced_missing_evidence_holds_the_change_and_says_what_is_missing(self):
+        self.commit("src/a.ts", "export const a = 2;\n")
+        held = self.gate("--enforce")
+        self.assertEqual(held.returncode, 1)
+        self.assertIn("**Next: back to the author** (unit-test).", held.stdout)
+        self.assertIn("held back, owed evidence is missing (unit-test)", held.stderr)
+
+    def test_enforced_a_review_holds_the_change_until_its_verdict_is_in_the_pull_request(self):
+        self.commit("src/a.ts", "export const a = 2;\n")
+        self.commit("src/a.test.ts", "test('a', () => {});\n")
+        text = self.repo / "pull-request.md"
+        text.write_text("## Brief\n\nGoal: a is two.\n")
+        waiting = self.gate("--enforce", "--pull-request-from", str(text))
+        self.assertEqual(waiting.returncode, 1)
+        self.assertIn("held back, no verdict in the pull request text for reviewer", waiting.stderr)
+        self.assertEqual(self.gate("--pull-request-from", str(text)).returncode, 0)
+        self.assertEqual(self.gate("--fail-on-missing", "--pull-request-from", str(text)).returncode, 0)
+        text.write_text("## Brief\n\nGoal: a is two.\n\n## Review verdict\n\nVerdict reviewer: approve\n")
+        done = self.gate("--enforce", "--pull-request-from", str(text))
+        self.assertEqual((done.returncode, done.stderr), (0, ""))
+        self.assertIn("**Next: ready.** Each review that was owed has a verdict in the pull request: reviewer (approve).",
+                      done.stdout)
+
+    def test_enforced_says_when_an_item_is_owed_only_because_its_question_got_no_answer(self):
+        self.commit("src/a.ts", "export const a = 2;\n")
+        self.commit("src/a.test.ts", "test('a', () => {});\n")
+        text = self.repo / "pull-request.md"
+        text.write_text("Verdict reviewer: approve\n")
+        down = self.judge("""
+            import sys
+            print("the service is down (HTTP 503)", file=sys.stderr)
+            sys.exit(1)
+        """)
+        held = self.gate("--enforce", "--pull-request-from", str(text), "--judge-cmd", down)
+        self.assertEqual(held.returncode, 1)
+        self.assertIn("held back, no verdict in the pull request text for security-review", held.stderr)
+        self.assertIn("security-review got no answer to the question and so counts as owed. If the judge was down, "
+                      "run the gate again", held.stderr)
+        up = self.judge("""
+            print('{"probability": 0.9}')
+        """)
+        answered = self.gate("--enforce", "--pull-request-from", str(text), "--judge-cmd", up)
+        self.assertEqual(answered.returncode, 1)
+        self.assertNotIn("got no answer", answered.stderr)
+        self.assertIn("held back, no verdict in the pull request text for security-review", answered.stderr)
+
+    def test_every_reason_for_an_unanswered_question_ends_the_same_way(self):
+        # The enforced run tells an outage from a real answer by this ending.
+        for bad in (lambda q: None, lambda q: 1 / 0):
+            d = run(rules(review()), changes("M src/orders/export.ts"), judge=bad)
+            self.assertTrue(state(d, "security-review").reason.endswith(gate.UNANSWERED))
+        big = run(rules(review(), max_input_chars=5), changes("M src/orders/export.ts"), judge=lambda q: 0.0)
+        self.assertTrue(state(big, "security-review").reason.endswith(gate.UNANSWERED), state(big, "security-review"))
+        asked = run(rules(review()), changes("M src/orders/export.ts"), judge=lambda q: 0.9)
+        self.assertFalse(state(asked, "security-review").reason.endswith(gate.UNANSWERED))
+
+    def test_enforced_a_change_that_owes_nothing_passes(self):
+        (self.repo / "rules.json").write_text(json.dumps({"items": [evidence(), code_review()]}))
+        self.commit("src/a.ts", "export const a = 2;\n")
+        self.commit("src/a.test.ts", "test('a', () => {});\n")
+        done = self.gate("--enforce")
+        self.assertEqual(done.returncode, 0, done.stderr)
+        self.assertIn("**Next: ready.** No reviewer is owed.", done.stdout)
+
+    def test_enforced_a_brief_that_owes_a_review_holds_until_the_verdict(self):
+        (self.repo / "rules.json").write_text(json.dumps({"items": Brief.ITEMS}))
+        brief = self.repo / "brief.md"
+        brief.write_text("Goal: rewrite the stored orders.\n")
+        cmd = self.judge("""
+            import json, sys
+            q = json.load(sys.stdin)
+            print(json.dumps({"probability": 0.9 if q["id"] == "architect-pass" else 0.0}))
+        """)
+        args = ["--handover", "brief-to-code", "--brief-from", str(brief), "--judge-cmd", cmd, "--enforce"]
+        self.assertEqual(self.gate(*args).returncode, 1)
+        text = self.repo / "pull-request.md"
+        text.write_text("Verdict architect: approve, with one note on the backfill order\n")
+        done = self.gate(*args, "--pull-request-from", str(text))
+        self.assertEqual(done.returncode, 0, done.stderr)
+        self.assertIn("**Next: write the code.**", done.stdout)
+
+    def test_enforced_a_gate_that_cannot_run_still_exits_two(self):
+        (self.repo / "rules.json").write_text("{not json")
+        self.assertEqual(self.gate("--enforce").returncode, 2)
 
     def test_the_judge_program_gets_the_question_and_the_diff(self):
         self.commit("src/a.ts", "export const a = 2;\n")

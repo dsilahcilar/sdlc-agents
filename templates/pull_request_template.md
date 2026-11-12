@@ -23,4 +23,7 @@ Ran <item>: <what you ran and what it showed>   (only where the block says a run
 
 ## Review verdict
 
-<!-- Paste each reviewer's JSON as it came back. -->
+<!-- For each reviewer the block names, once its review has run: one line of your own, then its JSON as it came back.
+The gate waits for a reviewer until its line is here.
+Verdict <reviewer>: <what it said, and what you did about it>
+-->

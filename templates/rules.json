@@ -176,9 +176,9 @@
       "id": "rules-change",
       "title": "Approval of a change to the gate, its rules or its lessons",
       "kind": "approval",
-      "note": "These files decide how much checking every later change gets, or tell the agents and the reviewers what to do (the roles, the contract, the hooks in the settings file), so a change to them is a person's to approve. In CI the gate and the rules are read from the base branch (see ci/handover-gate.yml), so a pull request cannot loosen the rules that judge it as long as it leaves that workflow file alone. Put your workflow folder on the security-review list for that reason.",
+      "note": "These files decide how much checking every later change gets, or tell the agents and the reviewers what to do (the roles, the contract, the hooks in the settings file), so a change to them is a person's to approve. In CI the gate and the rules are read from the base branch, so a pull request cannot loosen the rules that judge it as long as it leaves the gate's workflow file alone. That file is on this list for that reason: a pull request that edits it runs its own copy. Put the rest of your workflow folder on the security-review list.",
       "owed_when": {
-        "changed": [".sdlc/rules.json", ".sdlc/gate/**", ".sdlc/lessons/**", ".sdlc/retro/**", ".claude/**", "CLAUDE.md", "AGENTS.md"]
+        "changed": [".sdlc/rules.json", ".sdlc/gate/**", ".sdlc/lessons/**", ".sdlc/retro/**", ".github/workflows/handover-gate.yml", ".claude/**", "CLAUDE.md", "AGENTS.md"]
       }
     },
     {
